@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports — Nepal FLDS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🏔️</div>
+      <div>
+        <div class="logo-text">Nepal FLDS</div>
+        <div class="logo-sub">Flood & Landslide System</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="../index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">9</span></a>
+      <a href="map.html" class="nav-item"><span class="nav-icon">🗺️</span> Nepal Map</a>
+      <div class="nav-section-label">Analysis</div>
+      <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
+      <a href="reports.html" class="nav-item active"><span class="nav-icon">📋</span> Reports</a>
+      <div class="nav-section-label">System</div>
+      <a href="#" class="nav-item"><span class="nav-icon">📡</span> Sensors</a>
+      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="nav-item"><span class="nav-icon">👤</span> NDRRMA Admin</div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <div>
+          <div class="page-title">Reports</div>
+          <div class="page-subtitle">Nepal flood & landslide incident summaries</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-indicator"><div class="status-dot"></div> All Systems Operational</div>
+        <button class="header-btn">🔔<span class="notif-badge">4</span></button>
+        <div class="avatar">ND</div>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <div class="page-header fade-in">
+        <div>
+          <div class="page-header-title">Incident Reports — Monsoon 2024</div>
+          <div class="page-header-sub">Historical data, analytics, and downloadable reports for Nepal</div>
+        </div>
+        <div class="header-actions">
+          <select class="filter-select">
+            <option>Last 30 Days</option>
+            <option>Last 7 Days</option>
+            <option>Monsoon Season</option>
+            <option>This Year</option>
+          </select>
+          <button class="btn btn-primary">📥 Generate Report</button>
+        </div>
+      </div>
+
+      <div class="grid grid-4 fade-in fade-in-delay-1" style="margin-bottom:20px;">
+        <div class="stat-card blue">
+          <div class="stat-icon blue">📋</div>
+          <div class="stat-value">86</div>
+          <div class="stat-label">Total Incidents (30d)</div>
+          <div class="stat-change up">↑ Monsoon peak</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-value">74</div>
+          <div class="stat-label">Resolved</div>
+          <div class="stat-change down">86% resolution rate</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon orange">⏱️</div>
+          <div class="stat-value">4.2h</div>
+          <div class="stat-label">Avg Resolution Time</div>
+          <div class="stat-change down">↓ 0.6h improvement</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon purple">👥</div>
+          <div class="stat-value">1.2M</div>
+          <div class="stat-label">People Affected</div>
+          <div class="stat-change neutral">→ Across 38 districts</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2 fade-in fade-in-delay-2" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📈 Monthly Incident Trend</div>
+              <div class="card-subtitle">Monsoon 2024 — Flood vs Landslide</div>
+            </div>
+          </div>
+          <div class="chart-container" style="height:200px;">
+            <canvas id="monthlyChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🥧 Incident Breakdown</div>
+              <div class="card-subtitle">Flood vs Landslide (30 days)</div>
+            </div>
+          </div>
+          <div class="donut-wrap">
+            <div style="width:140px;height:140px;flex-shrink:0;">
+              <canvas id="reportDonutChart"></canvas>
+            </div>
+            <div class="donut-legend" id="report-donut-legend"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card fade-in">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📁 Recent Reports</div>
+            <div class="card-subtitle">Nepal FLDS incident and summary reports</div>
+          </div>
+          <div class="tabs" style="margin-bottom:0;">
+            <button class="tab-btn active">All</button>
+            <button class="tab-btn">Flood</button>
+            <button class="tab-btn">Landslide</button>
+            <button class="tab-btn">Weekly</button>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Report Name</th>
+              <th>Type</th>
+              <th>District / Province</th>
+              <th>Incidents</th>
+              <th>Generated</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="reports-table"></tbody>
+        </table>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="../js/mock-data.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/interactions.js"></script>
+<script>
+// Monthly trend — monsoon season peaks Jun–Sep
+const monthCtx = document.getElementById('monthlyChart');
+new Chart(monthCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    datasets: [
+      {
+        label: 'Flood',
+        data: [2, 1, 2, 4, 8, 18, 28, 32, 22, 10, 3, 1],
+        backgroundColor: 'rgba(59,130,246,0.7)',
+        borderRadius: 4, borderSkipped: false,
+      },
+      {
+        label: 'Landslide',
+        data: [1, 0, 1, 2, 5, 12, 20, 24, 16, 6, 2, 0],
+        backgroundColor: 'rgba(139,92,246,0.7)',
+        borderRadius: 4, borderSkipped: false,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10 } },
+      tooltip: { backgroundColor: '#1a2235', borderColor: '#2d3748', borderWidth: 1, titleColor: '#f1f5f9', bodyColor: '#94a3b8', padding: 10, cornerRadius: 8 }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 11 } }, border: { color: '#1e293b' }, stacked: true },
+      y: { grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 11 } }, border: { color: '#1e293b' }, stacked: true }
+    }
+  }
+});
+
+// Donut
+const donutCtx = document.getElementById('reportDonutChart');
+new Chart(donutCtx, {
+  type: 'doughnut',
+  data: {
+    labels: MOCK.disasterTypes.map(d => d.label),
+    datasets: [{ data: MOCK.disasterTypes.map(d => d.value), backgroundColor: MOCK.disasterTypes.map(d => d.color), borderWidth: 0, hoverOffset: 6 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '70%',
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2235', borderColor: '#2d3748', borderWidth: 1, titleColor: '#f1f5f9', bodyColor: '#94a3b8', padding: 10, cornerRadius: 8 } }
+  }
+});
+
+document.getElementById('report-donut-legend').innerHTML = MOCK.disasterTypes.map(d => `
+  <div class="donut-legend-item">
+    <div class="donut-legend-dot" style="background:${d.color}"></div>
+    <span class="donut-legend-label">${d.label}</span>
+    <span class="donut-legend-val">${d.value}%</span>
+  </div>
+`).join('');
+
+const reports = [
+  { name: 'Koshi River Flood — Emergency Response Report',    type: 'Flood',     district: 'Sunsari, Province 1',       count: 1,  date: '2024-07-28', size: '4.2 MB' },
+  { name: 'Sindhupalchok Landslide — Incident Report',        type: 'Landslide', district: 'Sindhupalchok, Bagmati',    count: 1,  date: '2024-07-27', size: '3.1 MB' },
+  { name: 'Weekly Flood & Landslide Summary — W30',           type: 'Weekly',    district: 'All Nepal',                 count: 18, date: '2024-07-26', size: '2.8 MB' },
+  { name: 'Rapti Basin Flood Assessment',                     type: 'Flood',     district: 'Dang, Lumbini Province',    count: 3,  date: '2024-07-24', size: '2.5 MB' },
+  { name: 'Myagdi Landslide Risk Analysis',                   type: 'Landslide', district: 'Myagdi, Gandaki Province',  count: 2,  date: '2024-07-22', size: '1.9 MB' },
+  { name: 'Weekly Flood & Landslide Summary — W29',           type: 'Weekly',    district: 'All Nepal',                 count: 22, date: '2024-07-19', size: '3.0 MB' },
+  { name: 'Monsoon 2024 — Mid-Season Progress Report',        type: 'Monthly',   district: 'All 7 Provinces',           count: 86, date: '2024-07-15', size: '9.4 MB' },
+  { name: 'Bagmati River Flood — Sarlahi District Report',    type: 'Flood',     district: 'Sarlahi, Madhesh Province', count: 2,  date: '2024-07-12', size: '2.2 MB' },
+];
+
+const typeColors = { Flood: 'badge-info', Landslide: 'badge-medium', Weekly: 'badge-high', Monthly: 'badge-critical' };
+
+function renderReportsTable(filter) {
+  const filtered = filter === 'All' ? reports : reports.filter(r => r.type === filter);
+  document.getElementById('reports-table').innerHTML = filtered.map(r => `
+    <tr style="cursor:pointer;" data-name="${r.name}" data-type="${r.type}" data-district="${r.district}" data-count="${r.count}" data-date="${r.date}" data-size="${r.size}">
+      <td style="color:var(--text-primary);font-weight:500;">📄 ${r.name}</td>
+      <td><span class="badge ${typeColors[r.type] || 'badge-info'}">${r.type}</span></td>
+      <td>${r.district}</td>
+      <td>${r.count}</td>
+      <td>${r.date}</td>
+      <td><button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="handleDownload(event,'${r.name}','${r.size}')">📥 ${r.size}</button></td>
+    </tr>
+  `).join('');
+
+  // Row click → report detail modal
+  document.querySelectorAll('#reports-table tr').forEach(row => {
+    row.addEventListener('click', e => {
+      if (e.target.closest('button')) return; // don't open modal when clicking download
+      showModal({
+        title: `📄 ${row.dataset.name}`,
+        size: 'md',
+        body: `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+            <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Type</div>
+              <div style="margin-top:6px;"><span class="badge ${typeColors[row.dataset.type] || 'badge-info'}">${row.dataset.type}</span></div>
+            </div>
+            <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Incidents</div>
+              <div style="font-size:18px;font-weight:700;margin-top:4px;">${row.dataset.count}</div>
+            </div>
+            <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">District / Province</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px;">${row.dataset.district}</div>
+            </div>
+            <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Generated</div>
+              <div style="font-size:12px;font-weight:600;margin-top:4px;">${row.dataset.date}</div>
+            </div>
+          </div>
+          <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text-secondary);">
+            This report covers flood and landslide incidents in ${row.dataset.district}. File size: ${row.dataset.size}.
+          </div>`,
+        actions: [
+          { id: 'download', label: '📥 Download', style: 'primary', onClick: () => handleDownload(null, row.dataset.name, row.dataset.size) },
+          { id: 'close', label: 'Close', style: 'secondary' }
+        ]
+      });
+    });
+  });
+}
+
+renderReportsTable('All');
+
+// Download handler
+function handleDownload(e, name, size) {
+  if (e) e.stopPropagation();
+  showToast(`📥 Downloading "${name}" (${size})…`, 'success', 4000);
+}
+
+// Tab filtering
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderReportsTable(btn.textContent.trim());
+  });
+});
+
+// Period filter → update chart
+const PERIOD_DATA = {
+  'Last 30 Days':    { flood: [0,0,0,0,0,0,0,28,0,0,0,0], landslide: [0,0,0,0,0,0,0,24,0,0,0,0] },
+  'Last 7 Days':     { flood: [0,0,0,0,0,0,0,8,0,0,0,0],  landslide: [0,0,0,0,0,0,0,6,0,0,0,0]  },
+  'Monsoon Season':  { flood: [2,1,2,4,8,18,28,32,22,10,3,1], landslide: [1,0,1,2,5,12,20,24,16,6,2,0] },
+  'This Year':       { flood: [2,1,2,4,8,18,28,32,22,10,3,1], landslide: [1,0,1,2,5,12,20,24,16,6,2,0] },
+};
+
+let monthChart = null;
+const monthCtx = document.getElementById('monthlyChart');
+function buildMonthChart(period) {
+  if (monthChart) monthChart.destroy();
+  const d = PERIOD_DATA[period] || PERIOD_DATA['Monsoon Season'];
+  monthChart = new Chart(monthCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      datasets: [
+        { label: 'Flood',     data: d.flood,     backgroundColor: 'rgba(59,130,246,0.7)', borderRadius: 4, borderSkipped: false },
+        { label: 'Landslide', data: d.landslide, backgroundColor: 'rgba(139,92,246,0.7)', borderRadius: 4, borderSkipped: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10 } },
+        tooltip: { backgroundColor: '#1a2235', borderColor: '#2d3748', borderWidth: 1, titleColor: '#f1f5f9', bodyColor: '#94a3b8', padding: 10, cornerRadius: 8 }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 11 } }, border: { color: '#1e293b' }, stacked: true },
+        y: { grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 11 } }, border: { color: '#1e293b' }, stacked: true }
+      }
+    }
+  });
+}
+
+buildMonthChart('Monsoon Season');
+
+document.querySelector('.filter-select')?.addEventListener('change', function() {
+  buildMonthChart(this.value);
+  showToast(`Chart updated: ${this.value}`, 'info', 2000);
+});
+
+// Generate Report button
+document.querySelector('.btn-primary')?.addEventListener('click', () => {
+  const period = document.querySelector('.filter-select')?.value || 'Last 30 Days';
+  showModal({
+    title: '📥 Generate Report',
+    size: 'sm',
+    body: `
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Report Type</label>
+        <select class="filter-select" style="width:100%;padding:10px;" id="gen-type">
+          <option>Flood Incident Report</option>
+          <option>Landslide Incident Report</option>
+          <option>Combined Summary</option>
+          <option>Province-Level Analysis</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Format</label>
+        <select class="filter-select" style="width:100%;padding:10px;" id="gen-fmt">
+          <option>PDF</option>
+          <option>CSV</option>
+          <option>Excel</option>
+        </select>
+      </div>
+      <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text-muted);">
+        Period: <strong style="color:var(--text-primary);">${period}</strong>
+      </div>`,
+    actions: [
+      { id: 'cancel', label: 'Cancel', style: 'secondary' },
+      { id: 'generate', label: '⚙️ Generate', style: 'primary', onClick: () => {
+        const type = document.getElementById('gen-type')?.value;
+        const fmt  = document.getElementById('gen-fmt')?.value;
+        showToast(`⚙️ Generating ${type} (${fmt})…`, 'info');
+        setTimeout(() => showToast(`✅ Report ready: ${type}.${fmt.toLowerCase()}`, 'success'), 2000);
+      }}
+    ]
+  });
+});
+
+// Donut
+const donutCtx = document.getElementById('reportDonutChart');
+new Chart(donutCtx, {
+  type: 'doughnut',
+  data: {
+    labels: MOCK.disasterTypes.map(d => d.label),
+    datasets: [{ data: MOCK.disasterTypes.map(d => d.value), backgroundColor: MOCK.disasterTypes.map(d => d.color), borderWidth: 0, hoverOffset: 6 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '70%',
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2235', borderColor: '#2d3748', borderWidth: 1, titleColor: '#f1f5f9', bodyColor: '#94a3b8', padding: 10, cornerRadius: 8 } }
+  }
+});
+
+document.getElementById('report-donut-legend').innerHTML = MOCK.disasterTypes.map(d => `
+  <div class="donut-legend-item" style="cursor:pointer;" onclick="renderReportsTable('${d.label}');document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.textContent.trim()==='${d.label}')});showToast('Filtered: ${d.label} reports','info',2000);">
+    <div class="donut-legend-dot" style="background:${d.color}"></div>
+    <span class="donut-legend-label">${d.label}</span>
+    <span class="donut-legend-val">${d.value}%</span>
+  </div>
+`).join('');
+
+</script>
+</body>
+</html>

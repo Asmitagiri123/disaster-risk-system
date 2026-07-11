@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nepal FLDS — Flood & Landslide Detection System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🏔️</div>
+      <div>
+        <div class="logo-text">Nepal FLDS</div>
+        <div class="logo-sub">Flood & Landslide System</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="index.html" class="nav-item active">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a href="pages/alerts.html" class="nav-item">
+        <span class="nav-icon">🚨</span> Active Alerts
+        <span class="nav-badge">9</span>
+      </a>
+      <a href="pages/map.html" class="nav-item">
+        <span class="nav-icon">🗺️</span> Nepal Map
+      </a>
+      <div class="nav-section-label">Analysis</div>
+      <a href="pages/predictions.html" class="nav-item">
+        <span class="nav-icon">🔮</span> Predictions
+      </a>
+      <a href="pages/reports.html" class="nav-item">
+        <span class="nav-icon">📋</span> Reports
+      </a>
+      <div class="nav-section-label">System</div>
+      <a href="#" class="nav-item">
+        <span class="nav-icon">📡</span> Sensors
+      </a>
+      <a href="#" class="nav-item">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="nav-item">
+        <span class="nav-icon">👤</span> NDRRMA Admin
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-subtitle" id="live-clock">Loading...</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          Monsoon Season Active
+        </div>
+        <button class="header-btn tooltip" data-tip="Notifications">
+          🔔
+          <span class="notif-badge">4</span>
+        </button>
+        <button class="header-btn tooltip" data-tip="Refresh Data">🔄</button>
+        <div class="avatar">ND</div>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <div class="page-header fade-in">
+        <div>
+          <div class="page-header-title">Nepal Flood & Landslide Overview</div>
+          <div class="page-header-sub">Real-time monitoring across all 77 districts — Monsoon 2024</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary">📥 Export</button>
+          <button class="btn btn-danger">🚨 Broadcast Alert</button>
+        </div>
+      </div>
+
+      <!-- Stat cards row 1 -->
+      <div class="grid grid-4 fade-in fade-in-delay-1" style="margin-bottom:16px;">
+        <div class="stat-card red">
+          <div class="stat-icon red">🚨</div>
+          <div class="stat-value" id="stat-alerts">9</div>
+          <div class="stat-label">Active Alerts</div>
+          <div class="stat-change up">↑ 2 since yesterday</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon orange">⚠️</div>
+          <div class="stat-value" id="stat-critical">4</div>
+          <div class="stat-label">Critical Zones</div>
+          <div class="stat-change up">↑ 1 new zone</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon blue">📡</div>
+          <div class="stat-value" id="stat-monitored">77</div>
+          <div class="stat-label">Districts Monitored</div>
+          <div class="stat-change neutral">→ All 77 districts</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-value" id="stat-accuracy">91.8%</div>
+          <div class="stat-label">Prediction Accuracy</div>
+          <div class="stat-change down">↑ +0.6% this month</div>
+        </div>
+      </div>
+
+      <!-- Stat cards row 2 -->
+      <div class="grid grid-4 fade-in fade-in-delay-2" style="margin-bottom:20px;">
+        <div class="stat-card purple">
+          <div class="stat-icon purple">⚡</div>
+          <div class="stat-value" id="stat-response">3.6m</div>
+          <div class="stat-label">Avg Response Time</div>
+          <div class="stat-change down">↓ 0.6m faster</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon green">🔒</div>
+          <div class="stat-value" id="stat-resolved">5</div>
+          <div class="stat-label">Resolved (24h)</div>
+          <div class="stat-change down">↑ 1 more than avg</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon blue">🌊</div>
+          <div class="stat-value">187 mm</div>
+          <div class="stat-label">24h Rainfall (Peak)</div>
+          <div class="stat-change up">↑ Above normal</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-icon yellow">🌱</div>
+          <div class="stat-value">94%</div>
+          <div class="stat-label">Avg Soil Saturation</div>
+          <div class="stat-change up">↑ Critical threshold</div>
+        </div>
+      </div>
+
+      <!-- Map + Alerts -->
+      <div class="grid grid-2-1 fade-in fade-in-delay-3" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🗺️ Nepal Live Event Map</div>
+              <div class="card-subtitle">Active floods and landslides across districts</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select class="filter-select">
+                <option>All Events</option>
+                <option>Flood Only</option>
+                <option>Landslide Only</option>
+              </select>
+              <a href="pages/map.html" class="btn btn-secondary" style="font-size:12px;padding:6px 10px;">Full Map →</a>
+            </div>
+          </div>
+          <div class="map-container">
+            <div id="leaflet-map"></div>
+            <div class="map-legend">
+              <div class="legend-title">Severity</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444;"></div> Critical</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f97316;"></div> High</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#eab308;"></div> Medium</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div> Low</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🚨 Active Alerts</div>
+              <div class="card-subtitle">Latest incidents</div>
+            </div>
+            <a href="pages/alerts.html" class="btn btn-secondary" style="font-size:12px;padding:6px 10px;">View All →</a>
+          </div>
+          <div class="scroll-list" id="alerts-list"></div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="grid grid-3 fade-in fade-in-delay-4" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📈 Weekly Alert Trend</div>
+              <div class="card-subtitle">New vs resolved</div>
+            </div>
+          </div>
+          <div class="chart-container" style="height:160px;">
+            <canvas id="weeklyTrendChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🥧 Event Distribution</div>
+              <div class="card-subtitle">Flood vs Landslide (30 days)</div>
+            </div>
+          </div>
+          <div class="donut-wrap">
+            <div style="width:120px;height:120px;flex-shrink:0;">
+              <canvas id="disasterTypeChart"></canvas>
+            </div>
+            <div class="donut-legend" id="donut-legend"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📉 Risk Level (24h)</div>
+              <div class="card-subtitle">Nepal composite score</div>
+            </div>
+            <span class="badge badge-high">HIGH</span>
+          </div>
+          <div class="chart-container" style="height:120px;">
+            <canvas id="riskTrendChart"></canvas>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:10px;">
+            <div style="font-size:11px;color:var(--text-muted);">Current: <span style="color:var(--accent-red);font-weight:700;">74%</span></div>
+            <div style="font-size:11px;color:var(--text-muted);">Peak: <span style="color:var(--accent-orange);font-weight:700;">85%</span></div>
+            <div style="font-size:11px;color:var(--text-muted);">Avg: <span style="color:var(--text-secondary);font-weight:700;">62%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Predictions + Sensors + Timeline -->
+      <div class="grid grid-3 fade-in" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🔮 AI Predictions</div>
+              <div class="card-subtitle">Next 72h probability</div>
+            </div>
+            <a href="pages/predictions.html" class="btn btn-secondary" style="font-size:12px;padding:6px 10px;">Details →</a>
+          </div>
+          <div class="scroll-list" id="predictions-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📡 Sensor Network</div>
+              <div class="card-subtitle">Live readings</div>
+            </div>
+            <span class="badge badge-info">9 Active</span>
+          </div>
+          <div class="sensor-grid" id="sensor-grid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🕐 Event Timeline</div>
+              <div class="card-subtitle">Today's incidents</div>
+            </div>
+          </div>
+          <div class="scroll-list">
+            <div class="timeline" id="timeline"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Radar + Table -->
+      <div class="grid grid-1-2 fade-in">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🕸️ Sensor Radar</div>
+              <div class="card-subtitle">vs alert thresholds</div>
+            </div>
+          </div>
+          <div class="chart-container" style="height:220px;">
+            <canvas id="sensorRadarChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📋 Recent Events</div>
+              <div class="card-subtitle">Last 24 hours</div>
+            </div>
+            <div class="tabs" style="margin-bottom:0;width:auto;">
+              <button class="tab-btn active">All</button>
+              <button class="tab-btn">Flood</button>
+              <button class="tab-btn">Landslide</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Location</th>
+                  <th>Severity</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>🌊 Flood Level 4</td>
+                  <td>Koshi River, Sunsari</td>
+                  <td><span class="badge badge-critical">Critical</span></td>
+                  <td>14:52</td>
+                  <td><span style="color:var(--accent-red);font-size:11px;font-weight:600;">● Active</span></td>
+                </tr>
+                <tr>
+                  <td>⛰️ Major Landslide</td>
+                  <td>Sindhupalchok</td>
+                  <td><span class="badge badge-critical">Critical</span></td>
+                  <td>14:30</td>
+                  <td><span style="color:var(--accent-red);font-size:11px;font-weight:600;">● Active</span></td>
+                </tr>
+                <tr>
+                  <td>🌊 Flood Level 3</td>
+                  <td>Rapti River, Dang</td>
+                  <td><span class="badge badge-high">High</span></td>
+                  <td>13:45</td>
+                  <td><span style="color:var(--accent-orange);font-size:11px;font-weight:600;">● Monitoring</span></td>
+                </tr>
+                <tr>
+                  <td>⛰️ Landslide Risk 3</td>
+                  <td>Myagdi District</td>
+                  <td><span class="badge badge-high">High</span></td>
+                  <td>12:20</td>
+                  <td><span style="color:var(--accent-orange);font-size:11px;font-weight:600;">● Monitoring</span></td>
+                </tr>
+                <tr>
+                  <td>🌊 Flood Level 3</td>
+                  <td>Bagmati River, Sarlahi</td>
+                  <td><span class="badge badge-high">High</span></td>
+                  <td>12:00</td>
+                  <td><span style="color:var(--accent-orange);font-size:11px;font-weight:600;">● Monitoring</span></td>
+                </tr>
+                <tr>
+                  <td>🌊 Flood Watch</td>
+                  <td>Bagmati River, Lalitpur</td>
+                  <td><span class="badge badge-medium">Medium</span></td>
+                  <td>11:00</td>
+                  <td><span style="color:var(--accent-green);font-size:11px;font-weight:600;">● Resolved</span></td>
+                </tr>
+                <tr>
+                  <td>⛰️ Landslide Risk 2</td>
+                  <td>Kaski District</td>
+                  <td><span class="badge badge-medium">Medium</span></td>
+                  <td>09:30</td>
+                  <td><span style="color:var(--accent-yellow);font-size:11px;font-weight:600;">● Watch</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/map.js"></script>
+<script src="js/interactions.js"></script>
+<script src="js/app.js"></script>
+<style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>
+</body>
+</html>

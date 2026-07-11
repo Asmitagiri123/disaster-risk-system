@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Predictions — Nepal FLDS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🏔️</div>
+      <div>
+        <div class="logo-text">Nepal FLDS</div>
+        <div class="logo-sub">Flood & Landslide System</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="../index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">9</span></a>
+      <a href="map.html" class="nav-item"><span class="nav-icon">🗺️</span> Nepal Map</a>
+      <div class="nav-section-label">Analysis</div>
+      <a href="predictions.html" class="nav-item active"><span class="nav-icon">🔮</span> Predictions</a>
+      <a href="reports.html" class="nav-item"><span class="nav-icon">📋</span> Reports</a>
+      <div class="nav-section-label">System</div>
+      <a href="#" class="nav-item"><span class="nav-icon">📡</span> Sensors</a>
+      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="nav-item"><span class="nav-icon">👤</span> NDRRMA Admin</div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <div>
+          <div class="page-title">AI Predictions</div>
+          <div class="page-subtitle">ML-based flood & landslide forecasting for Nepal</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-indicator"><div class="status-dot"></div> Model Active</div>
+        <button class="header-btn">🔔<span class="notif-badge">4</span></button>
+        <div class="avatar">ND</div>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <div class="page-header fade-in">
+        <div>
+          <div class="page-header-title">Flood & Landslide Predictions</div>
+          <div class="page-header-sub">AI model forecasts for Nepal — 24h, 48h, and 72h windows</div>
+        </div>
+        <div class="header-actions">
+          <div class="tabs" style="margin-bottom:0;">
+            <button class="tab-btn active">24h</button>
+            <button class="tab-btn">48h</button>
+            <button class="tab-btn">72h</button>
+          </div>
+          <button class="btn btn-primary">🔄 Refresh Model</button>
+        </div>
+      </div>
+
+      <div class="grid grid-4 fade-in fade-in-delay-1" style="margin-bottom:20px;">
+        <div class="stat-card green">
+          <div class="stat-icon green">🎯</div>
+          <div class="stat-value">91.8%</div>
+          <div class="stat-label">Model Accuracy</div>
+          <div class="stat-change down">↑ Monsoon-tuned</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon blue">🔮</div>
+          <div class="stat-value">6</div>
+          <div class="stat-label">Active Predictions</div>
+          <div class="stat-change neutral">→ 3 Flood, 3 Landslide</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon purple">🧠</div>
+          <div class="stat-value">v2.4</div>
+          <div class="stat-label">Model Version</div>
+          <div class="stat-change neutral">→ Nepal-specific</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon orange">⏱️</div>
+          <div class="stat-value">1.8s</div>
+          <div class="stat-label">Inference Time</div>
+          <div class="stat-change down">↓ Optimized</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2-1 fade-in fade-in-delay-2" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🔮 Upcoming Predictions (Next 24h)</div>
+              <div class="card-subtitle">Sorted by probability — Nepal districts</div>
+            </div>
+          </div>
+          <div id="pred-cards"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📈 Model Accuracy (12 months)</div>
+              <div class="card-subtitle">Monsoon season performance</div>
+            </div>
+          </div>
+          <div class="chart-container" style="height:200px;">
+            <canvas id="accuracyChart"></canvas>
+          </div>
+          <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Model Input Features</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span class="badge badge-info">Rainfall Data (DHM)</span>
+              <span class="badge badge-info">River Gauge Levels</span>
+              <span class="badge badge-info">Soil Moisture</span>
+              <span class="badge badge-info">Slope Gradient</span>
+              <span class="badge badge-info">Land Cover</span>
+              <span class="badge badge-info">Historical Events</span>
+              <span class="badge badge-info">Satellite Imagery</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Province-level risk table -->
+      <div class="card fade-in">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🌡️ Province-Level Risk Assessment</div>
+            <div class="card-subtitle">Predicted flood & landslide risk by Nepal province</div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Province</th>
+                <th>Flood Risk</th>
+                <th>Landslide Risk</th>
+                <th>Rainfall (24h)</th>
+                <th>River Status</th>
+                <th>Overall Risk</th>
+              </tr>
+            </thead>
+            <tbody id="risk-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="../js/mock-data.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/interactions.js"></script>
+<script>
+initPredictionAccuracyChart('accuracyChart');
+
+// Prediction data per time window
+const PRED_WINDOWS = {
+  '24h': MOCK.predictions,
+  '48h': MOCK.predictions.map(p => ({ ...p, probability: Math.min(99, p.probability + Math.floor(Math.random()*8+4)) })),
+  '72h': MOCK.predictions.map(p => ({ ...p, probability: Math.min(99, p.probability + Math.floor(Math.random()*14+8)) })),
+};
+
+function renderPredCards(window) {
+  const preds = PRED_WINDOWS[window];
+  document.getElementById('pred-cards').innerHTML = preds.map(p => {
+    const trendIcon  = p.trend === 'up' ? '↑' : p.trend === 'down' ? '↓' : '→';
+    const trendColor = p.trend === 'up' ? 'var(--accent-red)' : p.trend === 'down' ? 'var(--accent-green)' : 'var(--text-muted)';
+    const riskLevel  = p.probability >= 75 ? 'critical' : p.probability >= 60 ? 'high' : p.probability >= 40 ? 'medium' : 'low';
+    return `
+      <div class="prediction-card" style="margin-bottom:10px;cursor:pointer;" onclick="showPredModal('${p.type}','${p.location}',${p.probability},'${p.color}','${p.trend}')">
+        <div class="prediction-icon" style="background:rgba(${hexToRgbStr(p.color)},0.15);font-size:24px;width:52px;height:52px;">${p.icon}</div>
+        <div class="prediction-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+            <div class="prediction-name">${p.type}</div>
+            <span class="badge badge-${riskLevel}">${riskLevel}</span>
+          </div>
+          <div class="prediction-location">📍 ${p.location}</div>
+          <div class="prediction-prob" style="margin-top:6px;">
+            <span class="prob-value" style="color:${p.color};font-size:22px;">${p.probability}%</span>
+            <div class="prob-bar" style="height:6px;"><div class="prob-fill" style="width:${p.probability}%;background:${p.color};"></div></div>
+            <span style="font-size:14px;color:${trendColor};font-weight:700;">${trendIcon}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+renderPredCards('24h');
+
+// Tab switching changes prediction window
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const w = btn.textContent.trim();
+    if (['24h','48h','72h'].includes(w)) {
+      renderPredCards(w);
+      showToast(`Showing ${w} forecast`, 'info', 2000);
+    }
+  });
+});
+
+// Refresh Model button
+document.querySelector('.btn-primary')?.addEventListener('click', () => {
+  showToast('🔄 Model retraining initiated…', 'info');
+  setTimeout(() => showToast('✅ Model updated — Accuracy: 91.8%', 'success'), 2200);
+});
+
+// Prediction detail modal
+function showPredModal(type, location, prob, color, trend) {
+  const riskLevel = prob >= 75 ? 'critical' : prob >= 60 ? 'high' : prob >= 40 ? 'medium' : 'low';
+  showModal({
+    title: `${type === 'Flood' ? '🌊' : '⛰️'} ${type} Prediction`,
+    size: 'sm',
+    body: `
+      <div style="text-align:center;padding:12px 0 20px;">
+        <div style="font-size:48px;font-weight:800;color:${color};letter-spacing:-2px;">${prob}%</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Probability</div>
+        <span class="badge badge-${riskLevel}" style="margin-top:8px;display:inline-flex;">${riskLevel} risk</span>
+      </div>
+      <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Location</div>
+        <div style="font-size:13px;font-weight:600;">📍 ${location}</div>
+      </div>
+      <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px 14px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Trend</div>
+        <div style="font-size:13px;font-weight:600;color:${trend==='up'?'var(--accent-red)':trend==='down'?'var(--accent-green)':'var(--text-muted)'}">
+          ${trend==='up'?'↑ Increasing':trend==='down'?'↓ Decreasing':'→ Stable'}
+        </div>
+      </div>`,
+    actions: [{ id: 'close', label: 'Close', style: 'secondary' }]
+  });
+}
+
+// Province risk table
+const provinces = [
+  { name: '🏔️ Koshi (Province 1)',    flood: 82, landslide: 75, rain: '187 mm', river: 'Danger',  overall: 'critical' },
+  { name: '🌾 Madhesh (Province 2)',   flood: 78, landslide: 28, rain: '142 mm', river: 'Warning', overall: 'high'     },
+  { name: '🏙️ Bagmati (Province 3)',  flood: 65, landslide: 79, rain: '165 mm', river: 'Warning', overall: 'high'     },
+  { name: '🏔️ Gandaki (Province 4)',  flood: 55, landslide: 72, rain: '148 mm', river: 'Watch',   overall: 'high'     },
+  { name: '🌿 Lumbini (Province 5)',   flood: 70, landslide: 48, rain: '132 mm', river: 'Warning', overall: 'high'     },
+  { name: '🏔️ Karnali (Province 6)',  flood: 42, landslide: 60, rain: '98 mm',  river: 'Normal',  overall: 'medium'   },
+  { name: '🌄 Sudurpashchim (Prov 7)',flood: 38, landslide: 45, rain: '88 mm',  river: 'Normal',  overall: 'medium'   },
+];
+
+function riskBar(val) {
+  const color = val >= 75 ? '#ef4444' : val >= 55 ? '#f97316' : val >= 35 ? '#eab308' : '#22c55e';
+  return `<div style="display:flex;align-items:center;gap:6px;">
+    <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+      <div style="width:${val}%;height:100%;background:${color};border-radius:2px;"></div>
+    </div>
+    <span style="font-size:11px;font-weight:600;color:${color};min-width:28px;">${val}%</span>
+  </div>`;
+}
+
+const riverColors = { Danger: 'var(--accent-red)', Warning: 'var(--accent-orange)', Watch: 'var(--accent-yellow)', Normal: 'var(--accent-green)' };
+
+document.getElementById('risk-table').innerHTML = provinces.map((r, i) => `
+  <tr style="cursor:pointer;" data-idx="${i}">
+    <td style="font-weight:600;color:var(--text-primary);">${r.name}</td>
+    <td>${riskBar(r.flood)}</td>
+    <td>${riskBar(r.landslide)}</td>
+    <td style="font-weight:600;">${r.rain}</td>
+    <td><span style="color:${riverColors[r.river]};font-weight:600;font-size:12px;">● ${r.river}</span></td>
+    <td><span class="badge badge-${r.overall}">${r.overall}</span></td>
+  </tr>
+`).join('');
+
+// Province row click → detail modal
+document.querySelectorAll('#risk-table tr').forEach(row => {
+  row.addEventListener('click', () => {
+    const r = provinces[+row.dataset.idx];
+    showModal({
+      title: `${r.name} — Risk Detail`,
+      size: 'sm',
+      body: `
+        <div style="display:grid;gap:8px;">
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Flood Risk</div>
+            ${riskBar(r.flood)}
+          </div>
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Landslide Risk</div>
+            ${riskBar(r.landslide)}
+          </div>
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
+            <span style="font-size:12px;color:var(--text-muted);">24h Rainfall</span>
+            <span style="font-size:12px;font-weight:700;">${r.rain}</span>
+          </div>
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
+            <span style="font-size:12px;color:var(--text-muted);">River Status</span>
+            <span style="font-size:12px;font-weight:700;color:${riverColors[r.river]}">● ${r.river}</span>
+          </div>
+        </div>`,
+      actions: [{ id: 'close', label: 'Close', style: 'secondary' }]
+    });
+  });
+});
+
+function hexToRgbStr(hex) {
+  return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)].join(',');
+}
+</script>
+</body>
+</html>
