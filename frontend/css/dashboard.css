@@ -41,7 +41,7 @@
   border-radius: var(--radius-sm);
   overflow: hidden;
   position: relative;
-  background: #0d1b2a;
+  background: #e2e8f0;
 }
 
 #leaflet-map { width: 100%; height: 100%; }
@@ -72,7 +72,7 @@
 .map-legend {
   position: absolute;
   bottom: 12px; left: 12px;
-  background: rgba(17,24,39,0.9);
+  background: rgba(255,255,255,0.95);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
