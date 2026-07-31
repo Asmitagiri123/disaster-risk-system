@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nepal Map — Nepal FLDS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <style>
+    .map-page-container { height: calc(100vh - var(--header-height) - 120px); }
+    #full-map { width: 100%; height: 100%; border-radius: var(--radius); }
+    .map-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .map-filter-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text-secondary); cursor: pointer; transition: all var(--transition);
+    }
+    .map-filter-btn.active, .map-filter-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--border-light); }
+    .map-filter-btn.active { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .map-stats-bar {
+      display: flex; gap: 16px; align-items: center;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 16px;
+      margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .map-stat { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+    .map-stat-val { font-weight: 700; font-size: 14px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🏔️</div>
+      <div>
+        <div class="logo-text">Nepal FLDS</div>
+        <div class="logo-sub">Flood & Landslide System</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="../index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">9</span></a>
+      <a href="map.html" class="nav-item active"><span class="nav-icon">🗺️</span> Nepal Map</a>
+      <div class="nav-section-label">Analysis</div>
+      <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
+      <a href="reports.html" class="nav-item"><span class="nav-icon">📋</span> Reports</a>
+      <div class="nav-section-label">System</div>
+      <a href="#" class="nav-item"><span class="nav-icon">📡</span> Sensors</a>
+      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="nav-item"><span class="nav-icon">👤</span> NDRRMA Admin</div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <div>
+          <div class="page-title">Nepal Map</div>
+          <div class="page-subtitle">Real-time flood & landslide event visualization</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-indicator"><div class="status-dot"></div> Live</div>
+        <button class="header-btn">🔔<span class="notif-badge">4</span></button>
+        <div class="avatar">ND</div>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <div class="map-stats-bar fade-in">
+        <div class="map-stat">
+          <span>🌊</span>
+          <span class="map-stat-val" style="color:var(--accent-blue);">5</span>
+          <span style="color:var(--text-muted);">Flood Events</span>
+        </div>
+        <div style="width:1px;height:20px;background:var(--border);"></div>
+        <div class="map-stat">
+          <span>⛰️</span>
+          <span class="map-stat-val" style="color:var(--accent-purple);">4</span>
+          <span style="color:var(--text-muted);">Landslide Events</span>
+        </div>
+        <div style="width:1px;height:20px;background:var(--border);"></div>
+        <div class="map-stat">
+          <span>🔴</span>
+          <span class="map-stat-val" style="color:var(--accent-red);">2</span>
+          <span style="color:var(--text-muted);">Critical</span>
+        </div>
+        <div style="width:1px;height:20px;background:var(--border);"></div>
+        <div class="map-stat">
+          <span>🟠</span>
+          <span class="map-stat-val" style="color:var(--accent-orange);">3</span>
+          <span style="color:var(--text-muted);">High</span>
+        </div>
+        <div style="width:1px;height:20px;background:var(--border);"></div>
+        <div class="map-stat">
+          <span>👥</span>
+          <span class="map-stat-val">~258K</span>
+          <span style="color:var(--text-muted);">People at Risk</span>
+        </div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text-muted);">
+          Updated: <span style="color:var(--text-secondary);" id="map-time">—</span>
+        </div>
+      </div>
+
+      <div class="map-controls fade-in fade-in-delay-1">
+        <button class="map-filter-btn active">🌐 All Events</button>
+        <button class="map-filter-btn">🌊 Flood Only</button>
+        <button class="map-filter-btn">⛰️ Landslide Only</button>
+        <button class="map-filter-btn">🔴 Critical</button>
+        <button class="map-filter-btn">🟠 High</button>
+        <button class="map-filter-btn">🟡 Medium & Low</button>
+      </div>
+
+      <div class="card map-page-container fade-in fade-in-delay-2" style="padding:0;overflow:hidden;">
+        <div id="full-map"></div>
+        <div class="map-legend" style="bottom:16px;left:16px;">
+          <div class="legend-title">Event Type</div>
+          <div class="legend-item"><span style="font-size:14px;">🌊</span> Flood</div>
+          <div class="legend-item"><span style="font-size:14px;">⛰️</span> Landslide</div>
+          <div style="margin-top:8px;" class="legend-title">Severity</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444;"></div> Critical</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f97316;"></div> High</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#eab308;"></div> Medium</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div> Low</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../js/mock-data.js"></script>
+<script src="../js/map.js"></script>
+<script src="../js/interactions.js"></script>
+<script>
+  document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
+  initMap('full-map');
+
+  function applyMapFilter(btn) {
+    document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const label = btn.textContent.trim();
+
+    // Remove all existing markers
+    mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
+
+    let filtered = MOCK.mapMarkers;
+    if (label.includes('Flood Only'))      filtered = MOCK.mapMarkers.filter(m => m.type === 'flood');
+    else if (label.includes('Landslide'))  filtered = MOCK.mapMarkers.filter(m => m.type === 'landslide');
+    else if (label.includes('Critical'))   filtered = MOCK.mapMarkers.filter(m => m.severity === 'critical');
+    else if (label.includes('High'))       filtered = MOCK.mapMarkers.filter(m => m.severity === 'high');
+    else if (label.includes('Medium'))     filtered = MOCK.mapMarkers.filter(m => m.severity === 'medium' || m.severity === 'low');
+
+    filtered.forEach(m => addMarker(m));
+    showToast(`Showing ${filtered.length} event(s) — ${label}`, 'info', 2000);
+  }
+
+  document.querySelectorAll('.map-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyMapFilter(btn));
+  });
+
+  // Marker click → show detail panel
+  // (handled inside addMarker popup — already wired)
+
+  // Stats bar items clickable
+  document.querySelectorAll('.map-stat').forEach(stat => {
+    stat.style.cursor = 'pointer';
+    stat.addEventListener('click', () => {
+      const text = stat.textContent.trim();
+      if (text.includes('Flood')) {
+        const floodBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Flood Only'));
+        if (floodBtn) applyMapFilter(floodBtn);
+      } else if (text.includes('Landslide')) {
+        const lsBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Landslide'));
+        if (lsBtn) applyMapFilter(lsBtn);
+      } else if (text.includes('Critical')) {
+        const critBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Critical'));
+        if (critBtn) applyMapFilter(critBtn);
+      }
+    });
+  });
+</script>
+</body>
+</html>
