@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function renderStats() {
   const s = MOCK.stats;
   document.getElementById('stat-alerts').textContent    = s.activeAlerts;
-  document.getElementById('stat-critical').textContent  = s.criticalZones;
+  document.getElementById('stat-critical').textContent  = s.highRiskZones;
   document.getElementById('stat-monitored').textContent = s.monitored;
   document.getElementById('stat-accuracy').textContent  = s.accuracy + '%';
   document.getElementById('stat-response').textContent  = s.responseTime;
@@ -172,7 +172,7 @@ function wireStatCards() {
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => {
       const label = card.querySelector('.stat-label')?.textContent?.trim();
-      if (label === 'Active Alerts' || label === 'Critical Zones') {
+      if (label === 'Active Alerts' || label === 'High Risk Zones') {
         window.location.href = 'pages/alerts.html';
       } else if (label === 'Districts Monitored') {
         window.location.href = 'pages/map.html';
@@ -219,8 +219,8 @@ function wireMapFilter() {
 
 // ─── RECENT EVENTS TABLE TABS ────────────────────────────────────────────────
 const TABLE_ROWS_DATA = [
-  { event: '🌊 Flood Level 4',   location: 'Koshi River, Sunsari',   severity: 'critical', time: '14:52', status: 'Active',     type: 'Flood'     },
-  { event: '⛰️ Major Landslide', location: 'Sindhupalchok',          severity: 'critical', time: '14:30', status: 'Active',     type: 'Landslide' },
+  { event: '🌊 Flood Level 4',   location: 'Koshi River, Sunsari',   severity: 'high', time: '14:52', status: 'Active',     type: 'Flood'     },
+  { event: '⛰️ Major Landslide', location: 'Sindhupalchok',          severity: 'high', time: '14:30', status: 'Active',     type: 'Landslide' },
   { event: '🌊 Flood Level 3',   location: 'Rapti River, Dang',      severity: 'high',     time: '13:45', status: 'Monitoring', type: 'Flood'     },
   { event: '⛰️ Landslide Risk 3',location: 'Myagdi District',        severity: 'high',     time: '12:20', status: 'Monitoring', type: 'Landslide' },
   { event: '🌊 Flood Level 3',   location: 'Bagmati River, Sarlahi', severity: 'high',     time: '12:00', status: 'Monitoring', type: 'Flood'     },
@@ -307,7 +307,7 @@ function wireExportBtn() {
 
 // ─── DETAIL MODALS ───────────────────────────────────────────────────────────
 function showAlertDetailModal(a) {
-  const colors = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' };
+  const colors = { high: '#f97316', medium: '#eab308', low: '#22c55e' };
   showModal({
     title: `${a.type === 'Flood' ? '🌊' : '⛰️'} ${a.type} — ${a.location}`,
     size: 'md',
@@ -326,7 +326,7 @@ function showAlertDetailModal(a) {
           <div style="font-size:13px;font-weight:600;margin-top:4px;">${a.coords[0].toFixed(2)}°N, ${a.coords[1].toFixed(2)}°E</div>
         </div>
       </div>
-      <div style="background:rgba(${a.severity === 'critical' ? '239,68,68' : '249,115,22'},0.08);border:1px solid rgba(${a.severity === 'critical' ? '239,68,68' : '249,115,22'},0.2);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text-secondary);line-height:1.6;">
+      <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text-secondary);line-height:1.6;">
         This ${a.type.toLowerCase()} event is currently at <strong style="color:${colors[a.severity]};">${a.severity}</strong> severity level. Monitoring teams have been notified and response protocols are in effect.
       </div>`,
     actions: [
@@ -337,7 +337,7 @@ function showAlertDetailModal(a) {
 }
 
 function showPredictionDetailModal(p) {
-  const riskLevel = p.probability >= 75 ? 'critical' : p.probability >= 60 ? 'high' : p.probability >= 40 ? 'medium' : 'low';
+  const riskLevel = p.probability >= 70 ? 'high' : p.probability >= 40 ? 'medium' : 'low';
   showModal({
     title: `${p.icon} ${p.type} Prediction`,
     size: 'sm',

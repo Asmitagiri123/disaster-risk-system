@@ -5,7 +5,7 @@
 const MOCK = {
   stats: {
     activeAlerts: 9,
-    criticalZones: 4,
+    highRiskZones: 4,
     monitored: 77,   // 77 districts of Nepal
     accuracy: 91.8,
     responseTime: '3.6m',
@@ -13,8 +13,8 @@ const MOCK = {
   },
 
   alerts: [
-    { id: 1, type: 'Flood',     severity: 'critical', location: 'Koshi River, Sunsari',      magnitude: 'Level 4', time: '8 min ago',  coords: [26.68, 87.17] },
-    { id: 2, type: 'Landslide', severity: 'critical', location: 'Sindhupalchok District',    magnitude: 'Major',   time: '22 min ago', coords: [27.95, 85.68] },
+    { id: 1, type: 'Flood',     severity: 'high', location: 'Koshi River, Sunsari',      magnitude: 'Level 4', time: '8 min ago',  coords: [26.68, 87.17] },
+    { id: 2, type: 'Landslide', severity: 'high', location: 'Sindhupalchok District',    magnitude: 'Major',   time: '22 min ago', coords: [27.95, 85.68] },
     { id: 3, type: 'Flood',     severity: 'high',     location: 'Rapti River, Dang',         magnitude: 'Level 3', time: '1h ago',     coords: [28.05, 82.30] },
     { id: 4, type: 'Landslide', severity: 'high',     location: 'Myagdi District',           magnitude: 'Risk 3',  time: '2h ago',     coords: [28.35, 83.57] },
     { id: 5, type: 'Flood',     severity: 'high',     location: 'Bagmati River, Sarlahi',    magnitude: 'Level 3', time: '2h ago',     coords: [27.00, 85.58] },
@@ -46,8 +46,8 @@ const MOCK = {
   ],
 
   timeline: [
-    { time: '14:52', title: 'Koshi River flood Level 4',       desc: 'Sunsari — Embankment breach risk. NDRRMA alerted.',         type: 'critical' },
-    { time: '14:30', title: 'Major landslide — Sindhupalchok', desc: 'Road blockage on Araniko Highway. Rescue teams dispatched.', type: 'critical' },
+    { time: '14:52', title: 'Koshi River flood Level 4',       desc: 'Sunsari — Embankment breach risk. NDRRMA alerted.',         type: 'warning' },
+    { time: '14:30', title: 'Major landslide — Sindhupalchok', desc: 'Road blockage on Araniko Highway. Rescue teams dispatched.', type: 'warning' },
     { time: '13:45', title: 'Rapti River flood warning',       desc: 'Dang district — Level 3 alert. Evacuation advisory issued.', type: 'warning'  },
     { time: '12:20', title: 'Landslide risk elevated — Myagdi',desc: 'Continuous rainfall >150mm. Slope monitoring active.',       type: 'warning'  },
     { time: '11:00', title: 'Bagmati flood watch cleared',     desc: 'Lalitpur — River receding. Watch downgraded to advisory.',   type: 'resolved' },
@@ -70,8 +70,8 @@ const MOCK = {
   ],
 
   mapMarkers: [
-    { coords: [26.68, 87.17], type: 'flood',     severity: 'critical', label: 'Koshi River — Level 4 Flood'       },
-    { coords: [27.95, 85.68], type: 'landslide', severity: 'critical', label: 'Sindhupalchok — Major Landslide'   },
+    { coords: [26.68, 87.17], type: 'flood',     severity: 'high', label: 'Koshi River — Level 4 Flood'       },
+    { coords: [27.95, 85.68], type: 'landslide', severity: 'high', label: 'Sindhupalchok — Major Landslide'   },
     { coords: [28.05, 82.30], type: 'flood',     severity: 'high',     label: 'Rapti River — Level 3 Flood'       },
     { coords: [28.35, 83.57], type: 'landslide', severity: 'high',     label: 'Myagdi — Landslide Risk 3'         },
     { coords: [27.00, 85.58], type: 'flood',     severity: 'high',     label: 'Bagmati River — Level 3 Flood'     },
