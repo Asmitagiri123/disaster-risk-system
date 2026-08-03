@@ -1,6 +1,14 @@
 // app.js — Dashboard rendering + full interactivity
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Show real username in sidebar
+  const user = Auth.getUser();
+  const usernameEl = document.getElementById('sidebar-username');
+  if (usernameEl && user) usernameEl.textContent = user.name || user.email || 'Admin';
+
+  // Load real data, then render
+  await loadDashboardData();
+
   renderStats();
   renderAlerts();
   renderPredictions();

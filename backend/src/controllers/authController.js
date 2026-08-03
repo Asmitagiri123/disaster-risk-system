@@ -2,9 +2,22 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const logger = require('../utils/logger');
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+// In-memory fallback for local development when MongoDB is not available
+const inMemoryUsers = [];
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+const sendTokenResponsePlain = (userPlain, statusCode, res) => {
+  const token = jwt.sign({ id: userPlain._id }, JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+  const userObj = { ...userPlain };
+  delete userObj.password;
+  res.status(statusCode).json({ success: true, token, data: { user: userObj } });
+};
 
 const signToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+  jwt.sign({ id: userId }, JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 
@@ -29,6 +42,17 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, phone, location } = req.body;
 
+    // If MongoDB not connected, use in-memory store
+    if (mongoose.connection.readyState !== 1) {
+      const existing = inMemoryUsers.find(u => u.email === email);
+      if (existing) return res.status(409).json({ success: false, message: 'Email already registered' });
+      const hashed = await bcrypt.hash(password, 10);
+      const newUser = { _id: String(Date.now()), name, email, password: hashed, phone, location, role: 'user', isActive: true };
+      inMemoryUsers.push(newUser);
+      logger.info(`New in-memory user registered: ${email}`);
+      return sendTokenResponsePlain(newUser, 201, res);
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ success: false, message: 'Email already registered' });
@@ -51,6 +75,18 @@ exports.login = async (req, res) => {
 
   try {
     const { email, password } = req.body;
+    // If MongoDB not connected, use in-memory users
+    if (mongoose.connection.readyState !== 1) {
+      const userPlain = inMemoryUsers.find(u => u.email === email);
+      if (!userPlain) return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      const match = await bcrypt.compare(password, userPlain.password);
+      if (!match) return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      if (!userPlain.isActive) return res.status(403).json({ success: false, message: 'Account is deactivated' });
+      userPlain.lastLogin = new Date();
+      logger.info(`In-memory user logged in: ${email}`);
+      return sendTokenResponsePlain(userPlain, 200, res);
+    }
+
     const user = await User.findOne({ email }).select('+password');
 
     if (!user || !(await user.comparePassword(password))) {
@@ -74,6 +110,10 @@ exports.login = async (req, res) => {
 
 exports.getMe = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      const userPlain = inMemoryUsers.find(u => u._id === req.user.id);
+      return res.json({ success: true, data: { user: userPlain || null } });
+    }
     const user = await User.findById(req.user.id);
     res.json({ success: true, data: { user } });
   } catch (err) {

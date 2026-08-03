@@ -55,7 +55,12 @@
       <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-footer">
-      <div class="nav-item"><span class="nav-icon">👤</span> NDRRMA Admin</div>
+      <div class="nav-item" style="cursor:pointer;" onclick="openProfileModal()">
+        <span class="nav-icon">👤</span> <span id="sidebar-username">Loading…</span>
+      </div>
+      <div class="nav-item" onclick="handleLogout()" style="cursor:pointer;color:var(--accent-red);margin-top:4px;">
+        <span class="nav-icon">🚪</span> Logout
+      </div>
     </div>
   </aside>
 
@@ -139,11 +144,16 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../js/api.js"></script>
+<script>requireAuth();</script>
 <script src="../js/mock-data.js"></script>
 <script src="../js/map.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
   document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
+  const _u3 = Auth.getUser();
+  const _unEl3 = document.getElementById('sidebar-username');
+  if (_unEl3 && _u3) _unEl3.textContent = _u3.name || _u3.email || 'Admin';
   initMap('full-map');
 
   function applyMapFilter(btn) {

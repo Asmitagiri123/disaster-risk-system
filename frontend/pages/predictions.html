@@ -32,7 +32,12 @@
       <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-footer">
-      <div class="nav-item"><span class="nav-icon">👤</span> NDRRMA Admin</div>
+      <div class="nav-item" style="cursor:pointer;" onclick="openProfileModal()">
+        <span class="nav-icon">👤</span> <span id="sidebar-username">Loading…</span>
+      </div>
+      <div class="nav-item" onclick="handleLogout()" style="cursor:pointer;color:var(--accent-red);margin-top:4px;">
+        <span class="nav-icon">🚪</span> Logout
+      </div>
     </div>
   </aside>
 
@@ -161,11 +166,17 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="../js/api.js"></script>
+<script>requireAuth();</script>
 <script src="../js/mock-data.js"></script>
 <script src="../js/charts.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
 initPredictionAccuracyChart('accuracyChart');
+
+const _u2 = Auth.getUser();
+const _unEl2 = document.getElementById('sidebar-username');
+if (_unEl2 && _u2) _unEl2.textContent = _u2.name || _u2.email || 'Admin';
 
 // Prediction data per time window
 const PRED_WINDOWS = {

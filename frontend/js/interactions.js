@@ -209,33 +209,46 @@ function exportCSV(data, filename) {
   showToast(`📥 Exported ${filename}`, 'success');
 }
 
+// ─── LOGOUT ──────────────────────────────────────────────────────────────────
+function handleLogout() {
+  showConfirm('Are you sure you want to log out?', () => {
+    Auth.clear();
+    window.location.href = window.location.pathname.includes('/pages/') ? '../login.html' : 'login.html';
+  }, 'Logout', 'danger');
+}
+
 // ─── PROFILE MODAL ───────────────────────────────────────────────────────────
 function openProfileModal() {
+  const user = Auth.getUser() || {};
+  const initials = (user.name || 'ND').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  const roleLabel = { admin: 'System Administrator', responder: 'Emergency Responder', user: 'Viewer' };
   showModal({
-    title: '👤 NDRRMA Admin',
+    title: `👤 ${user.name || 'Profile'}`,
     size: 'sm',
     body: `
       <div style="text-align:center;margin-bottom:20px;">
-        <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin:0 auto 12px;">ND</div>
-        <div style="font-size:16px;font-weight:700;">NDRRMA Admin</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">National Disaster Risk Reduction & Management Authority</div>
+        <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin:0 auto 12px;">${initials}</div>
+        <div style="font-size:16px;font-weight:700;">${user.name || '—'}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${user.email || ''}</div>
       </div>
       <div style="display:grid;gap:8px;">
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
           <span style="font-size:12px;color:var(--text-muted);">Role</span>
-          <span style="font-size:12px;font-weight:600;">System Administrator</span>
+          <span style="font-size:12px;font-weight:600;">${roleLabel[user.role] || user.role || '—'}</span>
         </div>
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
           <span style="font-size:12px;color:var(--text-muted);">Access Level</span>
-          <span style="font-size:12px;font-weight:600;color:var(--accent-green);">Full Access</span>
+          <span style="font-size:12px;font-weight:600;color:var(--accent-green);">${user.role === 'admin' ? 'Full Access' : user.role === 'responder' ? 'Responder' : 'Read Only'}</span>
         </div>
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
           <span style="font-size:12px;color:var(--text-muted);">Last Login</span>
-          <span style="font-size:12px;font-weight:600;">Today, ${new Date().toLocaleTimeString()}</span>
+          <span style="font-size:12px;font-weight:600;">${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Today, ' + new Date().toLocaleTimeString()}</span>
         </div>
-      </div>
-    `,
-    actions: [{ id: 'close', label: 'Close', style: 'secondary' }]
+      </div>`,
+    actions: [
+      { id: 'logout', label: '🚪 Logout', style: 'danger', onClick: handleLogout, closeOnClick: false },
+      { id: 'close', label: 'Close', style: 'secondary' }
+    ]
   });
 }
 
@@ -268,4 +281,85 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.btn-danger').forEach(btn => {
     if (btn.textContent.includes('Broadcast')) btn.addEventListener('click', openBroadcastModal);
   });
+
+  // Sidebar items with href="#" → open inline modals (Settings, Sensors)
+  document.querySelectorAll('.sidebar .nav-item').forEach(item => {
+    const href = item.getAttribute('href');
+    if (href === '#') {
+      item.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const txt = item.textContent.trim();
+        if (txt.includes('Settings')) return openSettingsModal();
+        if (txt.includes('Sensors'))  return openSensorsModal();
+        // fallback: show profile for anything else
+        openProfileModal();
+      });
+    }
+  });
+
+  // Delegate: make sure Generate/Export buttons trigger intended actions even if markup varies
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const text = (btn.textContent || '').trim();
+    if (text.includes('Generate Report') || text.includes('Generate')) {
+      // Try to trigger existing handler on page (some pages attach handlers inline); otherwise show modal
+      if (typeof window.buildMonthChart === 'function') {
+        // let page handle it (reports.html attaches its own listener). Do nothing.
+        return;
+      }
+      // fallback: show a simple generate modal
+      showModal({
+        title: '📥 Generate Report',
+        size: 'sm',
+        body: '<div style="font-size:13px;color:var(--text-muted);">Select options from the Reports page to generate a report.</div>',
+        actions: [{ id: 'close', label: 'Close', style: 'secondary' }]
+      });
+    }
+  });
 });
+
+// --- Settings / Sensors modals ---
+function openSettingsModal() {
+  showModal({
+    title: '⚙️ Settings',
+    size: 'md',
+    body: `
+      <div style="display:grid;gap:10px;">
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Site Name</label>
+          <input type="text" value="Nepal FLDS" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);" />
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Alert Email</label>
+          <input type="email" value="alerts@ndrrma.gov.np" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);" />
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">CORS Origin</label>
+          <input type="text" value="http://localhost:3000" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);" />
+        </div>
+      </div>
+    `,
+    actions: [
+      { id: 'save', label: 'Save', style: 'primary', onClick: () => showToast('Settings saved', 'success') },
+      { id: 'close', label: 'Close', style: 'secondary' }
+    ]
+  });
+}
+
+function openSensorsModal() {
+  showModal({
+    title: '📡 Sensors',
+    size: 'md',
+    body: `
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+        Manage sensor endpoints and health checks. Use the Sensors page for full controls.
+      </div>
+      <div style="margin-top:10px;display:grid;gap:8px;">
+        <button class="btn btn-secondary" onclick="showToast('Health check started','info')">Run Health Check</button>
+        <button class="btn btn-secondary" onclick="showToast('Added mock sensor','success')">Add Mock Sensor</button>
+      </div>
+    `,
+    actions: [ { id: 'close', label: 'Close', style: 'secondary' } ]
+  });
+}

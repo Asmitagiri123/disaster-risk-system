@@ -32,7 +32,12 @@
       <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-footer">
-      <div class="nav-item"><span class="nav-icon">👤</span> NDRRMA Admin</div>
+      <div class="nav-item" style="cursor:pointer;" onclick="openProfileModal()">
+        <span class="nav-icon">👤</span> <span id="sidebar-username">Loading…</span>
+      </div>
+      <div class="nav-item" onclick="handleLogout()" style="cursor:pointer;color:var(--accent-red);margin-top:4px;">
+        <span class="nav-icon">🚪</span> Logout
+      </div>
     </div>
   </aside>
 
@@ -98,6 +103,8 @@
   </div>
 </div>
 
+<script src="../js/api.js"></script>
+<script>requireAuth();</script>
 <script src="../js/mock-data.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
@@ -216,6 +223,11 @@ function renderAlertCards(data) {
     </div>
   `).join('');
 }
+
+// Populate sidebar username
+const _u = Auth.getUser();
+const _unEl = document.getElementById('sidebar-username');
+if (_unEl && _u) _unEl.textContent = _u.name || _u.email || 'Admin';
 
 renderAlertCards(ALERT_DETAILS);
 
