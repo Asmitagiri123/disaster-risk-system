@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Predictions — Nepal FLDS</title>
+  <title>Predictions — NepAlert</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/main.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
@@ -15,7 +15,7 @@
     <div class="sidebar-logo">
       <div class="logo-icon">🏔️</div>
       <div>
-        <div class="logo-text">Nepal FLDS</div>
+        <div class="logo-text">NepAlert</div>
         <div class="logo-sub">Flood & Landslide System</div>
       </div>
     </div>
@@ -176,7 +176,7 @@ initPredictionAccuracyChart('accuracyChart');
 
 const _u2 = Auth.getUser();
 const _unEl2 = document.getElementById('sidebar-username');
-if (_unEl2 && _u2) _unEl2.textContent = _u2.name || _u2.email || 'Admin';
+if (_unEl2 && _u2) _unEl2.textContent = _u2.name || _u2.email || 'NepAlert';
 
 // Prediction data per time window
 const PRED_WINDOWS = {

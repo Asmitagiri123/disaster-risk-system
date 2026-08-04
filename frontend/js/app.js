@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Show real username in sidebar
   const user = Auth.getUser();
   const usernameEl = document.getElementById('sidebar-username');
-  if (usernameEl && user) usernameEl.textContent = user.name || user.email || 'Admin';
+  if (usernameEl && user) usernameEl.textContent = user.name || user.email || 'NepAlert';
 
   // Load real data, then render
   await loadDashboardData();

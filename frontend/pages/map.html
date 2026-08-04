@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nepal Map — Nepal FLDS</title>
+  <title>Nepal Map — NepAlert</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="../css/main.css" />
@@ -38,7 +38,7 @@
     <div class="sidebar-logo">
       <div class="logo-icon">🏔️</div>
       <div>
-        <div class="logo-text">Nepal FLDS</div>
+        <div class="logo-text">NepAlert</div>
         <div class="logo-sub">Flood & Landslide System</div>
       </div>
     </div>
@@ -153,7 +153,7 @@
   document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
   const _u3 = Auth.getUser();
   const _unEl3 = document.getElementById('sidebar-username');
-  if (_unEl3 && _u3) _unEl3.textContent = _u3.name || _u3.email || 'Admin';
+  if (_unEl3 && _u3) _unEl3.textContent = _u3.name || _u3.email || 'NepAlert';
   initMap('full-map');
 
   function applyMapFilter(btn) {

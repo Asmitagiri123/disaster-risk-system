@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Active Alerts — Nepal FLDS</title>
+  <title>Active Alerts — NepAlert</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/main.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
@@ -15,7 +15,7 @@
     <div class="sidebar-logo">
       <div class="logo-icon">🏔️</div>
       <div>
-        <div class="logo-text">Nepal FLDS</div>
+        <div class="logo-text">NepAlert</div>
         <div class="logo-sub">Flood & Landslide System</div>
       </div>
     </div>
@@ -227,7 +227,7 @@ function renderAlertCards(data) {
 // Populate sidebar username
 const _u = Auth.getUser();
 const _unEl = document.getElementById('sidebar-username');
-if (_unEl && _u) _unEl.textContent = _u.name || _u.email || 'Admin';
+if (_unEl && _u) _unEl.textContent = _u.name || _u.email || 'NepAlert';
 
 renderAlertCards(ALERT_DETAILS);
 

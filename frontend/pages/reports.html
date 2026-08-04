@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reports — Nepal FLDS</title>
+  <title>Reports — NepAlert</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/main.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
@@ -15,7 +15,7 @@
     <div class="sidebar-logo">
       <div class="logo-icon">🏔️</div>
       <div>
-        <div class="logo-text">Nepal FLDS</div>
+        <div class="logo-text">NepAlert</div>
         <div class="logo-sub">Flood & Landslide System</div>
       </div>
     </div>
@@ -134,7 +134,7 @@
         <div class="card-header">
           <div>
             <div class="card-title">📁 Recent Reports</div>
-            <div class="card-subtitle">Nepal FLDS incident and summary reports</div>
+            <div class="card-subtitle">NepAlert incident and summary reports</div>
           </div>
           <div class="tabs" style="margin-bottom:0;">
             <button class="tab-btn active">All</button>
@@ -172,7 +172,7 @@
 // Sidebar username
 const _u4 = Auth.getUser();
 const _unEl4 = document.getElementById('sidebar-username');
-if (_unEl4 && _u4) _unEl4.textContent = _u4.name || _u4.email || 'Admin';
+if (_unEl4 && _u4) _unEl4.textContent = _u4.name || _u4.email || 'NepAlert';
 
 const reports = [
   { name: 'Koshi River Flood — Emergency Response Report',    type: 'Flood',     district: 'Sunsari, Province 1',       count: 1,  date: '2024-07-28', size: '4.2 MB' },
