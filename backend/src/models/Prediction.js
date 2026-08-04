@@ -47,8 +47,14 @@ const predictionSchema = new mongoose.Schema(
     },
     predictedBy: {
       type: String,
-      enum: ['scheduled', 'manual', 'sensor'],
+      enum: ['scheduled', 'manual', 'sensor', 'csv-import', 'external'],
       default: 'manual',
+    },
+    // Independent cross-check of this prediction (rainfall-rule vs model class).
+    // null when no rule applies (e.g. earthquake) or the check was not run.
+    verification: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

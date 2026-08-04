@@ -1,176 +1,72 @@
-# Disaster Prediction & Early Warning System — Backend
+# Nepal FLDS — Flood & Landslide Detection System
 
-AI-powered backend for predicting earthquakes, floods, and landslides using TensorFlow.js,
-with real-time alerts via Email and SMS.
+Real-time flood and landslide early-warning system covering all 77 Nepal
+districts. Live weather from Open-Meteo is polled on a schedule, run through
+XGBoost risk models, and surfaced as alerts on a live dashboard. Every alert
+is cross-checked against the documented monsoon rainfall rule, and responders
+can record field confirmations — so the system tracks **model confidence vs
+confirmed events** with real numbers.
 
----
+## Stack
 
-## Tech Stack
-- **Runtime**: Node.js + Express
-- **Database**: MongoDB (Mongoose)
-- **ML**: TensorFlow.js (local model files)
-- **Notifications**: Nodemailer (Email) + Twilio (SMS)
-- **Auth**: JWT
-- **Jobs**: node-cron
+| Layer | Tech |
+|---|---|
+| Backend API | Node.js + Express + MongoDB (Mongoose) |
+| ML | Python + FastAPI + XGBoost (77-district flood/landslide models) |
+| Live data | Open-Meteo weather API (free, no key) |
+| Frontend | Plain HTML/JS/CSS + Chart.js + Leaflet (no build step) |
+| Real time | Server-Sent Events (SSE) |
+| Notifications | Nodemailer / Twilio (optional) |
 
----
+## Layout
 
-## Quick Start
+```
+backend/     Express API, polling scheduler, alerts, SSE feed, frontend serving
+frontend/    Dashboard, alerts, map, predictions, reports pages (static)
+models/      XGBoost models, predict_service.py (FastAPI), train.py
+dataset/     (reserved for imported datasets)
+```
+
+## Running it
+
+Requires Node 18+, MongoDB, Python 3.10+.
 
 ```bash
-# 1. Install dependencies
-npm install
+# 1. ML service (repo root)
+pip install -r models/requirements.txt
+python models/predict_service.py            # :8000
 
-# 2. Copy env file and fill in values
-cp .env.example .env
+# 2. Backend
+cd backend && npm install && cp .env.example .env   # fill in MONGO_URI, JWT_SECRET
+npm run dev                                 # :5000 — serves the frontend too
 
-# 3. Configure your sensor API key for secure ingestion
-#    Set SENSOR_API_KEY in .env and include `x-sensor-api-key` in sensor POST requests.
-
-# 4. Add your TF.js model files (or skip — mock predictions will be used)
-mkdir -p src/ml/models/earthquake_model
-mkdir -p src/ml/models/flood_model
-mkdir -p src/ml/models/landslide_model
-
-# 4. Start in development mode
-npm run dev
-
-# 5. Start in production
-npm start
+# 3. Seed the demo admin, then open http://localhost:5000
+npm run seed:demo                           # admin@flds.demo / demo12345
 ```
 
----
+### Windows auto-start (optional)
 
-## API Endpoints
-
-### Auth
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/auth/register` | Register a new user |
-| POST | `/api/v1/auth/login` | Login and get JWT |
-| GET  | `/api/v1/auth/me` | Get current user (auth) |
-| PUT  | `/api/v1/auth/profile` | Update profile (auth) |
-| PUT  | `/api/v1/auth/change-password` | Change password (auth) |
-
-### Predictions
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/predictions` | Run a prediction (auth) |
-| GET  | `/api/v1/predictions` | Get prediction history (auth) |
-| GET  | `/api/v1/predictions/stats` | Stats (admin/responder) |
-| GET  | `/api/v1/predictions/:id` | Get one prediction (auth) |
-
-### Alerts
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET  | `/api/v1/alerts` | List alerts (auth) |
-| GET  | `/api/v1/alerts/:id` | Get one alert (auth) |
-| PATCH | `/api/v1/alerts/:id/resolve` | Resolve alert (admin) |
-| GET  | `/api/v1/alerts/stats` | Alert stats (admin) |
-
-### Sensors
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/sensors/data` | Ingest sensor reading (JWT or sensor API key) |
-| GET  | `/api/v1/sensors/data` | Get sensor history (auth) |
-| GET  | `/api/v1/sensors/latest` | Latest reading per sensor (auth) |
-
----
-
-## Sample Request: Run a Flood Prediction
-
-```json
-POST /api/v1/predictions
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "disasterType": "flood",
-  "sensorData": {
-    "rainfall": 180,
-    "waterLevel": 8.5,
-    "soilMoisture": 85,
-    "riverFlow": 4200,
-    "humidity": 92,
-    "elevation": 15
-  },
-  "location": {
-    "coordinates": [85.3240, 27.7172],
-    "city": "Kathmandu",
-    "country": "Nepal"
-  },
-  "affectedRadius": 50
-}
+```powershell
+# Registers a 2-minute watchdog + logon task that keep both services up
+.\setup-scheduled-tasks.ps1
 ```
 
-### Sample Response
-```json
-{
-  "success": true,
-  "data": {
-    "predictionId": "...",
-    "disasterType": "flood",
-    "probability": 0.8742,
-    "riskLevel": "critical",
-    "alertTriggered": true,
-    "location": { "city": "Kathmandu", "country": "Nepal" }
-  }
-}
-```
+`start-services.ps1` is the idempotent starter the tasks call — it only starts
+a service when its port is free and logs the result to `logs/`.
 
-## Sample Sensor Ingestion
-```http
-POST /api/v1/sensors/data
-Content-Type: application/json
-x-sensor-api-key: your_sensor_api_key_here
+## Documentation
 
-{
-  "sensorId": "sensor-123",
-  "sensorType": "weather",
-  "disasterType": "flood",
-  "location": {
-    "coordinates": [85.3240, 27.7172],
-    "city": "Kathmandu",
-    "country": "Nepal"
-  },
-  "readings": {
-    "rainfall": 180,
-    "waterLevel": 8.5,
-    "soilMoisture": 85,
-    "riverFlow": 4200,
-    "humidity": 92,
-    "elevation": 15
-  }
-}
-```
+- [backend/README.md](backend/README.md) — API, pipeline, env vars, scripts
+- [models/README.md](models/README.md) — ML service, features, training
 
----
+## What the numbers mean
 
-## ML Model Integration
+- **Probability** — the model's confidence in its risk class (low/moderate/
+  high), capped to its risk band so a moderate alert never displays as ~100%.
+- **✓ verified** — the model's class and the documented rainfall rule agree.
+- **✅ confirmed / ❌ not confirmed** — a responder's field report of what
+  actually happened on the ground.
 
-Place your TensorFlow.js saved model files in:
-```
-src/ml/models/earthquake_model/model.json  (+ weights)
-src/ml/models/flood_model/model.json
-src/ml/models/landslide_model/model.json
-```
-
-**Input feature shapes:**
-- Earthquake: `[magnitude, depth, latitude, longitude, seismicActivity, groundVibration]`
-- Flood: `[rainfall, waterLevel, soilMoisture, riverFlow, humidity, elevation]`
-- Landslide: `[rainfall, soilMoisture, slopeAngle, soilType, vegetationCover, groundDisplacement]`
-
-All values are normalized to `[0, 1]` before inference. Models without files fall back to a
-deterministic mock predictor for development.
-
----
-
-## User Roles
-- `user` — can register, run predictions, view alerts
-- `responder` — can view stats and sensor data
-- `admin` — can resolve alerts, access all stats
-
-## Alert Thresholds (configurable in .env)
-- Earthquake: 0.70 (70% probability triggers alert)
-- Flood: 0.65
-- Landslide: 0.60
+The models predict **risk from weather**; only field reports confirm events.
+Validation metrics (flood ~99.8%, landslide ~99.7% accuracy) live in
+`models/training_metadata.json` and are shown on the Predictions page.

@@ -190,9 +190,41 @@ ul { list-style: none; }
   animation: pulse-dot 2s infinite;
 }
 
+/* Real-time live feed indicator */
+.live-pill {
+  background: rgba(22,163,74,0.12);
+  color: var(--accent-green);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  border: 1px solid rgba(22,163,74,0.35);
+  animation: pulse-dot 2s infinite;
+}
+
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(0.8); }
+}
+
+/* User's alert-location chip (header) */
+.location-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.35);
+  color: var(--accent-purple); font-size: 11px; font-weight: 700;
+  padding: 5px 11px; border-radius: 14px; cursor: pointer;
+  white-space: nowrap; transition: background 0.2s, transform 0.15s;
+}
+.location-chip:hover { background: rgba(139,92,246,0.22); transform: translateY(-1px); }
+
+/* Location-scope banner (dashboard + alerts page) */
+.scope-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.25);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;
 }
 
 .header-btn {
@@ -393,6 +425,16 @@ ul { list-style: none; }
 
 .alert-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
 .alert-meta { font-size: 11px; color: var(--text-muted); }
+
+/* Explainable alerts: the real live readings that drove the prediction */
+.alert-evidence {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed var(--border);
+  letter-spacing: 0.2px;
+}
 
 /* Progress bars */
 .progress-bar {

@@ -33,11 +33,20 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin', 'responder'],
       default: 'user',
     },
+    // Alert location picked at login/registration (one of the 77 districts).
+    // Drives location-scoped alert views and targeted notifications.
+    province: {
+      type: String,
+      trim: true,
+    },
+    district: {
+      type: String,
+      trim: true,
+    },
     location: {
       type: {
         type: String,
         enum: ['Point'],
-        default: 'Point',
       },
       coordinates: {
         type: [Number], // [longitude, latitude]
@@ -71,6 +80,33 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ location: '2dsphere' });
+userSchema.index({ province: 1, district: 1 });
+
+// Drop a location with no usable coordinates so the 2dsphere index stays valid
+userSchema.pre('save', function (next) {
+  this.location = _normalizeLocation(this.location);
+  next();
+});
+
+// findOneAndUpdate skips pre('save'), so normalise the location here too
+userSchema.pre('findOneAndUpdate', function (next) {
+  const update = this.getUpdate();
+  if (update && update.location) {
+    update.location = _normalizeLocation(update.location);
+  } else if (update && update.$set && update.$set.location) {
+    update.$set.location = _normalizeLocation(update.$set.location);
+  }
+  next();
+});
+
+function _normalizeLocation(location) {
+  if (!location) return undefined;
+  const coords = Array.isArray(location.coordinates) ? location.coordinates : undefined;
+  if (!coords || coords.length === 0 || coords.some(c => !Number.isFinite(c))) {
+    return undefined;
+  }
+  return { ...location, type: 'Point' };
+}
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {

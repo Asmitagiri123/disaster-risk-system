@@ -1,41 +1,29 @@
-const mongoose = require('mongoose');
 const Prediction = require('../models/Prediction');
 const mlService = require('../ml/modelBridge');
 const alertService = require('./alertService');
+const liveBus = require('./liveEventBus');
 const logger = require('../utils/logger');
-const { addPrediction, updatePrediction, getPredictions, getPredictionStats } = require('../utils/inMemoryStore');
 
 class PredictionService {
   async predict(disasterType, inputData, location, options = {}) {
-    const result = await mlService.predict(disasterType, inputData);
+    const result = await mlService.predict(disasterType, inputData, location);
 
-    const prediction = mongoose.connection.readyState === 1
-      ? await Prediction.create({
-        disasterType,
-        probability: result.probability,
-        riskLevel: result.riskLevel,
-        location,
-        inputData,
-        modelVersion: '1.0.0',
-        predictedBy: options.predictedBy || 'manual',
-        createdBy: options.userId || null,
-      })
-      : addPrediction({
-        disasterType,
-        probability: result.probability,
-        riskLevel: result.riskLevel,
-        location,
-        inputData,
-        modelVersion: '1.0.0',
-        predictedBy: options.predictedBy || 'manual',
-        createdBy: options.userId || null,
-      });
+    const prediction = await Prediction.create({
+      disasterType,
+      probability: result.probability,
+      riskLevel: result.riskLevel,
+      location,
+      inputData,
+      modelVersion: result.modelVersion || '1.0.0',
+      predictedBy: options.predictedBy || 'manual',
+      createdBy: options.userId || null,
+      verification: result.verification || null,
+    });
 
     logger.info(
       `Prediction created: ${disasterType} | ${result.riskLevel} | ${(result.probability * 100).toFixed(1)}%`
     );
 
-    // Dispatch alert if threshold exceeded
     if (result.shouldAlert) {
       try {
         const alert = await alertService.createAndDispatch({
@@ -44,16 +32,26 @@ class PredictionService {
         });
         prediction.alertTriggered = true;
         prediction.alertId = alert._id;
-        if (mongoose.connection.readyState === 1) {
-          await prediction.save();
-        } else {
-          updatePrediction(prediction._id, { alertTriggered: true, alertId: alert._id });
-        }
+        await prediction.save();
         logger.info(`Alert dispatched for prediction ${prediction._id}`);
       } catch (err) {
         logger.error(`Alert dispatch failed: ${err.message}`);
       }
     }
+
+    liveBus.emit('prediction:new', {
+      prediction: {
+        id: prediction._id,
+        disasterType: prediction.disasterType,
+        riskLevel: prediction.riskLevel,
+        probability: prediction.probability,
+        alertTriggered: prediction.alertTriggered,
+        alertId: prediction.alertId,
+        location: prediction.location || {},
+        createdAt: prediction.createdAt,
+        verification: prediction.verification || null,
+      },
+    });
 
     return {
       prediction,
@@ -71,10 +69,6 @@ class PredictionService {
       query.createdAt = {};
       if (filters.startDate) query.createdAt.$gte = new Date(filters.startDate);
       if (filters.endDate) query.createdAt.$lte = new Date(filters.endDate);
-    }
-
-    if (mongoose.connection.readyState !== 1) {
-      return getPredictions({ ...query, ...filters }, page, limit);
     }
 
     const [predictions, total] = await Promise.all([
@@ -98,10 +92,6 @@ class PredictionService {
   }
 
   async getStats() {
-    if (mongoose.connection.readyState !== 1) {
-      return getPredictionStats();
-    }
-
     const [byType, byRisk, recent] = await Promise.all([
       Prediction.aggregate([
         { $group: { _id: '$disasterType', count: { $sum: 1 }, avgProbability: { $avg: '$probability' } } },

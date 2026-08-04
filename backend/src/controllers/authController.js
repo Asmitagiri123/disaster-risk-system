@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
+const { normalizeDistrict, provinceOfDistrict } = require('../utils/nepalRegions');
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -13,6 +14,31 @@ const sendTokenResponsePlain = (userPlain, statusCode, res) => {
   delete userObj.password;
   res.status(statusCode).json({ success: true, token, data: { user: userObj } });
 };
+
+// Validate a district/province choice. Returns { district, province } using the
+// canonical names, or null when nothing was chosen. Throws on a bad district.
+function parseLocationChoice(body) {
+  const { district, province } = body || {};
+  if (!district && !province) return null;
+
+  if (district) {
+    const d = normalizeDistrict(district);
+    if (!d) {
+      const err = new Error('Unknown district. Pick one from the list.');
+      err.code = 400;
+      throw err;
+    }
+    const p = provinceOfDistrict(d);
+    if (province && province.toLowerCase() !== p.toLowerCase()) {
+      const err = new Error(`${province} is not the province of ${d}`);
+      err.code = 400;
+      throw err;
+    }
+    return { district: d, province: p };
+  }
+  // Province-only scope (all districts in that province)
+  return { province: String(province).trim() };
+}
 
 const signToken = (userId) =>
   jwt.sign({ id: userId }, JWT_SECRET, {
@@ -56,10 +82,20 @@ exports.register = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Email already registered' });
     }
 
-    const user = await User.create({ name, email, password, phone, location });
+    // Alert location: canonical district + province from the login page picker.
+    const choice = parseLocationChoice(req.body);
+    const user = await User.create({
+      name,
+      email,
+      password,
+      phone,
+      ...choice,
+      location,
+    });
     logger.info(`New user registered: ${email}`);
     sendTokenResponse(user, 201, res);
   } catch (err) {
+    if (err.code === 400) return res.status(400).json({ success: false, message: err.message });
     logger.error(`Register error: ${err.message}`);
     res.status(500).json({ success: false, message: 'Registration failed' });
   }
@@ -95,12 +131,21 @@ exports.login = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Account is deactivated' });
     }
 
+    // A location chosen on the login page becomes the account's alert location,
+    // so a shared/field account can re-scope its alerts at each sign-in.
+    const choice = parseLocationChoice(req.body);
+    if (choice) {
+      user.district = choice.district;
+      user.province = choice.province;
+    }
+
     user.lastLogin = new Date();
     await user.save({ validateBeforeSave: false });
 
     logger.info(`User logged in: ${email}`);
     sendTokenResponse(user, 200, res);
   } catch (err) {
+    if (err.code === 400) return res.status(400).json({ success: false, message: err.message });
     logger.error(`Login error: ${err.message}`);
     res.status(500).json({ success: false, message: 'Login failed' });
   }
@@ -121,9 +166,20 @@ exports.getMe = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const allowedFields = ['name', 'phone', 'location', 'alertPreferences'];
+    const allowedFields = ['name', 'phone', 'location', 'alertPreferences', 'province', 'district'];
     const updates = {};
     allowedFields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+
+    // Keep district + province canonical and consistent when either is changed.
+    // An explicit empty selection (both '') clears the account's location scope.
+    if (req.body.district || req.body.province) {
+      const choice = parseLocationChoice(req.body);
+      updates.province = choice.province;
+      updates.district = choice.district || ''; // province-only scope clears any district
+    } else if (req.body.district === '' && req.body.province === '') {
+      updates.province = '';
+      updates.district = '';
+    }
 
     const user = await User.findByIdAndUpdate(req.user.id, updates, {
       new: true,
@@ -132,6 +188,7 @@ exports.updateProfile = async (req, res) => {
 
     res.json({ success: true, data: { user } });
   } catch (err) {
+    if (err.code === 400) return res.status(400).json({ success: false, message: err.message });
     res.status(500).json({ success: false, message: 'Profile update failed' });
   }
 };

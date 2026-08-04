@@ -1,0 +1,169 @@
+{
+  "version": "1.1.0",
+  "trainedAt": "2026-08-02T22:28:22.636861Z",
+  "dataSource": "Open-Meteo Archive API (free, no key) \u2014 observed daily weather",
+  "dateRange": {
+    "start": "2018-01-01",
+    "end": "2026-07-31"
+  },
+  "districts": 77,
+  "districtsTrained": 56,
+  "districtsPending": [
+    "Achham",
+    "Baitadi",
+    "Bajhang",
+    "Bajura",
+    "Bhojpur",
+    "Dadeldhura",
+    "Darchula",
+    "Dhankuta",
+    "Doti",
+    "Ilam",
+    "Jajarkot",
+    "Jhapa",
+    "Jumla",
+    "Kailali",
+    "Kalikot",
+    "Kanchanpur",
+    "Khotang",
+    "Mugu",
+    "Rukum West",
+    "Salyan",
+    "Surkhet"
+  ],
+  "rows": {
+    "flood": 175504,
+    "landslide": 175504
+  },
+  "labelRule": {
+    "description": "Risk class labels derived from real rainfall with documented monsoon trigger thresholds.",
+    "flood": {
+      "high_rain_day": 80,
+      "high_roll7": 150,
+      "mod_rain_day": 30,
+      "mod_roll7": 60
+    },
+    "landslide": {
+      "high_rain_day": 60,
+      "high_roll3": 100,
+      "mod_rain_day": 20,
+      "mod_roll3": 40
+    }
+  },
+  "featureNotes": {
+    "soil_moisture": "Training uses a rain-driven proxy (no free historical soil data); LIVE inference uses real Open-Meteo soil moisture.",
+    "discharge": "Constant 0 \u2014 no free live river-discharge source for Nepal.",
+    "slope": "Constant 25 \u2014 no free national slope dataset."
+  },
+  "classBalance": {
+    "flood": {
+      "0": 134720,
+      "1": 28420,
+      "2": 12364
+    },
+    "landslide": {
+      "0": 148970,
+      "1": 20640,
+      "2": 5894
+    }
+  },
+  "models": {
+    "flood": {
+      "nEstimators": 300,
+      "maxDepth": 6,
+      "features": [
+        "temperature",
+        "rainfall",
+        "humidity",
+        "wind_speed",
+        "discharge",
+        "rainfall_roll3",
+        "rainfall_roll7",
+        "discharge_roll3",
+        "discharge_roll7",
+        "month",
+        "location_encoded",
+        "terrain_encoded"
+      ],
+      "metrics": {
+        "accuracy": 0.9977,
+        "classificationReport": {
+          "0": {
+            "precision": 0.9997,
+            "recall": 0.9991,
+            "f1-score": 0.9994
+          },
+          "1": {
+            "precision": 0.994,
+            "recall": 0.9919,
+            "f1-score": 0.993
+          },
+          "2": {
+            "precision": 0.9844,
+            "recall": 0.996,
+            "f1-score": 0.9902
+          },
+          "accuracy": 0.9977208626534857,
+          "macro avg": {
+            "precision": 0.9927,
+            "recall": 0.9957,
+            "f1-score": 0.9942
+          },
+          "weighted avg": {
+            "precision": 0.9977,
+            "recall": 0.9977,
+            "f1-score": 0.9977
+          }
+        }
+      }
+    },
+    "landslide": {
+      "nEstimators": 300,
+      "maxDepth": 6,
+      "features": [
+        "temperature",
+        "rainfall",
+        "humidity",
+        "wind_speed",
+        "rain_3day",
+        "rain_7day",
+        "soil_moisture",
+        "slope",
+        "month",
+        "terrain_encoded",
+        "location_encoded"
+      ],
+      "metrics": {
+        "accuracy": 0.9979,
+        "classificationReport": {
+          "0": {
+            "precision": 0.9993,
+            "recall": 0.9988,
+            "f1-score": 0.999
+          },
+          "1": {
+            "precision": 0.9873,
+            "recall": 0.9949,
+            "f1-score": 0.9911
+          },
+          "2": {
+            "precision": 1.0,
+            "recall": 0.9864,
+            "f1-score": 0.9932
+          },
+          "accuracy": 0.9978917979544742,
+          "macro avg": {
+            "precision": 0.9955,
+            "recall": 0.9934,
+            "f1-score": 0.9944
+          },
+          "weighted avg": {
+            "precision": 0.9979,
+            "recall": 0.9979,
+            "f1-score": 0.9979
+          }
+        }
+      }
+    }
+  }
+}
