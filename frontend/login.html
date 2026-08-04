@@ -67,13 +67,10 @@
 
   <script src="js/api.js"></script>
   <script>
-    // Redirect if already logged in
-    if (Auth.isLoggedIn()) window.location.href = 'index.html';
+    const form = document.getElementById('login-form');
 
-    // DEV BYPASS: skip login once
-    Auth.save('dev-token', { name: 'NepAlert', email: 'dev@nepalert.com' });
-    window.location.href = 'index.html';
-    const footer = document.querySelector('.login-footer');
+    // Redirect if already logged in
+
     const errorEl = document.getElementById('error-msg');
     const submitBtn = document.getElementById('login-btn');
 

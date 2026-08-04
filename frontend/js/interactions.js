@@ -309,9 +309,29 @@ function handleLogout() {
   }, 'Logout', 'danger');
 }
 
+function getCurrentUser() {
+  return Auth.getUser() || {};
+}
+
+function updateUserDisplay() {
+  const user = getCurrentUser();
+  const name = user.name || user.email || 'NepAlert';
+  const initials = String(name).split(/\s+/).filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'ND';
+
+  document.querySelectorAll('#sidebar-username').forEach(el => {
+    if (el) el.textContent = name;
+  });
+
+  document.querySelectorAll('.avatar').forEach(el => {
+    if (el) el.textContent = initials;
+  });
+}
+
+window.updateUserDisplay = updateUserDisplay;
+
 // ─── PROFILE MODAL ───────────────────────────────────────────────────────────
 function openProfileModal() {
-  const user = Auth.getUser() || {};
+  const user = getCurrentUser();
   const initials = (user.name || 'ND').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   const roleLabel = { admin: 'System Administrator', responder: 'Emergency Responder', user: 'Viewer' };
   showModal({
@@ -356,6 +376,7 @@ document.head.appendChild(interactionStyles);
 
 // ─── GLOBAL HEADER WIRING (runs on every page) ────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  updateUserDisplay();
   // Notification bell
   document.querySelectorAll('.header-btn').forEach(btn => {
     if (btn.textContent.includes('🔔')) btn.addEventListener('click', openNotificationPanel);
@@ -414,27 +435,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- Settings / Sensors modals ---
 function openSettingsModal() {
+  const user = getCurrentUser();
   showModal({
     title: '⚙️ Settings',
     size: 'md',
     body: `
       <div style="display:grid;gap:10px;">
         <div>
-          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Site Name</label>
-          <input type="text" value="Nepal FLDS" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);" />
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Display Name</label>
+          <input id="settings-name" type="text" value="${(user.name || '').replace(/"/g, '&quot;')}" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);" />
         </div>
         <div>
-          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Alert Email</label>
-          <input type="email" value="alerts@ndrrma.gov.np" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);" />
-        </div>
-        <div>
-          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">CORS Origin</label>
-          <input type="text" value="http://localhost:3000" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);" />
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Email</label>
+          <input type="email" value="${(user.email || '').replace(/"/g, '&quot;')}" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);" disabled />
         </div>
       </div>
     `,
     actions: [
-      { id: 'save', label: 'Save', style: 'primary', onClick: () => showToast('Settings saved', 'success') },
+      { id: 'save', label: 'Save', style: 'primary', onClick: async () => {
+        const newName = document.getElementById('settings-name')?.value?.trim();
+        if (!newName) {
+          showToast('Name is required', 'warning');
+          return;
+        }
+        try {
+          const res = await API.auth.updateProfile({ name: newName });
+          if (!res?.success) throw new Error(res?.message || 'Profile update failed');
+          const savedUser = { ...(Auth.getUser() || {}), ...(res.data?.user || {}), name: newName };
+          Auth.save(Auth.getToken(), savedUser);
+          updateUserDisplay();
+          showToast('Profile saved successfully', 'success');
+        } catch (err) {
+          showToast(err?.message || 'Unable to save profile', 'error');
+        }
+      } },
       { id: 'close', label: 'Close', style: 'secondary' }
     ]
   });

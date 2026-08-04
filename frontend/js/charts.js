@@ -1,5 +1,17 @@
-// charts.js — All Chart.js chart initializations
-// Requires Chart.js loaded via CDN
+// Chart.js helpers. Charts draw from LIVE data; empty states show a message.
+
+// Track charts per canvas so re-renders destroy old instances
+const _chartRegistry = {};
+
+function createChart(canvasId, config) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return null;
+  if (_chartRegistry[canvasId]) _chartRegistry[canvasId].destroy();
+  const emptyEl = document.getElementById(`${canvasId}-empty`); // clear placeholder
+  if (emptyEl) emptyEl.remove();
+  _chartRegistry[canvasId] = new Chart(ctx, config);
+  return _chartRegistry[canvasId];
+}
 
 const CHART_DEFAULTS = {
   responsive: true,
@@ -14,102 +26,132 @@ const CHART_DEFAULTS = {
       bodyColor: '#94a3b8',
       padding: 10,
       cornerRadius: 8,
-    }
-  }
+    },
+  },
 };
+
+// Show a simple message in the chart's card when there is no data yet.
+function showEmpty(canvasId, message = 'Waiting for live data…') {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  const card = ctx.closest('.card') || ctx.parentElement;
+  let el = document.getElementById(`${canvasId}-empty`);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = `${canvasId}-empty`;
+    el.style.cssText = 'text-align:center;color:var(--text-muted);font-size:12px;padding:24px 0;';
+    card.appendChild(el);
+  }
+  el.textContent = message;
+}
 
 function initWeeklyTrendChart(canvasId) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
+  const trend = (window.LIVE && LIVE.weeklyTrend) || [];
+  if (!trend.length) return showEmpty(canvasId, 'No alert history yet');
 
-  const data = (DATA.weeklyTrend && DATA.weeklyTrend.length) ? DATA.weeklyTrend : [
-    { day: 'Mon', alerts: 0, resolved: 0 },
-    { day: 'Tue', alerts: 0, resolved: 0 },
-    { day: 'Wed', alerts: 0, resolved: 0 },
-    { day: 'Thu', alerts: 0, resolved: 0 },
-    { day: 'Fri', alerts: 0, resolved: 0 },
-    { day: 'Sat', alerts: 0, resolved: 0 },
-    { day: 'Sun', alerts: 0, resolved: 0 }
-  ];
-
-  return new Chart(ctx, {
+  return createChart(canvasId, {
     type: 'bar',
     data: {
-      labels: data.map(d => d.day),
+      labels: trend.map(d => d.day),
       datasets: [
         {
-          label: 'New Alerts',
-          data: data.map(d => d.alerts),
+          label: 'Raised',
+          data: trend.map(d => d.alerts),
           backgroundColor: 'rgba(239,68,68,0.7)',
           borderRadius: 4,
           borderSkipped: false,
         },
         {
           label: 'Resolved',
-          data: data.map(d => d.resolved),
+          data: trend.map(d => d.resolved),
           backgroundColor: 'rgba(34,197,94,0.7)',
           borderRadius: 4,
           borderSkipped: false,
-        }
-      ]
+        },
+      ],
     },
     options: {
       ...CHART_DEFAULTS,
       scales: {
         x: { grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 11 } }, border: { color: '#1e293b' } },
-        y: { grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 11 }, stepSize: 5 }, border: { color: '#1e293b' } }
+        y: { grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 11 }, stepSize: 5 }, border: { color: '#1e293b' } },
       },
       plugins: {
         ...CHART_DEFAULTS.plugins,
-        legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10, borderRadius: 3 } }
-      }
-    }
+        legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10, borderRadius: 3 } },
+      },
+    },
   });
 }
 
 function initDisasterTypeChart(canvasId) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
+  const types = (window.LIVE && LIVE.disasterTypes) || [];
+  if (!types.length) return showEmpty(canvasId, 'No prediction data yet');
 
-  const data = (DATA.disasterTypes && DATA.disasterTypes.length) ? DATA.disasterTypes : [
-    { label: 'Flood', value: 50, color: '#3b82f6' },
-    { label: 'Landslide', value: 50, color: '#8b5cf6' }
-  ];
-
-  return new Chart(ctx, {
+  return createChart(canvasId, {
     type: 'doughnut',
     data: {
-      labels: data.map(d => d.label),
+      labels: types.map(d => d.label),
       datasets: [{
-        data: data.map(d => d.value),
-        backgroundColor: data.map(d => d.color),
+        data: types.map(d => d.value),
+        backgroundColor: types.map(d => d.color),
         borderWidth: 0,
         hoverOffset: 6,
-      }]
+      }],
     },
     options: {
       ...CHART_DEFAULTS,
       cutout: '72%',
-      plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } }
-    }
+      plugins: { ...CHART_DEFAULTS.plugins, legend: { display: false } },
+    },
   });
 }
 
+// Risk level over the last 24h — prediction probabilities per hour.
 function initRiskTrendChart(canvasId) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
+  const rt = (window.LIVE && LIVE.riskTrend) || null;
+  if (!rt || rt.data.every(v => v === null)) {
+    const riskBadge = document.getElementById('risk-level-badge'); // clear stale label
+    if (riskBadge) {
+      riskBadge.textContent = '—';
+      riskBadge.className = 'badge badge-info';
+    }
+    return showEmpty(canvasId, 'No predictions in the last 24h');
+  }
 
-  const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
-  // Monsoon-season risk pattern — peaks during afternoon rainfall
-  const riskData = [38, 35, 32, 36, 48, 55, 52, 60, 68, 65, 72, 78, 75, 80, 84, 79, 74, 70, 76, 82, 85, 82, 78, 74];
+  const data = rt.data.map(v => v ?? 0);
+  const real = rt.data.filter(v => v !== null);
+  const current = real.length ? real[real.length - 1] : 0;
+  const peak = Math.max(...real, 0);
+  const avg = Math.round(real.reduce((s, v) => s + v, 0) / real.length);
 
-  return new Chart(ctx, {
+  const currentEl = document.getElementById('risk-current');
+  const peakEl = document.getElementById('risk-peak');
+  const avgEl = document.getElementById('risk-avg');
+  if (currentEl) { currentEl.textContent = `${current}%`; currentEl.style.color = current >= 70 ? 'var(--accent-red)' : 'var(--text-secondary)'; }
+  if (peakEl) { peakEl.textContent = `${peak}%`; peakEl.style.color = peak >= 70 ? 'var(--accent-orange)' : 'var(--text-secondary)'; }
+  if (avgEl) { avgEl.textContent = `${avg}%`; avgEl.style.color = 'var(--text-secondary)'; }
+
+  const riskBadge = document.getElementById('risk-level-badge');
+  if (riskBadge) {
+    const lvl = current >= 75 ? 'high' : current >= 40 ? 'medium' : 'low';
+    riskBadge.textContent = lvl.toUpperCase();
+    riskBadge.className = `badge badge-${lvl}`;
+  }
+
+  return createChart(canvasId, {
     type: 'line',
     data: {
-      labels: hours,
+      labels: rt.labels,
       datasets: [{
         label: 'Risk Level',
-        data: riskData,
+        data,
         borderColor: '#ef4444',
         backgroundColor: 'rgba(239,68,68,0.08)',
         borderWidth: 2,
@@ -118,90 +160,66 @@ function initRiskTrendChart(canvasId) {
         pointRadius: 0,
         pointHoverRadius: 4,
         pointHoverBackgroundColor: '#ef4444',
-      }]
+      }],
     },
     options: {
       ...CHART_DEFAULTS,
       scales: {
         x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 10 }, maxTicksLimit: 8 }, border: { color: '#1e293b' } },
-        y: { min: 0, max: 100, grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 10 }, callback: v => v + '%' }, border: { color: '#1e293b' } }
-      }
-    }
-  });
-}
-
-function initPredictionAccuracyChart(canvasId) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
-
-  return new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-      datasets: [{
-        label: 'Accuracy %',
-        data: [85, 86, 88, 87, 89, 90, 91, 92, 91, 93, 92, 91.8],
-        borderColor: '#22c55e',
-        backgroundColor: 'rgba(34,197,94,0.08)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 3,
-        pointBackgroundColor: '#22c55e',
-        pointBorderWidth: 0,
-      }]
+        y: { min: 0, max: 100, grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 10 }, callback: v => v + '%' }, border: { color: '#1e293b' } },
+      },
     },
-    options: {
-      ...CHART_DEFAULTS,
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 11 } }, border: { color: '#1e293b' } },
-        y: { min: 80, max: 100, grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 11 }, callback: v => v + '%' }, border: { color: '#1e293b' } }
-      }
-    }
   });
 }
 
+// Latest sensor readings scaled against their alert thresholds.
 function initSensorRadarChart(canvasId) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
+  const radar = (window.LIVE && LIVE.sensorRadar) || null;
+  if (!radar || !radar.labels.length) return showEmpty(canvasId, 'No sensor readings yet');
 
-  return new Chart(ctx, {
+  return createChart(canvasId, {
     type: 'radar',
     data: {
-      labels: ['Rainfall', 'River Level', 'Soil Moisture', 'Flow Rate', 'Humidity', 'Slope Stability'],
-      datasets: [{
-        label: 'Current',
-        data: [92, 85, 95, 78, 94, 30],
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.15)',
-        borderWidth: 2,
-        pointBackgroundColor: '#3b82f6',
-        pointRadius: 3,
-      }, {
-        label: 'Alert Threshold',
-        data: [80, 80, 80, 80, 80, 80],
-        borderColor: 'rgba(239,68,68,0.5)',
-        backgroundColor: 'transparent',
-        borderWidth: 1,
-        borderDash: [4, 4],
-        pointRadius: 0,
-      }]
+      labels: radar.labels,
+      datasets: [
+        {
+          label: 'Current',
+          data: radar.values,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,0.15)',
+          borderWidth: 2,
+          pointBackgroundColor: '#3b82f6',
+          pointRadius: 3,
+        },
+        {
+          label: 'Alert Threshold',
+          data: radar.values.map(() => 80),
+          borderColor: 'rgba(239,68,68,0.5)',
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderDash: [4, 4],
+          pointRadius: 0,
+        },
+      ],
     },
     options: {
       ...CHART_DEFAULTS,
       scales: {
         r: {
-          min: 0, max: 100,
+          min: 0,
+          max: 100,
           grid: { color: 'rgba(30,41,59,0.8)' },
           angleLines: { color: 'rgba(30,41,59,0.8)' },
           ticks: { display: false },
-          pointLabels: { color: '#94a3b8', font: { size: 11 } }
-        }
+          pointLabels: { color: '#94a3b8', font: { size: 11 } },
+        },
       },
       plugins: {
         ...CHART_DEFAULTS.plugins,
-        legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10 } }
-      }
-    }
+        legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10 } },
+      },
+    },
   });
 }

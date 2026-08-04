@@ -5,7 +5,7 @@ const { normalizeDistrict, provinceOfDistrict } = require('../utils/nepalRegions
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { users: inMemoryUsers, addUser, findUserByEmail } = require('../utils/inMemoryStore');
+const { users: inMemoryUsers, addUser, findUserByEmail, findUserById, updateUser } = require('../utils/inMemoryStore');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const sendTokenResponsePlain = (userPlain, statusCode, res) => {
@@ -66,17 +66,6 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, phone, location } = req.body;
 
-    // If MongoDB not connected, use in-memory store
-    if (mongoose.connection.readyState !== 1) {
-      const existing = findUserByEmail(email);
-      if (existing) return res.status(409).json({ success: false, message: 'Email already registered' });
-      const hashed = await bcrypt.hash(password, 10);
-      const newUser = { _id: String(Date.now()), name, email, password: hashed, phone, location, role: 'user', isActive: true };
-      addUser(newUser);
-      logger.info(`New in-memory user registered: ${email}`);
-      return sendTokenResponsePlain(newUser, 201, res);
-    }
-
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ success: false, message: 'Email already registered' });
@@ -92,11 +81,30 @@ exports.register = async (req, res) => {
       ...choice,
       location,
     });
+
+    // Send welcome email
+    if (user.email) {
+      const welcomeHtml = notificationService.buildWelcomeEmail(user);
+      notificationService.sendEmail(user.email, 'Welcome to NepAlert!', welcomeHtml);
+    }
     logger.info(`New user registered: ${email}`);
     sendTokenResponse(user, 201, res);
   } catch (err) {
-    if (err.code === 400) return res.status(400).json({ success: false, message: err.message });
-    logger.error(`Register error: ${err.message}`);
+    // Handle errors from parseLocationChoice (e.g., unknown district)
+    if (err.code === 400) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+
+    // Handle Mongoose validation errors (e.g., password minlength, email format)
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(el => el.message);
+      return res.status(400).json({ success: false, message: `Validation failed: ${errors.join(', ')}` });
+    }
+    // Handle duplicate key errors (e.g., unique email constraint)
+    if (err.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Email already registered' });
+    }
+    logger.error(`Register error: ${err.message}`, err); // Log full error for debugging
     res.status(500).json({ success: false, message: 'Registration failed' });
   }
 };
@@ -109,18 +117,6 @@ exports.login = async (req, res) => {
 
   try {
     const { email, password } = req.body;
-    // If MongoDB not connected, use in-memory users
-    if (mongoose.connection.readyState !== 1) {
-      const userPlain = findUserByEmail(email);
-      if (!userPlain) return res.status(401).json({ success: false, message: 'Invalid email or password' });
-      const match = await bcrypt.compare(password, userPlain.password);
-      if (!match) return res.status(401).json({ success: false, message: 'Invalid email or password' });
-      if (!userPlain.isActive) return res.status(403).json({ success: false, message: 'Account is deactivated' });
-      userPlain.lastLogin = new Date();
-      logger.info(`In-memory user logged in: ${email}`);
-      return sendTokenResponsePlain(userPlain, 200, res);
-    }
-
     const user = await User.findOne({ email }).select('+password');
 
     if (!user || !(await user.comparePassword(password))) {
@@ -153,10 +149,6 @@ exports.login = async (req, res) => {
 
 exports.getMe = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      const userPlain = inMemoryUsers.find(u => u._id === req.user.id);
-      return res.json({ success: true, data: { user: userPlain || null } });
-    }
     const user = await User.findById(req.user.id);
     res.json({ success: true, data: { user } });
   } catch (err) {

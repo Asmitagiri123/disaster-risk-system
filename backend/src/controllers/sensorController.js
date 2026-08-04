@@ -1,8 +1,9 @@
+const mongoose = require('mongoose');
 const { validationResult } = require('express-validator');
 const SensorData = require('../models/SensorData');
 const predictionService = require('../services/predictionService');
 const liveBus = require('../services/liveEventBus');
-const logger = require('../utils/logger');
+const logger = require('../utils/logger'); // Keep this, it's used
 
 exports.ingestSensorData = async (req, res) => {
   const errors = validationResult(req);

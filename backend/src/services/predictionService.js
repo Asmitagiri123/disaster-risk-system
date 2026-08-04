@@ -1,8 +1,9 @@
+const mongoose = require('mongoose');
 const Prediction = require('../models/Prediction');
 const mlService = require('../ml/modelBridge');
 const alertService = require('./alertService');
-const liveBus = require('./liveEventBus');
 const logger = require('../utils/logger');
+const liveBus = require('./liveEventBus'); // Keep this, it's used
 
 class PredictionService {
   async predict(disasterType, inputData, location, options = {}) {
