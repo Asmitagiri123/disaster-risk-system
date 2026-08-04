@@ -45,7 +45,7 @@
     <nav class="sidebar-nav">
       <div class="nav-section-label">Overview</div>
       <a href="../index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-      <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">9</span></a>
+      <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge" id="nav-alert-badge" style="display:none;"></span></a>
       <a href="map.html" class="nav-item active"><span class="nav-icon">🗺️</span> Nepal Map</a>
       <div class="nav-section-label">Analysis</div>
       <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
@@ -74,7 +74,7 @@
       </div>
       <div class="header-right">
         <div class="status-indicator"><div class="status-dot"></div> Live</div>
-        <button class="header-btn">🔔<span class="notif-badge">4</span></button>
+        <button class="header-btn">🔔<span class="notif-badge" style="display:none;"></span></button>
         <div class="avatar">ND</div>
       </div>
     </header>
@@ -164,12 +164,12 @@
     // Remove all existing markers
     mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
 
-    let filtered = MOCK.mapMarkers;
-    if (label.includes('Flood Only'))      filtered = MOCK.mapMarkers.filter(m => m.type === 'flood');
-    else if (label.includes('Landslide'))  filtered = MOCK.mapMarkers.filter(m => m.type === 'landslide');
-    else if (label.includes('Critical'))   filtered = MOCK.mapMarkers.filter(m => m.severity === 'critical');
-    else if (label.includes('High'))       filtered = MOCK.mapMarkers.filter(m => m.severity === 'high');
-    else if (label.includes('Medium'))     filtered = MOCK.mapMarkers.filter(m => m.severity === 'medium' || m.severity === 'low');
+    let filtered = DATA.mapMarkers || [];
+    if (label.includes('Flood Only'))      filtered = (DATA.mapMarkers || []).filter(m => m.type === 'flood');
+    else if (label.includes('Landslide'))  filtered = (DATA.mapMarkers || []).filter(m => m.type === 'landslide');
+    else if (label.includes('Critical'))   filtered = (DATA.mapMarkers || []).filter(m => m.severity === 'critical');
+    else if (label.includes('High'))       filtered = (DATA.mapMarkers || []).filter(m => m.severity === 'high');
+    else if (label.includes('Medium'))     filtered = (DATA.mapMarkers || []).filter(m => m.severity === 'medium' || m.severity === 'low');
 
     filtered.forEach(m => addMarker(m));
     showToast(`Showing ${filtered.length} event(s) — ${label}`, 'info', 2000);

@@ -1,12 +1,10 @@
-// app.js — Dashboard rendering + full interactivity
+// app.js — Dashboard rendering, fully backend-driven
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Show real username in sidebar
   const user = Auth.getUser();
   const usernameEl = document.getElementById('sidebar-username');
   if (usernameEl && user) usernameEl.textContent = user.name || user.email || 'NepAlert';
 
-  // Load real data, then render
   await loadDashboardData();
 
   renderStats();
@@ -26,24 +24,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   wireTableRows();
   wireExportBtn();
   wireRecentEventsTabs();
+  updateNavAlertBadge();
 });
 
 // ─── RENDER ──────────────────────────────────────────────────────────────────
 
 function renderStats() {
-  const s = MOCK.stats;
-  document.getElementById('stat-alerts').textContent    = s.activeAlerts;
-  document.getElementById('stat-critical').textContent  = s.highRiskZones;
-  document.getElementById('stat-monitored').textContent = s.monitored;
-  document.getElementById('stat-accuracy').textContent  = s.accuracy + '%';
-  document.getElementById('stat-response').textContent  = s.responseTime;
-  document.getElementById('stat-resolved').textContent  = s.resolved24h;
+  const s = DATA.stats;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('stat-alerts',    s.activeAlerts > 0 ? s.activeAlerts : '');
+  set('stat-critical',  s.highRiskZones);
+  set('stat-monitored', s.monitored);
+  set('stat-accuracy',  s.accuracy !== '—' ? s.accuracy + '%' : '—');
+  set('stat-response',  s.responseTime);
+  set('stat-resolved',  s.resolved24h);
 }
 
 function renderAlerts() {
   const container = document.getElementById('alerts-list');
   if (!container) return;
-  container.innerHTML = MOCK.alerts.map(a => `
+  if (!DATA.alerts.length) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">No active alerts</div>';
+    return;
+  }
+  container.innerHTML = DATA.alerts.map(a => `
     <div class="alert-item fade-in" data-id="${a.id}" style="cursor:pointer;">
       <div class="alert-dot ${a.severity}"></div>
       <div style="flex:1;min-width:0;">
@@ -56,7 +60,7 @@ function renderAlerts() {
 
   container.querySelectorAll('.alert-item').forEach(el => {
     el.addEventListener('click', () => {
-      const alert = MOCK.alerts.find(a => a.id === +el.dataset.id);
+      const alert = DATA.alerts.find(a => a.id === el.dataset.id);
       if (alert) showAlertDetailModal(alert);
     });
   });
@@ -65,7 +69,11 @@ function renderAlerts() {
 function renderPredictions() {
   const container = document.getElementById('predictions-list');
   if (!container) return;
-  container.innerHTML = MOCK.predictions.map((p, i) => {
+  if (!DATA.predictions.length) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">No predictions available</div>';
+    return;
+  }
+  container.innerHTML = DATA.predictions.map((p, i) => {
     const trendIcon  = p.trend === 'up' ? '↑' : p.trend === 'down' ? '↓' : '→';
     const trendColor = p.trend === 'up' ? 'var(--accent-red)' : p.trend === 'down' ? 'var(--accent-green)' : 'var(--text-muted)';
     return `
@@ -85,17 +93,18 @@ function renderPredictions() {
   }).join('');
 
   container.querySelectorAll('.prediction-card').forEach(el => {
-    el.addEventListener('click', () => {
-      const p = MOCK.predictions[+el.dataset.idx];
-      showPredictionDetailModal(p);
-    });
+    el.addEventListener('click', () => showPredictionDetailModal(DATA.predictions[+el.dataset.idx]));
   });
 }
 
 function renderSensors() {
   const container = document.getElementById('sensor-grid');
   if (!container) return;
-  container.innerHTML = MOCK.sensors.map((s, i) => `
+  if (!DATA.sensors.length) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;grid-column:1/-1;">No sensor data</div>';
+    return;
+  }
+  container.innerHTML = DATA.sensors.map((s, i) => `
     <div class="sensor-item ${s.status}" data-idx="${i}" style="cursor:pointer;">
       <div class="sensor-icon">${s.icon}</div>
       <div class="sensor-value">${s.value}</div>
@@ -105,17 +114,18 @@ function renderSensors() {
   `).join('');
 
   container.querySelectorAll('.sensor-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const s = MOCK.sensors[+el.dataset.idx];
-      showSensorModal(s);
-    });
+    el.addEventListener('click', () => showSensorModal(DATA.sensors[+el.dataset.idx]));
   });
 }
 
 function renderTimeline() {
   const container = document.getElementById('timeline');
   if (!container) return;
-  container.innerHTML = MOCK.timeline.map(t => `
+  if (!DATA.timeline.length) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">No recent events</div>';
+    return;
+  }
+  container.innerHTML = DATA.timeline.map(t => `
     <div class="timeline-item ${t.type}" style="cursor:pointer;" data-title="${t.title}" data-desc="${t.desc}" data-time="${t.time}">
       <div class="timeline-time">${t.time}</div>
       <div class="timeline-title">${t.title}</div>
@@ -141,7 +151,8 @@ function renderTimeline() {
 function renderDisasterTypeDonut() {
   const container = document.getElementById('donut-legend');
   if (!container) return;
-  container.innerHTML = MOCK.disasterTypes.map(d => `
+  if (!DATA.disasterTypes.length) return;
+  container.innerHTML = DATA.disasterTypes.map(d => `
     <div class="donut-legend-item" style="cursor:pointer;" data-label="${d.label}">
       <div class="donut-legend-dot" style="background:${d.color}"></div>
       <span class="donut-legend-label">${d.label}</span>
@@ -153,7 +164,7 @@ function renderDisasterTypeDonut() {
   container.querySelectorAll('.donut-legend-item').forEach(el => {
     el.addEventListener('click', () => {
       const label = el.dataset.label;
-      const filtered = MOCK.alerts.filter(a => a.type === label);
+      const filtered = DATA.alerts.filter(a => a.type === label);
       showModal({
         title: `${label === 'Flood' ? '🌊' : '⛰️'} ${label} Events`,
         body: filtered.length
@@ -175,8 +186,7 @@ function renderDisasterTypeDonut() {
 
 // ─── STAT CARD CLICKS ────────────────────────────────────────────────────────
 function wireStatCards() {
-  const statCards = document.querySelectorAll('.stat-card');
-  statCards.forEach(card => {
+  document.querySelectorAll('.stat-card').forEach(card => {
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => {
       const label = card.querySelector('.stat-label')?.textContent?.trim();
@@ -194,11 +204,10 @@ function wireStatCards() {
         showModal({
           title: label,
           size: 'sm',
-          body: `
-            <div style="text-align:center;padding:16px 0;">
-              <div style="font-size:48px;font-weight:800;letter-spacing:-2px;margin-bottom:8px;">${value}</div>
-              <div style="font-size:13px;color:var(--text-muted);">${change || ''}</div>
-            </div>`,
+          body: `<div style="text-align:center;padding:16px 0;">
+            <div style="font-size:48px;font-weight:800;letter-spacing:-2px;margin-bottom:8px;">${value}</div>
+            <div style="font-size:13px;color:var(--text-muted);">${change || ''}</div>
+          </div>`,
           actions: [{ id: 'close', label: 'Close', style: 'secondary' }]
         });
       }
@@ -206,84 +215,57 @@ function wireStatCards() {
   });
 }
 
-// ─── MAP FILTER SELECT ───────────────────────────────────────────────────────
+// ─── MAP FILTER ──────────────────────────────────────────────────────────────
 function wireMapFilter() {
   const sel = document.querySelector('.filter-select');
   if (!sel) return;
   sel.addEventListener('change', () => {
     const val = sel.value;
     if (!mapInstance) return;
-    mapInstance.eachLayer(layer => {
-      if (layer instanceof L.Marker) mapInstance.removeLayer(layer);
-    });
-    const filtered = val === 'All Events' ? MOCK.mapMarkers
-      : val === 'Flood Only'     ? MOCK.mapMarkers.filter(m => m.type === 'flood')
-      : val === 'Landslide Only' ? MOCK.mapMarkers.filter(m => m.type === 'landslide')
-      : MOCK.mapMarkers;
+    mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
+    const filtered = val === 'All Events'     ? DATA.mapMarkers
+      : val === 'Flood Only'                  ? DATA.mapMarkers.filter(m => m.type === 'flood')
+      : val === 'Landslide Only'              ? DATA.mapMarkers.filter(m => m.type === 'landslide')
+      : DATA.mapMarkers;
     filtered.forEach(m => addMarker(m));
     showToast(`Map filtered: ${val}`, 'info', 2000);
   });
 }
 
-// ─── RECENT EVENTS TABLE TABS ────────────────────────────────────────────────
-const TABLE_ROWS_DATA = [
-  { event: '🌊 Flood Level 4',   location: 'Koshi River, Sunsari',   severity: 'high', time: '14:52', status: 'Active',     type: 'Flood'     },
-  { event: '⛰️ Major Landslide', location: 'Sindhupalchok',          severity: 'high', time: '14:30', status: 'Active',     type: 'Landslide' },
-  { event: '🌊 Flood Level 3',   location: 'Rapti River, Dang',      severity: 'high',     time: '13:45', status: 'Monitoring', type: 'Flood'     },
-  { event: '⛰️ Landslide Risk 3',location: 'Myagdi District',        severity: 'high',     time: '12:20', status: 'Monitoring', type: 'Landslide' },
-  { event: '🌊 Flood Level 3',   location: 'Bagmati River, Sarlahi', severity: 'high',     time: '12:00', status: 'Monitoring', type: 'Flood'     },
-  { event: '🌊 Flood Watch',     location: 'Bagmati, Lalitpur',      severity: 'medium',   time: '11:00', status: 'Resolved',   type: 'Flood'     },
-  { event: '⛰️ Landslide Risk 2',location: 'Kaski District',         severity: 'medium',   time: '09:30', status: 'Watch',      type: 'Landslide' },
-];
-
-const statusTextColors = { Active: 'var(--accent-red)', Monitoring: 'var(--accent-orange)', Resolved: 'var(--accent-green)', Watch: 'var(--accent-yellow)' };
+// ─── RECENT EVENTS TABLE — driven from DATA.alerts ───────────────────────────
+const statusTextColors = { true: 'var(--accent-red)', false: 'var(--accent-green)' };
 
 function renderTableRows(filter = 'All') {
   const tbody = document.querySelector('.data-table tbody');
   if (!tbody) return;
-  const rows = filter === 'All' ? TABLE_ROWS_DATA : TABLE_ROWS_DATA.filter(r => r.type === filter);
-  tbody.innerHTML = rows.map(r => `
-    <tr style="cursor:pointer;" data-event="${r.event}" data-location="${r.location}" data-severity="${r.severity}" data-status="${r.status}">
-      <td>${r.event}</td>
-      <td>${r.location}</td>
-      <td><span class="badge badge-${r.severity}">${r.severity}</span></td>
-      <td>${r.time}</td>
-      <td><span style="color:${statusTextColors[r.status]};font-size:11px;font-weight:600;">● ${r.status}</span></td>
-    </tr>
-  `).join('');
+  const rows = filter === 'All' ? DATA.alerts : DATA.alerts.filter(r => r.type === filter);
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">No events</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const statusLabel = r.isActive ? 'Active' : 'Resolved';
+    const statusColor = r.isActive ? 'var(--accent-red)' : 'var(--accent-green)';
+    return `
+      <tr style="cursor:pointer;" data-id="${r.id}">
+        <td>${r.type === 'Flood' ? '🌊' : '⛰️'} ${r.type}</td>
+        <td>${r.location}</td>
+        <td><span class="badge badge-${r.severity}">${r.severity}</span></td>
+        <td>${r.time}</td>
+        <td><span style="color:${statusColor};font-size:11px;font-weight:600;">● ${statusLabel}</span></td>
+      </tr>
+    `;
+  }).join('');
 
   tbody.querySelectorAll('tr').forEach(row => {
     row.addEventListener('click', () => {
-      showModal({
-        title: `${row.dataset.event}`,
-        size: 'sm',
-        body: `
-          <div style="display:grid;gap:8px;">
-            <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
-              <span style="font-size:12px;color:var(--text-muted);">Location</span>
-              <span style="font-size:12px;font-weight:600;">📍 ${row.dataset.location}</span>
-            </div>
-            <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
-              <span style="font-size:12px;color:var(--text-muted);">Severity</span>
-              <span class="badge badge-${row.dataset.severity}">${row.dataset.severity}</span>
-            </div>
-            <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
-              <span style="font-size:12px;color:var(--text-muted);">Status</span>
-              <span style="font-size:12px;font-weight:600;color:${statusTextColors[row.dataset.status]};">● ${row.dataset.status}</span>
-            </div>
-          </div>`,
-        actions: [
-          { id: 'view', label: '🔍 View Full Alert', style: 'primary', onClick: () => window.location.href = 'pages/alerts.html' },
-          { id: 'close', label: 'Close', style: 'secondary' }
-        ]
-      });
+      const a = DATA.alerts.find(x => x.id === row.dataset.id);
+      if (a) showAlertDetailModal(a);
     });
   });
 }
 
-function wireTableRows() {
-  renderTableRows('All');
-}
+function wireTableRows() { renderTableRows('All'); }
 
 function wireRecentEventsTabs() {
   document.addEventListener('click', e => {
@@ -293,9 +275,7 @@ function wireRecentEventsTabs() {
     tabs.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
     e.target.classList.add('active');
     const label = e.target.textContent.trim();
-    if (label === 'All' || label === 'Flood' || label === 'Landslide') {
-      renderTableRows(label);
-    }
+    if (label === 'All' || label === 'Flood' || label === 'Landslide') renderTableRows(label);
   });
 }
 
@@ -305,38 +285,49 @@ function wireExportBtn() {
     if (btn.textContent.includes('Export')) {
       btn.addEventListener('click', () => {
         exportCSV(
-          MOCK.alerts.map(a => ({ type: a.type, severity: a.severity, location: a.location, magnitude: a.magnitude, time: a.time })),
-          'nepal-flds-alerts.csv'
+          DATA.alerts.map(a => ({ type: a.type, severity: a.severity, location: a.location, magnitude: a.magnitude, time: a.time })),
+          'nepalert-alerts.csv'
         );
       });
     }
   });
 }
 
+// ─── NAV BADGE ───────────────────────────────────────────────────────────────
+function updateNavAlertBadge() {
+  const count = DATA.stats.activeAlerts || 0;
+  document.querySelectorAll('#nav-alert-badge').forEach(badge => {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? '' : 'none';
+  });
+}
+
 // ─── DETAIL MODALS ───────────────────────────────────────────────────────────
 function showAlertDetailModal(a) {
-  const colors = { high: '#f97316', medium: '#eab308', low: '#22c55e' };
+  const colors = { high: '#f97316', critical: '#ef4444', medium: '#eab308', low: '#22c55e', moderate: '#eab308' };
+  const coordsHtml = a.coords
+    ? `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Coordinates</div>
+        <div style="font-size:13px;font-weight:600;margin-top:4px;">${a.coords[0].toFixed(2)}°N, ${a.coords[1].toFixed(2)}°E</div>
+       </div>`
+    : '';
   showModal({
     title: `${a.type === 'Flood' ? '🌊' : '⛰️'} ${a.type} — ${a.location}`,
     size: 'md',
     body: `
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        <span class="badge badge-${a.severity}" style="font-size:12px;">${a.severity}</span>
+        <span class="badge badge-${a.severity}">${a.severity}</span>
         <span style="font-size:12px;color:var(--text-muted);">🕐 ${a.time}</span>
+        <span style="font-size:12px;color:${a.isActive ? 'var(--accent-red)' : 'var(--accent-green)'};">● ${a.isActive ? 'Active' : 'Resolved'}</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Magnitude</div>
-          <div style="font-size:16px;font-weight:700;margin-top:4px;color:${colors[a.severity]};">${a.magnitude}</div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Probability</div>
+          <div style="font-size:16px;font-weight:700;margin-top:4px;color:${colors[a.severity] || '#94a3b8'};">${a.magnitude}</div>
         </div>
-        <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Coordinates</div>
-          <div style="font-size:13px;font-weight:600;margin-top:4px;">${a.coords[0].toFixed(2)}°N, ${a.coords[1].toFixed(2)}°E</div>
-        </div>
+        ${coordsHtml}
       </div>
-      <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text-secondary);line-height:1.6;">
-        This ${a.type.toLowerCase()} event is currently at <strong style="color:${colors[a.severity]};">${a.severity}</strong> severity level. Monitoring teams have been notified and response protocols are in effect.
-      </div>`,
+      ${a.message ? `<div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text-secondary);line-height:1.6;">${a.message}</div>` : ''}`,
     actions: [
       { id: 'map', label: '🗺️ View on Map', style: 'secondary', onClick: () => window.location.href = (window.location.pathname.includes('pages') ? '' : 'pages/') + 'map.html' },
       { id: 'respond', label: '⚡ Respond', style: 'primary', onClick: () => showToast(`Response team dispatched to ${a.location}`, 'success') }
@@ -352,18 +343,12 @@ function showPredictionDetailModal(p) {
     body: `
       <div style="text-align:center;padding:12px 0 20px;">
         <div style="font-size:48px;font-weight:800;color:${p.color};letter-spacing:-2px;">${p.probability}%</div>
-        <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Probability in next 72h</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Probability</div>
         <span class="badge badge-${riskLevel}" style="margin-top:8px;display:inline-flex;">${riskLevel} risk</span>
       </div>
       <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;">
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Location</div>
         <div style="font-size:13px;font-weight:600;">📍 ${p.location}</div>
-      </div>
-      <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px 14px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Trend</div>
-        <div style="font-size:13px;font-weight:600;color:${p.trend === 'up' ? 'var(--accent-red)' : p.trend === 'down' ? 'var(--accent-green)' : 'var(--text-muted)'};">
-          ${p.trend === 'up' ? '↑ Increasing' : p.trend === 'down' ? '↓ Decreasing' : '→ Stable'}
-        </div>
       </div>`,
     actions: [
       { id: 'full', label: '🔮 Full Predictions', style: 'primary', onClick: () => window.location.href = (window.location.pathname.includes('pages') ? '' : 'pages/') + 'predictions.html' },
@@ -374,11 +359,13 @@ function showPredictionDetailModal(p) {
 
 function showSensorModal(s) {
   const statusColors = { active: 'var(--accent-green)', warning: 'var(--accent-yellow)', offline: 'var(--accent-red)' };
-  const thresholds = {
-    'Rainfall': '150 mm/24h', 'River Level': '+2.5 m', 'Soil Moist.': '85%',
-    'Flow Rate': '1500 m³/s', 'Humidity': '95%', 'Wind Speed': '60 km/h',
-    'Temperature': '35°C', 'Slope Stab.': 'Stable', 'Sediment': 'Moderate'
-  };
+  const readingsHtml = Object.entries(s.readings || {})
+    .filter(([, v]) => v !== undefined && v !== null)
+    .map(([k, v]) => `
+      <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
+        <span style="font-size:12px;color:var(--text-muted);text-transform:capitalize;">${k}</span>
+        <span style="font-size:12px;font-weight:600;">${v}</span>
+      </div>`).join('');
   showModal({
     title: `${s.icon} ${s.name} Sensor`,
     size: 'sm',
@@ -387,14 +374,11 @@ function showSensorModal(s) {
         <div style="font-size:40px;margin-bottom:8px;">${s.icon}</div>
         <div style="font-size:36px;font-weight:800;letter-spacing:-1px;">${s.value}</div>
         <div style="margin-top:8px;">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${statusColors[s.status]};">● ${s.status}</span>
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${statusColors[s.status] || 'var(--text-muted)'};">● ${s.status}</span>
         </div>
       </div>
       <div style="display:grid;gap:8px;">
-        <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
-          <span style="font-size:12px;color:var(--text-muted);">Alert Threshold</span>
-          <span style="font-size:12px;font-weight:600;">${thresholds[s.name] || 'N/A'}</span>
-        </div>
+        ${readingsHtml}
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
           <span style="font-size:12px;color:var(--text-muted);">Last Updated</span>
           <span style="font-size:12px;font-weight:600;">${new Date().toLocaleTimeString()}</span>
@@ -417,14 +401,15 @@ function startClock() {
 }
 
 function startLiveCounter() {
-  simulateLiveUpdate(delta => {
+  startLivePoll(delta => {
     const el = document.getElementById('stat-alerts');
-    if (!el) return;
-    const next = Math.max(0, parseInt(el.textContent) + delta);
-    el.textContent = next;
-    if (delta > 0) { el.style.color = 'var(--accent-red)'; showToast('New alert detected in Nepal', 'warning', 3000); }
-    else if (delta < 0) el.style.color = 'var(--accent-green)';
-    setTimeout(() => el.style.color = '', 1200);
+    if (el) {
+      el.textContent = DATA.stats.activeAlerts;
+      if (delta > 0) { el.style.color = 'var(--accent-red)'; showToast('New alert detected', 'warning', 3000); }
+      else if (delta < 0) el.style.color = 'var(--accent-green)';
+      setTimeout(() => el.style.color = '', 1200);
+    }
+    updateNavAlertBadge();
   });
 }
 

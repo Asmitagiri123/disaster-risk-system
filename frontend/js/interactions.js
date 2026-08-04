@@ -81,7 +81,12 @@ function showModal({ title, body, actions = [], size = 'md' }) {
 
   actions.forEach(a => {
     const btn = modal.querySelector(`[data-action="${a.id}"]`);
-    if (btn && a.onClick) btn.addEventListener('click', () => { a.onClick(); if (a.closeOnClick !== false) closeModal(); });
+    if (btn) {
+      btn.addEventListener('click', () => {
+        if (a.onClick) a.onClick();
+        if (a.closeOnClick !== false) closeModal();
+      });
+    }
   });
 
   return modal;
@@ -106,39 +111,126 @@ function showConfirm(message, onConfirm, confirmLabel = 'Confirm', confirmStyle 
 }
 
 // ─── NOTIFICATION PANEL ──────────────────────────────────────────────────────
-const NOTIFICATIONS = [
-  { id: 1, title: 'Koshi River — Level 4 Flood', desc: 'Embankment breach risk. NDRRMA alerted.', time: '8 min ago', type: 'critical', read: false },
-  { id: 2, title: 'Sindhupalchok Landslide', desc: 'Major landslide on Araniko Highway.', time: '22 min ago', type: 'critical', read: false },
-  { id: 3, title: 'Rapti River rising', desc: 'Level 3 alert issued for Dang district.', time: '1h ago', type: 'warning', read: false },
-  { id: 4, title: 'Model accuracy updated', desc: 'Prediction model retrained — 91.8%', time: '2h ago', type: 'info', read: true },
-];
+const NOTIFICATION_STORAGE_KEY = 'nepalert-notifications';
+
+function getStoredNotificationState() {
+  try {
+    return JSON.parse(localStorage.getItem(NOTIFICATION_STORAGE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveNotificationState(state) {
+  localStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(state));
+}
+
+function getNotifications() {
+  const stored = getStoredNotificationState();
+  const alerts = Array.isArray(DATA?.alerts) ? DATA.alerts : [];
+
+  const liveNotifications = alerts.map((alert, index) => {
+    const id = `alert-${alert.id || index}`;
+    const title = `${alert.type || (alert.disasterType === 'flood' ? 'Flood' : 'Landslide')} — ${alert.location || 'Nepal'}`;
+    const desc = alert.message || `${alert.severity || 'medium'} risk alert from the live feed.`;
+    const type = (alert.severity === 'critical' || alert.severity === 'high') ? 'critical' : (alert.severity === 'medium') ? 'warning' : 'info';
+    return {
+      id,
+      title,
+      desc,
+      time: alert.time || 'just now',
+      type,
+      read: !!stored[id],
+      alert,
+    };
+  });
+
+  return liveNotifications;
+}
+
+function renderNotifBody() {
+  const typeColors = { critical: 'var(--accent-red)', warning: 'var(--accent-orange)', info: 'var(--accent-blue)' };
+  const notifications = getNotifications();
+
+  if (!notifications.length) {
+    return `<div style="padding:16px 0;text-align:center;color:var(--text-muted);font-size:13px;">No new notifications</div>`;
+  }
+
+  return notifications.map(n => `
+    <div data-notif-id="${n.id}" onclick="handleNotificationClick('${n.id}')" style="
+      display:flex;gap:12px;padding:12px;border-radius:var(--radius-sm);
+      background:${n.read ? 'transparent' : 'rgba(59,130,246,0.05)'};
+      border:1px solid ${n.read ? 'transparent' : 'rgba(59,130,246,0.15)'};
+      margin-bottom:8px;transition:all 0.2s;cursor:pointer;
+    ">
+      <div style="width:8px;height:8px;border-radius:50%;background:${typeColors[n.type]};margin-top:5px;flex-shrink:0;opacity:${n.read ? '0.3' : '1'}"></div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:${n.read ? '500' : '700'};margin-bottom:2px;">${n.title}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${n.desc}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">🕐 ${n.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function syncNotifBadges() {
+  const unreadCount = getNotifications().filter(n => !n.read).length;
+  document.querySelectorAll('.notif-badge').forEach(b => {
+    if (unreadCount === 0) {
+      b.style.display = 'none';
+      b.textContent = '';
+    } else {
+      b.style.display = '';
+      b.textContent = unreadCount;
+    }
+  });
+  return unreadCount;
+}
+
+function markNotificationRead(id) {
+  const state = getStoredNotificationState();
+  state[id] = true;
+  saveNotificationState(state);
+  syncNotifBadges();
+}
+
+function handleNotificationClick(id) {
+  const notification = getNotifications().find(n => n.id === id);
+  if (!notification) return;
+
+  markNotificationRead(id);
+  closeModal();
+
+  if (notification.alert && typeof window.showAlertDetailModal === 'function') {
+    window.showAlertDetailModal(notification.alert);
+    return;
+  }
+
+  showModal({
+    title: `🔔 ${notification.title}`,
+    size: 'sm',
+    body: `<div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">${notification.desc}</div>`,
+    actions: [{ id: 'close', label: 'Close', style: 'secondary' }]
+  });
+}
 
 function openNotificationPanel() {
-  const unread = NOTIFICATIONS.filter(n => !n.read);
-  const typeColors = { critical: 'var(--accent-red)', warning: 'var(--accent-orange)', info: 'var(--accent-blue)' };
+  const unread = getNotifications().filter(n => !n.read);
 
   showModal({
     title: `🔔 Notifications (${unread.length} unread)`,
     size: 'sm',
-    body: NOTIFICATIONS.map(n => `
-      <div style="
-        display:flex;gap:12px;padding:12px;border-radius:var(--radius-sm);
-        background:${n.read ? 'transparent' : 'rgba(59,130,246,0.05)'};
-        border:1px solid ${n.read ? 'transparent' : 'rgba(59,130,246,0.15)'};
-        margin-bottom:8px;
-      ">
-        <div style="width:8px;height:8px;border-radius:50%;background:${typeColors[n.type]};margin-top:5px;flex-shrink:0;${n.read ? 'opacity:0.3' : ''}"></div>
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:${n.read ? '500' : '700'};margin-bottom:2px;">${n.title}</div>
-          <div style="font-size:11px;color:var(--text-muted);">${n.desc}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">🕐 ${n.time}</div>
-        </div>
-      </div>
-    `).join(''),
+    body: renderNotifBody(),
     actions: [
       { id: 'mark-all', label: 'Mark All Read', style: 'secondary', onClick: () => {
-        NOTIFICATIONS.forEach(n => n.read = true);
-        document.querySelectorAll('.notif-badge').forEach(b => b.style.display = 'none');
+        const state = getStoredNotificationState();
+        getNotifications().forEach(n => { state[n.id] = true; });
+        saveNotificationState(state);
+        syncNotifBadges();
+        const bodyEl = document.querySelector('#modal-overlay [style*="overflow-y"]');
+        if (bodyEl) bodyEl.innerHTML = renderNotifBody();
+        const titleEl = document.querySelector('#modal-overlay [style*="font-weight:700"]');
+        if (titleEl) titleEl.textContent = '🔔 Notifications (0 unread)';
         showToast('All notifications marked as read', 'success');
       }, closeOnClick: false }
     ]
@@ -273,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => btn.style.animation = '', 700);
     });
   });
+  syncNotifBadges();
 
   // Avatar → profile
   document.querySelectorAll('.avatar').forEach(a => a.addEventListener('click', openProfileModal));

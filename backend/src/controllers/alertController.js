@@ -47,15 +47,8 @@ exports.resolveAlert = async (req, res) => {
 
 exports.getAlertStats = async (req, res) => {
   try {
-    const [total, active, byType] = await Promise.all([
-      Alert.countDocuments(),
-      Alert.countDocuments({ isActive: true }),
-      Alert.aggregate([
-        { $group: { _id: '$disasterType', count: { $sum: 1 }, totalNotified: { $sum: '$totalNotified' } } },
-      ]),
-    ]);
-
-    res.json({ success: true, data: { total, active, byType } });
+    const stats = await alertService.getAlertStats();
+    res.json({ success: true, data: stats });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to fetch alert stats' });
   }

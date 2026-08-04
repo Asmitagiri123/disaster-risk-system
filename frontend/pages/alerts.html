@@ -22,7 +22,7 @@
     <nav class="sidebar-nav">
       <div class="nav-section-label">Overview</div>
       <a href="../index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-      <a href="alerts.html" class="nav-item active"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">9</span></a>
+      <a href="alerts.html" class="nav-item active"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge" id="nav-alert-badge" style="display:none;"></span></a>
       <a href="map.html" class="nav-item"><span class="nav-icon">🗺️</span> Nepal Map</a>
       <div class="nav-section-label">Analysis</div>
       <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
@@ -46,12 +46,12 @@
       <div class="header-left">
         <div>
           <div class="page-title">Active Alerts</div>
-          <div class="page-subtitle">9 incidents requiring attention</div>
+          <div class="page-subtitle" id="alert-page-subtitle">Loading alerts…</div>
         </div>
       </div>
       <div class="header-right">
         <div class="status-indicator"><div class="status-dot"></div> Live Feed</div>
-        <button class="header-btn">🔔<span class="notif-badge">4</span></button>
+        <button class="header-btn">🔔<span class="notif-badge" style="display:none;"></span></button>
         <div class="avatar">ND</div>
       </div>
     </header>
@@ -82,17 +82,17 @@
       <div class="grid grid-3 fade-in fade-in-delay-1" style="margin-bottom:20px;">
         <div class="stat-card orange">
           <div class="stat-icon orange">🟠</div>
-          <div class="stat-value">5</div>
+          <div class="stat-value" id="alert-count-high">0</div>
           <div class="stat-label">High</div>
         </div>
         <div class="stat-card yellow">
           <div class="stat-icon yellow">🟡</div>
-          <div class="stat-value">2</div>
+          <div class="stat-value" id="alert-count-medium">0</div>
           <div class="stat-label">Medium</div>
         </div>
         <div class="stat-card green">
           <div class="stat-icon green">🟢</div>
-          <div class="stat-value">2</div>
+          <div class="stat-value" id="alert-count-low">0</div>
           <div class="stat-label">Low</div>
         </div>
       </div>
@@ -108,86 +108,57 @@
 <script src="../js/mock-data.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
-const ALERT_DETAILS = [
-  {
-    type: 'Flood', icon: '🌊', severity: 'high',
-    location: 'Koshi River, Sunsari District',
-    magnitude: 'Level 4', time: '8 min ago',
-    affected: '~85,000 people', status: 'Active Response',
-    desc: 'Koshi River has breached danger level at Chatara gauge station. Embankment breach risk in Sunsari and Saptari. NDRRMA and Army deployed. Evacuation of riverbank settlements underway.',
-    river: 'Koshi River', province: 'Province 1'
-  },
-  {
-    type: 'Landslide', icon: '⛰️', severity: 'high',
-    location: 'Sindhupalchok District, Bagmati Province',
-    magnitude: 'Major', time: '22 min ago',
-    affected: '~12,000 people', status: 'Rescue Ongoing',
-    desc: 'Major landslide triggered by continuous rainfall (>200mm/24h) on Araniko Highway near Tatopani. Road blocked. Multiple households at risk. Rescue teams from Bhaktapur dispatched.',
-    river: '—', province: 'Bagmati Province'
-  },
-  {
-    type: 'Flood', icon: '🌊', severity: 'high',
-    location: 'Rapti River, Dang District',
-    magnitude: 'Level 3', time: '1h ago',
-    affected: '~42,000 people', status: 'Evacuation Advisory',
-    desc: 'Rapti River rising rapidly at Kusum gauge. Level 3 flood alert issued. Low-lying areas of Ghorahi and Tulsipur at risk. Relief camps established at Dang campus.',
-    river: 'Rapti River', province: 'Lumbini Province'
-  },
-  {
-    type: 'Landslide', icon: '⛰️', severity: 'high',
-    location: 'Myagdi District, Gandaki Province',
-    magnitude: 'Risk Level 3', time: '2h ago',
-    affected: '~8,500 people', status: 'Monitoring',
-    desc: 'Continuous rainfall saturating slopes along Kali Gandaki corridor. Slope stability index critical. Beni–Jomsom road at risk. Vulnerable settlements alerted.',
-    river: 'Kali Gandaki', province: 'Gandaki Province'
-  },
-  {
-    type: 'Flood', icon: '🌊', severity: 'high',
-    location: 'Bagmati River, Sarlahi District',
-    magnitude: 'Level 3', time: '2h ago',
-    affected: '~60,000 people', status: 'Monitoring',
-    desc: 'Bagmati River exceeding danger level at Karmaiya gauge. Madhesh Province terai settlements at risk. Embankment monitoring intensified. Relief pre-positioned.',
-    river: 'Bagmati River', province: 'Madhesh Province'
-  },
-  {
-    type: 'Landslide', icon: '⛰️', severity: 'medium',
-    location: 'Kaski District, Gandaki Province',
-    magnitude: 'Risk Level 2', time: '3h ago',
-    affected: '~5,200 people', status: 'Watch',
-    desc: 'Soil saturation at 92% on slopes above Pokhara outskirts. Landslide watch issued for Hemja and Lekhnath areas. Residents advised to stay alert.',
-    river: '—', province: 'Gandaki Province'
-  },
-  {
-    type: 'Flood', icon: '🌊', severity: 'medium',
-    location: 'Narayani River, Chitwan District',
-    magnitude: 'Level 2', time: '4h ago',
-    affected: '~28,000 people', status: 'Watch',
-    desc: 'Narayani River at warning level at Narayanghat gauge. Riverbank communities in Bharatpur advised to monitor. No evacuation yet but pre-positioning of boats underway.',
-    river: 'Narayani River', province: 'Bagmati Province'
-  },
-  {
-    type: 'Landslide', icon: '⛰️', severity: 'low',
-    location: 'Dolakha District, Bagmati Province',
-    magnitude: 'Watch', time: '5h ago',
-    affected: '~3,000 people', status: 'Watch',
-    desc: 'Minor slope instability detected near Charikot. Rainfall forecast to continue. Precautionary watch issued. No immediate threat but monitoring ongoing.',
-    river: 'Tamakoshi River', province: 'Bagmati Province'
-  },
-  {
-    type: 'Flood', icon: '🌊', severity: 'low',
-    location: 'Karnali River, Surkhet District',
-    magnitude: 'Level 1', time: '6h ago',
-    affected: '~15,000 people', status: 'Advisory',
-    desc: 'Karnali River at advisory level. Upstream rainfall in Humla and Mugu may cause rise. Birendranagar municipality on standby. Situation being monitored.',
-    river: 'Karnali River', province: 'Karnali Province'
-  },
-];
+const statusColors = { high: '#f97316', medium: '#eab308', low: '#22c55e', critical: '#ef4444' };
+let alertList = [];
+let filteredAlerts = [];
+let severitySelect;
+let typeSelect;
 
-const statusColors = { high: '#f97316', medium: '#eab308', low: '#22c55e' };
+function normalizeSeverity(riskLevel) {
+  const level = (riskLevel || '').toLowerCase();
+  if (level === 'critical' || level === 'high') return 'critical';
+  if (level === 'moderate' || level === 'medium') return 'medium';
+  return 'low';
+}
+
+function getSeverityBucket(riskLevel) {
+  const severity = normalizeSeverity(riskLevel);
+  return severity === 'critical' || severity === 'high' ? 'high' : severity === 'medium' ? 'medium' : 'low';
+}
+
+function mapAlertToCardModel(a) {
+  const mapped = mapAlert(a);
+  const severity = normalizeSeverity(a.riskLevel);
+  const type = mapped.type || (a.disasterType === 'flood' ? 'Flood' : a.disasterType === 'landslide' ? 'Landslide' : 'Alert');
+
+  return {
+    ...mapped,
+    severity,
+    type,
+    icon: type === 'Flood' ? '🌊' : type === 'Landslide' ? '⛰️' : '⚠️',
+    location: a.location?.address || a.location?.city || 'Nepal',
+    affected: a.affectedRadius ? `${a.affectedRadius} km radius` : 'Area-based alert',
+    status: a.isActive ? 'Active Response' : 'Resolved',
+    desc: a.message || `${type} alert generated from monitored conditions.`,
+    river: a.location?.address || '—',
+    province: a.location?.city || 'Nepal',
+    time: timeAgo(a.createdAt),
+    createdAt: a.createdAt,
+  };
+}
 
 function renderAlertCards(data) {
-  document.getElementById('alert-cards').innerHTML = data.map((a, i) => `
-    <div class="card fade-in" style="border-left:3px solid ${statusColors[a.severity]};">
+  filteredAlerts = data;
+  const container = document.getElementById('alert-cards');
+  if (!container) return;
+
+  if (!data.length) {
+    container.innerHTML = '<div class="card fade-in" style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:24px;">No alerts match the current filters.</div>';
+    return;
+  }
+
+  container.innerHTML = data.map((a, i) => `
+    <div class="card fade-in" style="border-left:3px solid ${statusColors[a.severity] || statusColors.low};">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="font-size:28px;">${a.icon}</div>
@@ -210,7 +181,7 @@ function renderAlertCards(data) {
         </div>
         <div style="background:var(--bg-secondary);border-radius:6px;padding:8px;">
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Status</div>
-          <div style="font-size:12px;font-weight:700;margin-top:2px;color:${statusColors[a.severity]};">${a.status}</div>
+          <div style="font-size:12px;font-weight:700;margin-top:2px;color:${statusColors[a.severity] || statusColors.low};">${a.status}</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -224,44 +195,85 @@ function renderAlertCards(data) {
   `).join('');
 }
 
+function updateAlertSummary(count) {
+  const el = document.getElementById('alert-page-subtitle');
+  if (!el) return;
+  el.textContent = count > 0 ? `${count} incident${count === 1 ? '' : 's'} requiring attention` : 'No active alerts';
+}
+
+function updateSeverityCards(data) {
+  const counts = { high: 0, medium: 0, low: 0 };
+  data.forEach(a => {
+    const bucket = getSeverityBucket(a.riskLevel);
+    if (bucket === 'high') counts.high += 1;
+    else if (bucket === 'medium') counts.medium += 1;
+    else counts.low += 1;
+  });
+
+  document.getElementById('alert-count-high')?.replaceChildren(document.createTextNode(String(counts.high)));
+  document.getElementById('alert-count-medium')?.replaceChildren(document.createTextNode(String(counts.medium)));
+  document.getElementById('alert-count-low')?.replaceChildren(document.createTextNode(String(counts.low)));
+}
+
+function updateAlertBadge(count) {
+  document.querySelectorAll('#nav-alert-badge').forEach(badge => {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? '' : 'none';
+  });
+}
+
+function applyFilters() {
+  const sev = severitySelect?.value || 'All Severities';
+  const type = typeSelect?.value || 'All Types';
+  const filtered = alertList.filter(a => {
+    const alignsWithSeverity = sev === 'All Severities' || (
+      (sev === 'High' && (a.severity === 'high' || a.severity === 'critical')) ||
+      (sev === 'Medium' && a.severity === 'medium') ||
+      (sev === 'Low' && a.severity === 'low')
+    );
+
+    const alignsWithType = type === 'All Types' || a.type === type;
+    return alignsWithSeverity && alignsWithType;
+  });
+
+  renderAlertCards(filtered);
+  updateAlertSummary(filtered.length);
+  updateSeverityCards(filtered);
+}
+
+async function loadAlertsFromBackend() {
+  try {
+    await loadDashboardData();
+    alertList = DATA.alerts.map(mapAlertToCardModel);
+    const activeAlerts = alertList.filter(a => a.isActive !== false);
+    renderAlertCards(activeAlerts);
+    updateAlertSummary(activeAlerts.length);
+    updateSeverityCards(activeAlerts);
+    updateAlertBadge(activeAlerts.length);
+  } catch (err) {
+    console.error('Failed to load alerts from backend', err);
+    renderAlertCards([]);
+    updateAlertSummary(0);
+    updateSeverityCards([]);
+    updateAlertBadge(0);
+  }
+}
+
 // Populate sidebar username
 const _u = Auth.getUser();
 const _unEl = document.getElementById('sidebar-username');
 if (_unEl && _u) _unEl.textContent = _u.name || _u.email || 'NepAlert';
 
-renderAlertCards(ALERT_DETAILS);
-
-// ── Severity filter cards ──
-document.querySelectorAll('.stat-card').forEach(card => {
-  card.style.cursor = 'pointer';
-  card.addEventListener('click', () => {
-    const label = card.querySelector('.stat-label')?.textContent?.trim().toLowerCase();
-    const filtered = label === 'high' || label === 'medium' || label === 'low'
-      ? ALERT_DETAILS.filter(a => a.severity === label)
-      : ALERT_DETAILS;
-    renderAlertCards(filtered);
-    showToast(`Showing ${filtered.length} ${label !== 'all' ? label : ''} alerts`, 'info', 2000);
-  });
-});
-
-// ── Type + severity dropdowns ──
-const [severitySelect, typeSelect] = document.querySelectorAll('.filter-select');
-function applyFilters() {
-  const sev  = severitySelect.value;
-  const type = typeSelect.value;
-  const filtered = ALERT_DETAILS.filter(a =>
-    (sev  === 'All Severities' || a.severity === sev.toLowerCase()) &&
-    (type === 'All Types'      || a.type     === type)
-  );
-  renderAlertCards(filtered);
-  showToast(`${filtered.length} alert(s) match filters`, 'info', 2000);
-}
+severitySelect = document.querySelectorAll('.filter-select')[0];
+typeSelect = document.querySelectorAll('.filter-select')[1];
 if (severitySelect) severitySelect.addEventListener('change', applyFilters);
-if (typeSelect)     typeSelect.addEventListener('change', applyFilters);
+if (typeSelect) typeSelect.addEventListener('change', applyFilters);
 
-// ── Details modal ──
+loadAlertsFromBackend();
+
 function openDetailsModal(i) {
-  const a = ALERT_DETAILS[i];
+  const a = filteredAlerts[i];
+  if (!a) return;
   showModal({
     title: `${a.icon} ${a.type} — ${a.location}`,
     size: 'md',
@@ -274,7 +286,7 @@ function openDetailsModal(i) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Magnitude</div>
-          <div style="font-size:15px;font-weight:700;margin-top:4px;color:${statusColors[a.severity]};">${a.magnitude}</div>
+          <div style="font-size:15px;font-weight:700;margin-top:4px;color:${statusColors[a.severity] || statusColors.low};">${a.magnitude}</div>
         </div>
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Affected</div>
@@ -291,14 +303,14 @@ function openDetailsModal(i) {
       </div>`,
     actions: [
       { id: 'map', label: '🗺️ View on Map', style: 'secondary', onClick: () => window.location.href = 'map.html' },
-      { id: 'respond', label: '⚡ Respond', style: 'primary', onClick: () => openRespondModal(i) }
+      { id: 'respond', label: '⚡ Respond', style: 'primary', onClick: () => openRespondModal(filteredAlerts.indexOf(a)) }
     ]
   });
 }
 
-// ── Respond modal ──
 function openRespondModal(i) {
-  const a = ALERT_DETAILS[i];
+  const a = filteredAlerts[i];
+  if (!a) return;
   showModal({
     title: `⚡ Respond — ${a.type} at ${a.location}`,
     size: 'md',

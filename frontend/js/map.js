@@ -29,7 +29,7 @@ function initMap(containerId = 'leaflet-map') {
     maxZoom: 18,
   }).addTo(mapInstance);
 
-  MOCK.mapMarkers.forEach(marker => addMarker(marker));
+  (DATA.mapMarkers || []).forEach(marker => addMarker(marker));
 
   L.control.zoom({ position: 'bottomright' }).addTo(mapInstance);
 

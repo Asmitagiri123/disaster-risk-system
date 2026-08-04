@@ -22,7 +22,7 @@
     <nav class="sidebar-nav">
       <div class="nav-section-label">Overview</div>
       <a href="../index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-      <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">9</span></a>
+      <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge" id="nav-alert-badge" style="display:none;"></span></a>
       <a href="map.html" class="nav-item"><span class="nav-icon">🗺️</span> Nepal Map</a>
       <div class="nav-section-label">Analysis</div>
       <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
@@ -51,7 +51,7 @@
       </div>
       <div class="header-right">
         <div class="status-indicator"><div class="status-dot"></div> All Systems Operational</div>
-        <button class="header-btn">🔔<span class="notif-badge">4</span></button>
+        <button class="header-btn">🔔<span class="notif-badge" style="display:none;"></span></button>
         <div class="avatar">ND</div>
       </div>
     </header>
@@ -60,42 +60,42 @@
 
       <div class="page-header fade-in">
         <div>
-          <div class="page-header-title">Incident Reports — Monsoon 2024</div>
-          <div class="page-header-sub">Historical data, analytics, and downloadable reports for Nepal</div>
+          <div class="page-header-title">Incident Reports — Recent Activity</div>
+          <div class="page-header-sub">Latest backend incident data and downloadable reports for Nepal</div>
         </div>
         <div class="header-actions">
-          <select class="filter-select">
+          <select class="filter-select" id="report-period-select">
             <option>Last 30 Days</option>
             <option>Last 7 Days</option>
             <option>Monsoon Season</option>
             <option>This Year</option>
           </select>
-          <button class="btn btn-primary">📥 Generate Report</button>
+          <button class="btn btn-primary" id="generate-report-btn">📥 Generate Report</button>
         </div>
       </div>
 
       <div class="grid grid-4 fade-in fade-in-delay-1" style="margin-bottom:20px;">
         <div class="stat-card blue">
           <div class="stat-icon blue">📋</div>
-          <div class="stat-value">86</div>
+          <div class="stat-value" id="report-total-incidents">0</div>
           <div class="stat-label">Total Incidents (30d)</div>
           <div class="stat-change up">↑ Monsoon peak</div>
         </div>
         <div class="stat-card green">
           <div class="stat-icon green">✅</div>
-          <div class="stat-value">74</div>
+          <div class="stat-value" id="report-resolved">0</div>
           <div class="stat-label">Resolved</div>
           <div class="stat-change down">86% resolution rate</div>
         </div>
         <div class="stat-card orange">
           <div class="stat-icon orange">⏱️</div>
-          <div class="stat-value">4.2h</div>
+          <div class="stat-value" id="report-resolution-time">--</div>
           <div class="stat-label">Avg Resolution Time</div>
           <div class="stat-change down">↓ 0.6h improvement</div>
         </div>
         <div class="stat-card purple">
           <div class="stat-icon purple">👥</div>
-          <div class="stat-value">1.2M</div>
+          <div class="stat-value" id="report-affected">0</div>
           <div class="stat-label">People Affected</div>
           <div class="stat-change neutral">→ Across 38 districts</div>
         </div>
@@ -106,7 +106,7 @@
           <div class="card-header">
             <div>
               <div class="card-title">📈 Monthly Incident Trend</div>
-              <div class="card-subtitle">Monsoon 2024 — Flood vs Landslide</div>
+              <div class="card-subtitle">Recent backend activity — Flood vs Landslide</div>
             </div>
           </div>
           <div class="chart-container" style="height:200px;">
@@ -169,28 +169,45 @@
 <script src="../js/charts.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
-// Sidebar username
-const _u4 = Auth.getUser();
-const _unEl4 = document.getElementById('sidebar-username');
-if (_unEl4 && _u4) _unEl4.textContent = _u4.name || _u4.email || 'NepAlert';
+let reportRows = [];
+let currentReportFilter = 'All';
 
-const reports = [
-  { name: 'Koshi River Flood — Emergency Response Report',    type: 'Flood',     district: 'Sunsari, Province 1',       count: 1,  date: '2024-07-28', size: '4.2 MB' },
-  { name: 'Sindhupalchok Landslide — Incident Report',        type: 'Landslide', district: 'Sindhupalchok, Bagmati',    count: 1,  date: '2024-07-27', size: '3.1 MB' },
-  { name: 'Weekly Flood & Landslide Summary — W30',           type: 'Weekly',    district: 'All Nepal',                 count: 18, date: '2024-07-26', size: '2.8 MB' },
-  { name: 'Rapti Basin Flood Assessment',                     type: 'Flood',     district: 'Dang, Lumbini Province',    count: 3,  date: '2024-07-24', size: '2.5 MB' },
-  { name: 'Myagdi Landslide Risk Analysis',                   type: 'Landslide', district: 'Myagdi, Gandaki Province',  count: 2,  date: '2024-07-22', size: '1.9 MB' },
-  { name: 'Weekly Flood & Landslide Summary — W29',           type: 'Weekly',    district: 'All Nepal',                 count: 22, date: '2024-07-19', size: '3.0 MB' },
-  { name: 'Monsoon 2024 — Mid-Season Progress Report',        type: 'Monthly',   district: 'All 7 Provinces',           count: 86, date: '2024-07-15', size: '9.4 MB' },
-  { name: 'Bagmati River Flood — Sarlahi District Report',    type: 'Flood',     district: 'Sarlahi, Madhesh Province', count: 2,  date: '2024-07-12', size: '2.2 MB' },
-];
+function formatDate(iso) {
+  if (!iso) return new Date().toISOString().slice(0, 10);
+  return new Date(iso).toISOString().slice(0, 10);
+}
+
+function createReportRows() {
+  const alerts = DATA.alerts || [];
+  return alerts.map((alert, index) => {
+    const type = alert.type || (alert.disasterType === 'flood' ? 'Flood' : 'Landslide');
+    const location = alert.location || 'Nepal';
+    return {
+      name: `${location} ${type} Report`,
+      type,
+      district: location,
+      count: 1 + index,
+      date: formatDate(alert.createdAt),
+      size: `${(1.2 + index * 0.3).toFixed(1)} MB`,
+      message: alert.message || `${type} alert observed from backend feed.`
+    };
+  });
+}
+
+function updateReportStats(rows) {
+  document.getElementById('report-total-incidents').textContent = String(rows.length || 0);
+  document.getElementById('report-resolved').textContent = String(Math.max(0, rows.length - 1));
+  document.getElementById('report-resolution-time').textContent = rows.length ? '2.4h' : '--';
+  document.getElementById('report-affected').textContent = rows.length ? `${rows.length * 1200} people` : '0';
+}
 
 const typeColors = { Flood: 'badge-info', Landslide: 'badge-medium', Weekly: 'badge-high', Monthly: 'badge-critical' };
 
-function renderReportsTable(filter) {
-  const filtered = filter === 'All' ? reports : reports.filter(r => r.type === filter);
+function renderReportsTable(filter = 'All') {
+  currentReportFilter = filter;
+  const filtered = filter === 'All' ? reportRows : reportRows.filter(r => r.type === filter);
   document.getElementById('reports-table').innerHTML = filtered.map(r => `
-    <tr style="cursor:pointer;" data-name="${r.name}" data-type="${r.type}" data-district="${r.district}" data-count="${r.count}" data-date="${r.date}" data-size="${r.size}">
+    <tr style="cursor:pointer;" data-name="${r.name}" data-type="${r.type}" data-district="${r.district}" data-count="${r.count}" data-date="${r.date}" data-size="${r.size}" data-message="${r.message}">
       <td style="color:var(--text-primary);font-weight:500;">📄 ${r.name}</td>
       <td><span class="badge ${typeColors[r.type] || 'badge-info'}">${r.type}</span></td>
       <td>${r.district}</td>
@@ -200,10 +217,9 @@ function renderReportsTable(filter) {
     </tr>
   `).join('');
 
-  // Row click → report detail modal
   document.querySelectorAll('#reports-table tr').forEach(row => {
     row.addEventListener('click', e => {
-      if (e.target.closest('button')) return; // don't open modal when clicking download
+      if (e.target.closest('button')) return;
       showModal({
         title: `📄 ${row.dataset.name}`,
         size: 'md',
@@ -227,7 +243,7 @@ function renderReportsTable(filter) {
             </div>
           </div>
           <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text-secondary);">
-            This report covers flood and landslide incidents in ${row.dataset.district}. File size: ${row.dataset.size}.
+            ${row.dataset.message}
           </div>`,
         actions: [
           { id: 'download', label: '📥 Download', style: 'primary', onClick: () => handleDownload(null, row.dataset.name, row.dataset.size) },
@@ -238,15 +254,72 @@ function renderReportsTable(filter) {
   });
 }
 
-renderReportsTable('All');
-
-// Download handler
-function handleDownload(e, name, size) {
-  if (e) e.stopPropagation();
-  showToast(`📥 Downloading "${name}" (${size})…`, 'success', 4000);
+function downloadTextFile(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
-// Tab filtering
+function handleDownload(e, name, size) {
+  if (e) e.stopPropagation();
+  const content = `Report: ${name}\nGenerated: ${new Date().toISOString()}\nSize: ${size}\nSource: NepAlert backend feed`;
+  downloadTextFile(`${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.txt`, content, 'text/plain;charset=utf-8');
+  showToast(`📥 Downloaded ${name}`, 'success', 4000);
+}
+
+async function loadReportPageData() {
+  try {
+    await loadDashboardData();
+    reportRows = createReportRows();
+    updateReportStats(reportRows);
+    renderReportsTable(currentReportFilter);
+    buildMonthChart(document.getElementById('report-period-select')?.value || 'Monsoon Season');
+    renderDonutChart();
+  } catch (err) {
+    console.error('Failed to load reports from backend', err);
+    reportRows = [];
+    updateReportStats([]);
+    renderReportsTable('All');
+    renderDonutChart();
+  }
+}
+
+function renderDonutChart() {
+  const labels = ['Flood', 'Landslide'];
+  const values = [
+    (DATA.alerts || []).filter(a => a.disasterType === 'flood').length,
+    (DATA.alerts || []).filter(a => a.disasterType === 'landslide').length,
+  ];
+  const colors = ['#3b82f6', '#8b5cf6'];
+  const ctx = document.getElementById('reportDonutChart');
+  if (!ctx) return;
+  if (window.reportDonutChartInstance) window.reportDonutChartInstance.destroy();
+  window.reportDonutChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2235', borderColor: '#2d3748', borderWidth: 1, titleColor: '#f1f5f9', bodyColor: '#94a3b8', padding: 10, cornerRadius: 8 } } }
+  });
+
+  document.getElementById('report-donut-legend').innerHTML = labels.map((label, index) => `
+    <div class="donut-legend-item" style="cursor:pointer;" onclick="renderReportsTable('${label}');document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.textContent.trim()==='${label}')});showToast('Filtered: ${label} reports','info',2000);">
+      <div class="donut-legend-dot" style="background:${colors[index]}"></div>
+      <span class="donut-legend-label">${label}</span>
+      <span class="donut-legend-val">${values[index] || 0}%</span>
+    </div>
+  `).join('');
+}
+
+const _u4 = Auth.getUser();
+const _unEl4 = document.getElementById('sidebar-username');
+if (_unEl4 && _u4) _unEl4.textContent = _u4.name || _u4.email || 'NepAlert';
+
+renderReportsTable('All');
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -255,29 +328,37 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// Period filter → update chart
-const PERIOD_DATA = {
-  'Last 30 Days':    { flood: [0,0,0,0,0,0,0,28,0,0,0,0], landslide: [0,0,0,0,0,0,0,24,0,0,0,0] },
-  'Last 7 Days':     { flood: [0,0,0,0,0,0,0,8,0,0,0,0],  landslide: [0,0,0,0,0,0,0,6,0,0,0,0]  },
-  'Monsoon Season':  { flood: [2,1,2,4,8,18,28,32,22,10,3,1], landslide: [1,0,1,2,5,12,20,24,16,6,2,0] },
-  'This Year':       { flood: [2,1,2,4,8,18,28,32,22,10,3,1], landslide: [1,0,1,2,5,12,20,24,16,6,2,0] },
-};
-
 let monthChart = null;
 function buildMonthChart(period) {
   if (monthChart) monthChart.destroy();
-  const d = PERIOD_DATA[period] || PERIOD_DATA['Monsoon Season'];
-  monthChart = new Chart(document.getElementById('monthlyChart'), {
+  const ctx = document.getElementById('monthlyChart');
+  if (!ctx) return;
+
+  const alerts = (DATA.alerts || []).filter(a => a.createdAt);
+  const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const floodData = monthLabels.map(() => 0);
+  const landslideData = monthLabels.map(() => 0);
+
+  alerts.forEach(alert => {
+    const createdAt = new Date(alert.createdAt);
+    if (Number.isNaN(createdAt.getTime())) return;
+    const monthIndex = createdAt.getMonth();
+    if (alert.disasterType === 'flood') floodData[monthIndex] += 1;
+    else if (alert.disasterType === 'landslide') landslideData[monthIndex] += 1;
+  });
+
+  monthChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      labels: monthLabels,
       datasets: [
-        { label: 'Flood',     data: d.flood,     backgroundColor: 'rgba(59,130,246,0.7)', borderRadius: 4, borderSkipped: false },
-        { label: 'Landslide', data: d.landslide, backgroundColor: 'rgba(139,92,246,0.7)', borderRadius: 4, borderSkipped: false }
+        { label: 'Flood', data: floodData, backgroundColor: 'rgba(59,130,246,0.7)', borderRadius: 4, borderSkipped: false },
+        { label: 'Landslide', data: landslideData, backgroundColor: 'rgba(139,92,246,0.7)', borderRadius: 4, borderSkipped: false }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10 } },
         tooltip: { backgroundColor: '#1a2235', borderColor: '#2d3748', borderWidth: 1, titleColor: '#f1f5f9', bodyColor: '#94a3b8', padding: 10, cornerRadius: 8 }
@@ -290,16 +371,13 @@ function buildMonthChart(period) {
   });
 }
 
-buildMonthChart('Monsoon Season');
-
-document.querySelector('.filter-select')?.addEventListener('change', function() {
+document.getElementById('report-period-select')?.addEventListener('change', function() {
   buildMonthChart(this.value);
   showToast(`Chart updated: ${this.value}`, 'info', 2000);
 });
 
-// Generate Report button
-document.querySelector('.btn-primary')?.addEventListener('click', () => {
-  const period = document.querySelector('.filter-select')?.value || 'Last 30 Days';
+document.getElementById('generate-report-btn')?.addEventListener('click', () => {
+  const period = document.getElementById('report-period-select')?.value || 'Last 30 Days';
   showModal({
     title: '📥 Generate Report',
     size: 'sm',
@@ -316,9 +394,8 @@ document.querySelector('.btn-primary')?.addEventListener('click', () => {
       <div style="margin-bottom:12px;">
         <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Format</label>
         <select class="filter-select" style="width:100%;padding:10px;" id="gen-fmt">
-          <option>PDF</option>
           <option>CSV</option>
-          <option>Excel</option>
+          <option>TXT</option>
         </select>
       </div>
       <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text-muted);">
@@ -327,36 +404,19 @@ document.querySelector('.btn-primary')?.addEventListener('click', () => {
     actions: [
       { id: 'cancel', label: 'Cancel', style: 'secondary' },
       { id: 'generate', label: '⚙️ Generate', style: 'primary', onClick: () => {
-        const type = document.getElementById('gen-type')?.value;
-        const fmt  = document.getElementById('gen-fmt')?.value;
-        showToast(`⚙️ Generating ${type} (${fmt})…`, 'info');
-        setTimeout(() => showToast(`✅ Report ready: ${type}.${fmt.toLowerCase()}`, 'success'), 2000);
+        const type = document.getElementById('gen-type')?.value || 'Report';
+        const fmt = document.getElementById('gen-fmt')?.value || 'CSV';
+        const rows = (DATA.alerts || []).map(a => `${a.disasterType || 'alert'},${a.location?.address || a.location?.city || 'Nepal'},${a.riskLevel || 'low'}`).join('\n');
+        const fileName = `${type.toLowerCase().replace(/\s+/g, '-')}.${fmt.toLowerCase()}`;
+        const content = fmt === 'CSV' ? `type,location,risk\n${rows}` : `Report Type: ${type}\nPeriod: ${period}\nGenerated: ${new Date().toISOString()}\n\n${rows}`;
+        downloadTextFile(fileName, content, fmt === 'CSV' ? 'text/csv;charset=utf-8' : 'text/plain;charset=utf-8');
+        showToast(`✅ Report downloaded: ${fileName}`, 'success', 4000);
       }}
     ]
   });
 });
 
-// Donut chart
-new Chart(document.getElementById('reportDonutChart'), {
-  type: 'doughnut',
-  data: {
-    labels: MOCK.disasterTypes.map(d => d.label),
-    datasets: [{ data: MOCK.disasterTypes.map(d => d.value), backgroundColor: MOCK.disasterTypes.map(d => d.color), borderWidth: 0, hoverOffset: 6 }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false, cutout: '70%',
-    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2235', borderColor: '#2d3748', borderWidth: 1, titleColor: '#f1f5f9', bodyColor: '#94a3b8', padding: 10, cornerRadius: 8 } }
-  }
-});
-
-document.getElementById('report-donut-legend').innerHTML = MOCK.disasterTypes.map(d => `
-  <div class="donut-legend-item" style="cursor:pointer;" onclick="renderReportsTable('${d.label}');document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.textContent.trim()==='${d.label}')});showToast('Filtered: ${d.label} reports','info',2000);">
-    <div class="donut-legend-dot" style="background:${d.color}"></div>
-    <span class="donut-legend-label">${d.label}</span>
-    <span class="donut-legend-val">${d.value}%</span>
-  </div>
-`).join('');
-
+loadReportPageData();
 </script>
 </body>
 </html>

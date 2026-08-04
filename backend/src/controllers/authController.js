@@ -4,9 +4,7 @@ const User = require('../models/User');
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-
-// In-memory fallback for local development when MongoDB is not available
-const inMemoryUsers = [];
+const { users: inMemoryUsers, addUser, findUserByEmail } = require('../utils/inMemoryStore');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const sendTokenResponsePlain = (userPlain, statusCode, res) => {
@@ -44,11 +42,11 @@ exports.register = async (req, res) => {
 
     // If MongoDB not connected, use in-memory store
     if (mongoose.connection.readyState !== 1) {
-      const existing = inMemoryUsers.find(u => u.email === email);
+      const existing = findUserByEmail(email);
       if (existing) return res.status(409).json({ success: false, message: 'Email already registered' });
       const hashed = await bcrypt.hash(password, 10);
       const newUser = { _id: String(Date.now()), name, email, password: hashed, phone, location, role: 'user', isActive: true };
-      inMemoryUsers.push(newUser);
+      addUser(newUser);
       logger.info(`New in-memory user registered: ${email}`);
       return sendTokenResponsePlain(newUser, 201, res);
     }
@@ -77,7 +75,7 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
     // If MongoDB not connected, use in-memory users
     if (mongoose.connection.readyState !== 1) {
-      const userPlain = inMemoryUsers.find(u => u.email === email);
+      const userPlain = findUserByEmail(email);
       if (!userPlain) return res.status(401).json({ success: false, message: 'Invalid email or password' });
       const match = await bcrypt.compare(password, userPlain.password);
       if (!match) return res.status(401).json({ success: false, message: 'Invalid email or password' });

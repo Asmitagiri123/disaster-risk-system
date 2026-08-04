@@ -1,7 +1,9 @@
+const mongoose = require('mongoose');
 const { validationResult } = require('express-validator');
 const SensorData = require('../models/SensorData');
 const predictionService = require('../services/predictionService');
 const logger = require('../utils/logger');
+const { addSensorData, getSensorData: getStoredSensorData, getLatestSensorData } = require('../utils/inMemoryStore');
 
 exports.ingestSensorData = async (req, res) => {
   const errors = validationResult(req);
@@ -12,15 +14,25 @@ exports.ingestSensorData = async (req, res) => {
   try {
     const { sensorId, sensorType, disasterType, location, readings } = req.body;
 
-    const sensorData = await SensorData.create({
-      sensorId,
-      sensorType,
-      disasterType,
-      location,
-      readings,
-      rawData: req.body,
-      processedAt: new Date(),
-    });
+    const sensorData = mongoose.connection.readyState === 1
+      ? await SensorData.create({
+        sensorId,
+        sensorType,
+        disasterType,
+        location,
+        readings,
+        rawData: req.body,
+        processedAt: new Date(),
+      })
+      : addSensorData({
+        sensorId,
+        sensorType,
+        disasterType,
+        location,
+        readings,
+        rawData: req.body,
+        processedAt: new Date(),
+      });
 
     logger.info(`Sensor data ingested: ${sensorId} (${disasterType})`);
 
@@ -34,7 +46,9 @@ exports.ingestSensorData = async (req, res) => {
 
     sensorData.predictionTriggered = true;
     sensorData.predictionId = prediction._id;
-    await sensorData.save();
+    if (mongoose.connection.readyState === 1) {
+      await sensorData.save();
+    }
 
     res.status(201).json({
       success: true,
@@ -63,6 +77,11 @@ exports.getSensorData = async (req, res) => {
     if (sensorId) query.sensorId = sensorId;
     if (disasterType) query.disasterType = disasterType;
 
+    if (mongoose.connection.readyState !== 1) {
+      const data = getStoredSensorData(query, parseInt(limit));
+      return res.json({ success: true, count: data.length, data: { sensorReadings: data } });
+    }
+
     const data = await SensorData.find(query)
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
@@ -76,6 +95,11 @@ exports.getSensorData = async (req, res) => {
 
 exports.getLatestReadings = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      const latest = getLatestSensorData();
+      return res.json({ success: true, count: latest.length, data: { sensors: latest } });
+    }
+
     const latest = await SensorData.aggregate([
       { $sort: { createdAt: -1 } },
       { $group: { _id: '$sensorId', latestReading: { $first: '$$ROOT' } } },

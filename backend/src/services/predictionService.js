@@ -1,22 +1,35 @@
+const mongoose = require('mongoose');
 const Prediction = require('../models/Prediction');
 const mlService = require('../ml/modelBridge');
 const alertService = require('./alertService');
 const logger = require('../utils/logger');
+const { addPrediction, updatePrediction, getPredictions, getPredictionStats } = require('../utils/inMemoryStore');
 
 class PredictionService {
   async predict(disasterType, inputData, location, options = {}) {
     const result = await mlService.predict(disasterType, inputData);
 
-    const prediction = await Prediction.create({
-      disasterType,
-      probability: result.probability,
-      riskLevel: result.riskLevel,
-      location,
-      inputData,
-      modelVersion: '1.0.0',
-      predictedBy: options.predictedBy || 'manual',
-      createdBy: options.userId || null,
-    });
+    const prediction = mongoose.connection.readyState === 1
+      ? await Prediction.create({
+        disasterType,
+        probability: result.probability,
+        riskLevel: result.riskLevel,
+        location,
+        inputData,
+        modelVersion: '1.0.0',
+        predictedBy: options.predictedBy || 'manual',
+        createdBy: options.userId || null,
+      })
+      : addPrediction({
+        disasterType,
+        probability: result.probability,
+        riskLevel: result.riskLevel,
+        location,
+        inputData,
+        modelVersion: '1.0.0',
+        predictedBy: options.predictedBy || 'manual',
+        createdBy: options.userId || null,
+      });
 
     logger.info(
       `Prediction created: ${disasterType} | ${result.riskLevel} | ${(result.probability * 100).toFixed(1)}%`
@@ -31,7 +44,11 @@ class PredictionService {
         });
         prediction.alertTriggered = true;
         prediction.alertId = alert._id;
-        await prediction.save();
+        if (mongoose.connection.readyState === 1) {
+          await prediction.save();
+        } else {
+          updatePrediction(prediction._id, { alertTriggered: true, alertId: alert._id });
+        }
         logger.info(`Alert dispatched for prediction ${prediction._id}`);
       } catch (err) {
         logger.error(`Alert dispatch failed: ${err.message}`);
@@ -56,6 +73,10 @@ class PredictionService {
       if (filters.endDate) query.createdAt.$lte = new Date(filters.endDate);
     }
 
+    if (mongoose.connection.readyState !== 1) {
+      return getPredictions({ ...query, ...filters }, page, limit);
+    }
+
     const [predictions, total] = await Promise.all([
       Prediction.find(query)
         .sort({ createdAt: -1 })
@@ -77,6 +98,10 @@ class PredictionService {
   }
 
   async getStats() {
+    if (mongoose.connection.readyState !== 1) {
+      return getPredictionStats();
+    }
+
     const [byType, byRisk, recent] = await Promise.all([
       Prediction.aggregate([
         { $group: { _id: '$disasterType', count: { $sum: 1 }, avgProbability: { $avg: '$probability' } } },

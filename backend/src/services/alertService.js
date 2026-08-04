@@ -1,8 +1,10 @@
+const mongoose = require('mongoose');
 const Alert = require('../models/Alert');
 const User = require('../models/User');
 const notificationService = require('./notificationService');
 const { getUsersInRadius } = require('../utils/geoHelper');
 const logger = require('../utils/logger');
+const { addAlert, getAlerts, findAlertById, updateAlert, getAlertStats } = require('../utils/inMemoryStore');
 
 class AlertService {
   async createAndDispatch(prediction) {
@@ -15,6 +17,20 @@ class AlertService {
     } = prediction;
 
     const message = this._buildMessage(disasterType, riskLevel, probability, location);
+
+    if (mongoose.connection.readyState !== 1) {
+      const alert = addAlert({
+        predictionId: prediction._id,
+        disasterType,
+        riskLevel,
+        probability,
+        location,
+        message,
+        affectedRadius,
+      });
+      logger.info(`In-memory alert created: ${alert._id} for ${disasterType} (${riskLevel})`);
+      return alert;
+    }
 
     const alert = await Alert.create({
       predictionId: prediction._id,
@@ -97,13 +113,38 @@ class AlertService {
 
   async getActiveAlerts(filters = {}) {
     const query = { isActive: true, ...filters };
+
+    if (mongoose.connection.readyState !== 1) {
+      return getAlerts(query).slice(0, 50);
+    }
+
     return Alert.find(query)
       .sort({ createdAt: -1 })
       .limit(50)
       .populate('predictionId', 'inputData modelVersion');
   }
 
+  async getAlertStats() {
+    if (mongoose.connection.readyState !== 1) {
+      return getAlertStats();
+    }
+
+    const [total, active, byType] = await Promise.all([
+      Alert.countDocuments(),
+      Alert.countDocuments({ isActive: true }),
+      Alert.aggregate([
+        { $group: { _id: '$disasterType', count: { $sum: 1 }, totalNotified: { $sum: '$totalNotified' } } },
+      ]),
+    ]);
+
+    return { total, active, byType };
+  }
+
   async resolveAlert(alertId) {
+    if (mongoose.connection.readyState !== 1) {
+      return updateAlert(alertId, { isActive: false, resolvedAt: new Date() });
+    }
+
     return Alert.findByIdAndUpdate(
       alertId,
       { isActive: false, resolvedAt: new Date() },

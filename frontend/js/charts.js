@@ -22,21 +22,31 @@ function initWeeklyTrendChart(canvasId) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
 
+  const data = (DATA.weeklyTrend && DATA.weeklyTrend.length) ? DATA.weeklyTrend : [
+    { day: 'Mon', alerts: 0, resolved: 0 },
+    { day: 'Tue', alerts: 0, resolved: 0 },
+    { day: 'Wed', alerts: 0, resolved: 0 },
+    { day: 'Thu', alerts: 0, resolved: 0 },
+    { day: 'Fri', alerts: 0, resolved: 0 },
+    { day: 'Sat', alerts: 0, resolved: 0 },
+    { day: 'Sun', alerts: 0, resolved: 0 }
+  ];
+
   return new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: MOCK.weeklyTrend.map(d => d.day),
+      labels: data.map(d => d.day),
       datasets: [
         {
           label: 'New Alerts',
-          data: MOCK.weeklyTrend.map(d => d.alerts),
+          data: data.map(d => d.alerts),
           backgroundColor: 'rgba(239,68,68,0.7)',
           borderRadius: 4,
           borderSkipped: false,
         },
         {
           label: 'Resolved',
-          data: MOCK.weeklyTrend.map(d => d.resolved),
+          data: data.map(d => d.resolved),
           backgroundColor: 'rgba(34,197,94,0.7)',
           borderRadius: 4,
           borderSkipped: false,
@@ -61,13 +71,18 @@ function initDisasterTypeChart(canvasId) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
 
+  const data = (DATA.disasterTypes && DATA.disasterTypes.length) ? DATA.disasterTypes : [
+    { label: 'Flood', value: 50, color: '#3b82f6' },
+    { label: 'Landslide', value: 50, color: '#8b5cf6' }
+  ];
+
   return new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: MOCK.disasterTypes.map(d => d.label),
+      labels: data.map(d => d.label),
       datasets: [{
-        data: MOCK.disasterTypes.map(d => d.value),
-        backgroundColor: MOCK.disasterTypes.map(d => d.color),
+        data: data.map(d => d.value),
+        backgroundColor: data.map(d => d.color),
         borderWidth: 0,
         hoverOffset: 6,
       }]
