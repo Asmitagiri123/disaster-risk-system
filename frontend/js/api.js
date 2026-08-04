@@ -1,106 +1,96 @@
-// Backend API client (same origin in production, localhost:5000 as a static file)
+// api.js — Backend integration layer
+// Base URL matches backend server.js default port
+const API_BASE = 'http://localhost:5000/api/v1';
 
-const API = (() => {
-  const TOKEN_KEY = 'flds_token';
-  const USER_KEY = 'flds_user';
+// ─── TOKEN HELPERS ────────────────────────────────────────────────────────────
+const Auth = {
+  getToken: () => localStorage.getItem('flds_token'),
+  getUser:  () => JSON.parse(localStorage.getItem('flds_user') || 'null'),
+  save: (token, user) => {
+    localStorage.setItem('flds_token', token);
+    localStorage.setItem('flds_user', JSON.stringify(user));
+  },
+  clear: () => {
+    localStorage.removeItem('flds_token');
+    localStorage.removeItem('flds_user');
+  },
+  isLoggedIn: () => !!localStorage.getItem('flds_token'),
+};
 
-  // Same-origin by default (frontend is served by Express); fallback for static dev
-  const BASE_URL = (window.location.protocol === 'file:')
-    ? 'http://localhost:5000/api/v1'
-    : '/api/v1';
+// ─── FETCH WRAPPER ────────────────────────────────────────────────────────────
+async function apiFetch(path, options = {}) {
+  const token = Auth.getToken();
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
 
-  let _token = localStorage.getItem(TOKEN_KEY) || '';
-  let _user = null;
-  try { _user = JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch (e) { _user = null; }
-
-  const getToken = () => _token;
-  const getUser = () => _user;
-
-  function setSession(token, user) {
-    _token = token || '';
-    _user = user || null;
-    if (token) localStorage.setItem(TOKEN_KEY, token); else localStorage.removeItem(TOKEN_KEY);
-    if (user) localStorage.setItem(USER_KEY, JSON.stringify(user)); else localStorage.removeItem(USER_KEY);
+  if (res.status === 401) {
+    Auth.clear();
+    window.location.href = getLoginPath();
+    return null;
   }
 
-  function clearSession() {
-    _token = '';
-    _user = null;
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+  return res.json();
+}
+
+function getLoginPath() {
+  return window.location.pathname.includes('/pages/') ? '../login.html' : 'login.html';
+}
+
+// ─── AUTH GUARD ───────────────────────────────────────────────────────────────
+function requireAuth() {
+  if (!Auth.isLoggedIn()) {
+    window.location.href = getLoginPath();
   }
+}
 
-  async function request(method, path, body) {
-    const headers = { 'Content-Type': 'application/json' };
-    if (_token) headers['Authorization'] = `Bearer ${_token}`;
+// ─── AUTH API ─────────────────────────────────────────────────────────────────
+async function apiLogin(email, password) {
+  return apiFetch('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
 
-    let response;
-    try {
-      response = await fetch(`${BASE_URL}${path}`, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-    } catch (err) {
-      // Network failure — backend unreachable
-      const error = new Error('Backend unreachable. Showing offline demo data.');
-      error.offline = true;
-      throw error;
-    }
+async function apiRegister(name, email, password) {
+  return apiFetch('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ name, email, password }),
+  });
+}
 
-    const data = await response.json().catch(() => ({}));
+async function apiGetMe() {
+  return apiFetch('/auth/me');
+}
 
-    if (!response.ok) {
-      const error = new Error(data.message || data.error || `Request failed (${response.status})`);
-      error.status = response.status;
-      error.data = data;
-      throw error;
-    }
-    return data;
-  }
+// ─── DATA API ─────────────────────────────────────────────────────────────────
+async function apiGetAlerts(filters = {}) {
+  const params = new URLSearchParams(filters).toString();
+  return apiFetch(`/alerts${params ? '?' + params : ''}`);
+}
 
-  const get = (p) => request('GET', p);
-  const post = (p, b) => request('POST', p, b);
-  const put = (p, b) => request('PUT', p, b);
-  const patch = (p, b) => request('PATCH', p, b);
+async function apiGetAlertStats() {
+  return apiFetch('/alerts/stats');
+}
 
-  return {
-    BASE_URL,
-    getToken,
-    getUser,
-    setSession,
-    clearSession,
+async function apiGetPredictions(filters = {}) {
+  const params = new URLSearchParams(filters).toString();
+  return apiFetch(`/predictions${params ? '?' + params : ''}`);
+}
 
-    auth: {
-      register: (body) => post('/auth/register', body),
-      login: (body) => post('/auth/login', body),
-      me: () => get('/auth/me'),
-      updateProfile: (body) => put('/auth/profile', body),
-    },
+async function apiGetPredictionStats() {
+  return apiFetch('/predictions/stats');
+}
 
-    dashboard: {
-      overview: () => get('/dashboard/overview'),
-    },
+async function apiGetSensors() {
+  return apiFetch('/sensors/latest');
+}
 
-    alerts: {
-      list: (params = '') => get(`/alerts${params}`),
-      get: (id) => get(`/alerts/${id}`),
-      stats: () => get('/alerts/stats'),
-      resolve: (id) => patch(`/alerts/${id}/resolve`),
-      confirm: (id, status, note = '') => patch(`/alerts/${id}/confirm`, { status, note }),
-    },
-
-    predictions: {
-      list: (params = '') => get(`/predictions${params}`),
-      stats: () => get('/predictions/stats'),
-      create: (body) => post('/predictions', body),
-      modelInfo: () => get('/predictions/models/info'),
-    },
-
-    sensors: {
-      list: (params = '') => get(`/sensors/data${params}`),
-      latest: () => get('/sensors/latest'),
-      ingest: (body) => post('/sensors/data', body),
-    },
-  };
-})();
+async function apiResolveAlert(id) {
+  return apiFetch(`/alerts/${id}/resolve`, { method: 'PATCH' });
+}

@@ -1,0 +1,174 @@
+district,municipality,lat,lon,terrain,discharge_donor,district_slope
+Baglung,Badigad,28.2678013,83.2509541,Hilly,pokhara,3.84
+Baglung,Baglung,28.2651055,83.6029924,Hilly,pokhara,3.84
+Baglung,Bareng,28.1468175,83.4691762,Hilly,pokhara,3.84
+Baglung,Dhorpatan,28.4902865,83.0672741,Hilly,pokhara,3.84
+Baglung,Galkot,28.2505322,83.3823394,Hilly,pokhara,3.84
+Baglung,Jaimini,28.1647289,83.6014831,Hilly,pokhara,3.84
+Baglung,Kanthekhola,28.2631701,83.5085249,Hilly,pokhara,3.84
+Baglung,Nisikhola,28.3763853,83.0198922,Hilly,pokhara,3.84
+Baglung,Taman Khola,28.3569554,83.1833073,Hilly,pokhara,3.84
+Dang,Babai,28.1803678,82.0655029,Hilly,pokhara,1.04
+Dang,Dangisharan,28.0855006,82.154719,Hilly,pokhara,1.04
+Dang,Gadhawa,27.7597708,82.6007196,Hilly,pokhara,1.04
+Dang,Ghorahi,28.0393605,82.4866861,Hilly,pokhara,1.04
+Dang,Lamahi,27.9312024,82.3410245,Hilly,pokhara,1.04
+Dang,Rajpur,27.8268287,82.3555524,Hilly,pokhara,1.04
+Dang,Rapti,27.869703,82.7170075,Hilly,pokhara,1.04
+Dang,Tulsipur,28.1312133,82.2983065,Hilly,pokhara,1.04
+Jhapa,Arjundhara,26.7144365,87.9604227,Terai,biratnagar,1.31
+Jhapa,Barhadashi,26.5282993,87.9207548,Terai,biratnagar,1.31
+Jhapa,Bhadrapur,26.5455566,88.0903762,Terai,biratnagar,1.31
+Jhapa,Birtamode,26.6430367,87.9918647,Terai,biratnagar,1.31
+Jhapa,Buddhashanti,26.7398617,88.0684095,Terai,biratnagar,1.31
+Jhapa,Damak,26.6650146,87.7011507,Terai,biratnagar,1.31
+Jhapa,Gauriganj,26.4687423,87.7261656,Terai,biratnagar,1.31
+Jhapa,Haldibari,26.5159384,87.9994321,Terai,biratnagar,1.31
+Jhapa,Jhapa,26.5136308,87.8662742,Terai,biratnagar,1.31
+Jhapa,Kachankawal,26.4156986,88.0045459,Terai,biratnagar,1.31
+Jhapa,Kamal,26.6080394,87.7453724,Terai,biratnagar,1.31
+Jhapa,Kankai,26.6372097,87.9114506,Terai,biratnagar,1.31
+Jhapa,Mechinagar,26.6537048,88.1274092,Terai,biratnagar,1.31
+Jhapa,Shivasataxi,26.6092488,87.8117499,Terai,biratnagar,1.31
+Kailali,Bardagoriya,28.6879899,81.0416429,Terai,nepalgunj,0.73
+Kailali,Bhajani,28.5203016,80.9645185,Terai,nepalgunj,0.73
+Kailali,Chure,28.9281998,80.7442898,Terai,nepalgunj,0.73
+Kailali,Dhangadhi,28.703304,80.567017,Terai,nepalgunj,0.73
+Kailali,Gauriganga,28.7494895,80.8079806,Terai,nepalgunj,0.73
+Kailali,Ghodaghodi,28.6901724,80.9514169,Terai,nepalgunj,0.73
+Kailali,Godawari_Kailali,28.81092,80.55275,Terai,nepalgunj,0.73
+Kailali,Janaki,28.5687256,81.1433439,Terai,nepalgunj,0.73
+Kailali,Joshipur,28.5691711,81.0276723,Terai,nepalgunj,0.73
+Kailali,Kailari,28.5989991,80.7899523,Terai,nepalgunj,0.73
+Kailali,Tikapur,28.5282679,81.119298,Terai,nepalgunj,0.73
+Kaski,Annapurna,28.433657,83.8022522,Hilly,pokhara,3.42
+Kaski,Machhapuchchhre,28.4466563,83.9643466,Hilly,pokhara,3.42
+Kaski,Madi,28.3643218,84.1353107,Hilly,pokhara,3.42
+Kaski,Pokhara,28.209538,83.991402,Hilly,pokhara,3.42
+Kaski,Rupa,28.1449388,84.1653153,Hilly,pokhara,3.42
+Kathmandu,Budhanilkantha,27.7781261,85.3623412,Hilly,kathmandu,1.67
+Kathmandu,Chandragiri,27.6889272,85.2422926,Hilly,kathmandu,1.67
+Kathmandu,Dakshinkali,27.6109788,85.264281,Hilly,kathmandu,1.67
+Kathmandu,Gokarneshwor,27.7262875,85.3759059,Hilly,kathmandu,1.67
+Kathmandu,Kathmandu,27.708317,85.3205817,Hilly,kathmandu,1.67
+Kathmandu,Kirtipur,27.676664,85.2782438,Hilly,kathmandu,1.67
+Kathmandu,Nagarjun,27.7174824,85.2693125,Hilly,kathmandu,1.67
+Kathmandu,Shankharapur,27.7306618,85.4662032,Hilly,kathmandu,1.67
+Kathmandu,Tarakeshwor,27.764635,85.3008613,Hilly,kathmandu,1.67
+Kathmandu,Tokha,27.7455698,85.326434,Hilly,kathmandu,1.67
+Morang,Belbari,26.6306307,87.4427822,Terai,biratnagar,0.73
+Morang,Biratnagar,26.4623007,87.281617,Terai,biratnagar,0.73
+Morang,Budhiganga,26.5620592,87.301188,Terai,biratnagar,0.73
+Morang,Jahada,26.4096002,87.3326859,Terai,biratnagar,0.73
+Morang,Kanepokhari,26.6005559,87.4973443,Terai,biratnagar,0.73
+Morang,Katahari,26.4883983,87.3477064,Terai,biratnagar,0.73
+Morang,Kerabari,26.7757978,87.3836886,Terai,biratnagar,0.73
+Morang,Miklajung,26.7812622,87.6189862,Terai,biratnagar,0.73
+Morang,Ratuwamai,26.4920725,87.6377267,Terai,biratnagar,0.73
+Morang,Sunwarshi,26.4164131,87.5897027,Terai,biratnagar,0.73
+Morang,Uralabari,26.6747176,87.5902142,Terai,biratnagar,0.73
+Myagdi,Annapurna,28.5958063,83.8199199,Hilly,pokhara,3.93
+Myagdi,Beni,28.344498,83.566635,Hilly,pokhara,3.93
+Myagdi,Dhaulagiri,28.6976088,83.4894884,Hilly,pokhara,3.93
+Myagdi,Malika,28.4199879,83.3597066,Hilly,pokhara,3.93
+Myagdi,Mangala,28.3795949,83.444376,Hilly,pokhara,3.93
+Myagdi,Raghuganga,28.5359722,83.5078812,Hilly,pokhara,3.93
+Palpa,Bagnaskali,27.882041,83.6042188,Hilly,pokhara,12.3
+Palpa,Mathagadhi,27.7672048,83.6550194,Hilly,pokhara,12.3
+Palpa,Nisdi,27.7854017,83.9076171,Hilly,pokhara,12.3
+Palpa,Purbakhola,27.8241778,83.7799318,Hilly,pokhara,12.3
+Palpa,Rainadevi Chhahara,27.8578495,83.3492072,Hilly,pokhara,12.3
+Palpa,Rambha,27.8682568,83.6863607,Hilly,pokhara,12.3
+Palpa,Rampur,27.8581107,83.8936046,Hilly,pokhara,12.3
+Palpa,Ribdikot,27.8668522,83.4521155,Hilly,pokhara,12.3
+Palpa,Tansen,27.866366,83.5469084,Hilly,pokhara,12.3
+Palpa,Tinau,27.7676459,83.4679688,Hilly,pokhara,12.3
+Panchthar,Falelung,27.1691538,87.9259946,Hilly,illam,7.16
+Panchthar,Falgunanda,27.0485727,87.7615464,Hilly,illam,7.16
+Panchthar,Hilihang,27.2210563,87.7914975,Hilly,illam,7.16
+Panchthar,Kummayak,27.0747891,87.6208795,Hilly,illam,7.16
+Panchthar,Miklajung,26.9384967,87.6525483,Hilly,illam,7.16
+Panchthar,Phidim,27.1441345,87.7660956,Hilly,illam,7.16
+Panchthar,Tumbewa,26.9838932,87.5676683,Hilly,illam,7.16
+Panchthar,Yangwarak,27.3273275,88.0289138,Hilly,illam,7.16
+Rautahat,Brindaban,27.044571,85.3956969,Terai,biratnagar,4.65
+Rautahat,Durga Bhagwati,26.8333297,85.3198111,Terai,biratnagar,4.65
+Rautahat,Gadhimai,26.9666985,85.3861966,Terai,biratnagar,4.65
+Rautahat,Garuda,26.9496523,85.3108169,Terai,biratnagar,4.65
+Rautahat,Gaur,26.7660963,85.2749238,Terai,biratnagar,4.65
+Rautahat,Ishanath,26.7986362,85.2051799,Terai,biratnagar,4.65
+Rautahat,Katahariya,26.985842,85.242752,Terai,biratnagar,4.65
+Rautahat,Madhav Narayan,26.8910545,85.3366876,Terai,biratnagar,4.65
+Rautahat,Maulapur,26.9302141,85.2045025,Terai,biratnagar,4.65
+Rautahat,Paroha,26.8514528,85.2307165,Terai,biratnagar,4.65
+Rautahat,Rajdevi,26.7812805,85.3237964,Terai,biratnagar,4.65
+Rautahat,Rajpur,26.8123478,85.2581098,Terai,biratnagar,4.65
+Rolpa,Lungri,28.266657,82.808739,Hilly,pokhara,11.57
+Rolpa,Madi,28.4018685,82.5063711,Hilly,pokhara,11.57
+Rolpa,Rolpa,28.3294736,82.6044576,Hilly,pokhara,11.57
+Rolpa,Runtigadhi,28.215387,82.583282,Hilly,pokhara,11.57
+Rolpa,Sukidaha,28.4454538,82.4199657,Hilly,pokhara,11.57
+Rolpa,Sunchhahari,28.3824097,82.8290717,Hilly,pokhara,11.57
+Rolpa,Sunil Smriti,28.2579868,82.7389803,Hilly,pokhara,11.57
+Rolpa,Thabang,28.4993449,82.7103339,Hilly,pokhara,11.57
+Rolpa,Tribeni,28.292775,82.4831073,Hilly,pokhara,11.57
+Sankhuwasabha,Bhotkhola,27.7485617,87.4745703,Hilly,illam,2.36
+Sankhuwasabha,Chainpur,27.3089894,87.3983089,Hilly,illam,2.36
+Sankhuwasabha,Chichila,27.4823567,87.2294866,Hilly,illam,2.36
+Sankhuwasabha,Dharmadevi,27.2007219,87.3561397,Hilly,illam,2.36
+Sankhuwasabha,Khandbari,27.3666794,87.2067999,Hilly,illam,2.36
+Sankhuwasabha,Madi,27.2518495,87.4104534,Hilly,illam,2.36
+Sankhuwasabha,Makalu,27.7285262,87.1635779,Hilly,illam,2.36
+Sankhuwasabha,Panchakhapan,27.3522884,87.3015325,Hilly,illam,2.36
+Sankhuwasabha,Silichong,27.582681,87.0557724,Hilly,illam,2.36
+Sindhupalchok,Balephi,28.0441162,85.7713461,Hilly,kathmandu,43.3
+Sindhupalchok,Barhabise,27.787806,85.899582,Hilly,kathmandu,43.3
+Sindhupalchok,Bhotekoshi,27.932976,85.9058163,Hilly,kathmandu,43.3
+Sindhupalchok,Helambu,28.0059782,85.5312949,Hilly,kathmandu,43.3
+Sindhupalchok,Indrawati,27.7856079,85.624202,Hilly,kathmandu,43.3
+Sindhupalchok,Jugal,28.1431922,85.8713437,Hilly,kathmandu,43.3
+Sindhupalchok,Lisangkhu Pakhar,27.6719877,85.8843586,Hilly,kathmandu,43.3
+Sindhupalchok,Melamchi,27.8293022,85.5761316,Hilly,kathmandu,43.3
+Sindhupalchok,Panchpokhari Thangpal,28.0083949,85.6493846,Hilly,kathmandu,43.3
+Sindhupalchok,Sunkoshi,27.7106031,85.8091066,Hilly,kathmandu,43.3
+Sindhupalchok,Tripurasundari,27.7482014,85.9494987,Hilly,kathmandu,43.3
+Solukhumbu,Khumbu Pasanglhamu,27.6961817,86.716964,Mountain,manang,14.01
+Solukhumbu,Likhu Pike,27.5582987,86.3800893,Mountain,manang,14.01
+Solukhumbu,Mahakulung,27.6529554,86.8978779,Mountain,manang,14.01
+Solukhumbu,Mapya Dudhkoshi,27.5225725,86.6893182,Mountain,manang,14.01
+Solukhumbu,Nechasalyan,27.3543206,86.6400039,Mountain,manang,14.01
+Solukhumbu,Solududhkunda,27.5733026,86.5851715,Mountain,manang,14.01
+Solukhumbu,Sotang,27.517691,86.7751434,Mountain,manang,14.01
+Solukhumbu,Thulung Dudhkoshi,27.4277211,86.713777,Mountain,manang,14.01
+Sunsari,Barah,26.7290021,87.1735801,Terai,biratnagar,1.64
+Sunsari,Dharan,26.8128974,87.2839978,Terai,biratnagar,1.64
+Sunsari,Duhabi,26.5523662,87.2424606,Terai,biratnagar,1.64
+Sunsari,Gadhi,26.5647768,87.1810161,Terai,biratnagar,1.64
+Sunsari,Harinagar,26.4978491,87.1242456,Terai,biratnagar,1.64
+Sunsari,Inaruwa,26.5999315,87.1680625,Terai,biratnagar,1.64
+Sunsari,Itahari,26.6622505,87.2748964,Terai,biratnagar,1.64
+Sunsari,Ramdhuni,26.6930836,87.1715651,Terai,biratnagar,1.64
+Taplejung,Aathrai Tribeni,27.3197812,87.6149467,Mountain,manang,9.38
+Taplejung,Maiwakhola,27.3861983,87.5020171,Mountain,manang,9.38
+Taplejung,Meringden,27.4812695,87.5377969,Mountain,manang,9.38
+Taplejung,Mikwakhola,27.5573517,87.6113227,Mountain,manang,9.38
+Taplejung,Pathibhara Yangwarak,27.3254631,87.7454564,Mountain,manang,9.38
+Taplejung,Phaktanglung,27.6794932,87.9131596,Mountain,manang,9.38
+Taplejung,Phungling,27.3586978,87.6727257,Mountain,manang,9.38
+Taplejung,Sidingba,27.3610973,87.9399703,Mountain,manang,9.38
+Taplejung,Sirijangha,27.4966,87.9653581,Mountain,manang,9.38
+Udayapur,Belaka,26.8142636,87.0673835,Hilly,illam,1.04
+Udayapur,Chaudandigadhi,26.7978524,86.8704548,Hilly,illam,1.04
+Udayapur,Katari,26.962807,86.3705031,Hilly,illam,1.04
+Udayapur,Rautamai,26.9754844,86.6786364,Hilly,illam,1.04
+Udayapur,Triyuga,26.7901679,86.812581,Hilly,illam,1.04
+Udayapur,Udayapurgadhi,26.9070303,86.5388079,Hilly,illam,1.04
+Jhapa,Gauradhaha,26.564072,87.715027,Terai,biratnagar,1.31
+Kathmandu,Kageshwori Manahora,27.7279083,85.4084253,Hilly,kathmandu,1.67
+Sankhuwasabha,Savapokhari,27.4377287,87.3560061,Hilly,illam,2.36
+Sindhupalchok,Chautara Sangachokgadhi,27.7513265,85.7267833,Hilly,kathmandu,43.3
+Sunsari,Bhokraha Narsingh,26.6069849,87.125895,Terai,biratnagar,1.64
+Baglung,Tara Khola,28.42,83.15,Hilly,pokhara,3.84
+Dang,Banglachuli,28.05,82.22,Hilly,pokhara,1.04
+Rolpa,Paribartan,28.42,82.75,Hilly,pokhara,11.57
+Sunsari,Devangunj,26.54,87.16,Terai,biratnagar,1.64

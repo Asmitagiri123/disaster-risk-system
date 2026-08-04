@@ -3,287 +3,161 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign in — Nepal FLDS</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔️</text></svg>" />
+  <title>NepAlert — Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <style>
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(1200px 600px at 80% -10%, rgba(59,130,246,0.12), transparent 60%),
-        radial-gradient(900px 500px at 10% 110%, rgba(139,92,246,0.10), transparent 60%),
-        var(--bg);
-      padding: 20px;
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--bg-primary); }
+    .login-wrap { width:100%; max-width:400px; padding:20px; }
+    .login-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:var(--radius); padding:36px 32px; box-shadow:var(--shadow-lg); }
+    .login-logo { text-align:center; margin-bottom:28px; }
+    .login-logo .logo-icon { font-size:40px; margin-bottom:8px; }
+    .login-logo .logo-icon-box { display:inline-flex; align-items:center; justify-content:center; width:64px; height:64px; background:#2563eb; border-radius:14px; margin-bottom:12px; }
+    .login-logo .logo-icon-box svg { width:34px; height:34px; fill:#fff; }
+    .login-logo h1 { font-size:22px; font-weight:800; margin:0 0 4px; }
+    .login-logo p { font-size:12px; color:var(--text-muted); margin:0; }
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+    .form-group input {
+      width:100%; background:var(--bg-secondary); border:1px solid var(--border);
+      border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit;
+      font-size:14px; padding:10px 12px; outline:none; box-sizing:border-box;
+      transition:border-color 0.2s;
     }
-    .auth-card {
-      width: 100%; max-width: 420px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 36px 32px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.45);
+    .form-group input:focus { border-color:var(--accent-blue); }
+    .btn-login {
+      width:100%; padding:12px; font-size:14px; font-weight:700;
+      background:var(--accent-blue); color:#fff; border:none;
+      border-radius:var(--radius-sm); cursor:pointer; margin-top:8px;
+      transition:opacity 0.2s;
     }
-    .auth-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-    .auth-logo .logo-icon { font-size: 32px; }
-    .auth-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-    .auth-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
-    .auth-tabs { display: flex; gap: 4px; background: var(--bg-secondary); border-radius: 10px; padding: 4px; margin-bottom: 22px; }
-    .auth-tab {
-      flex: 1; padding: 9px 0; border: none; background: transparent; cursor: pointer;
-      color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px;
-      font-family: inherit; transition: all 0.2s;
-    }
-    .auth-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-    .field { margin-bottom: 14px; }
-    .field label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
-    .field input, .field select {
-      width: 100%; padding: 11px 14px;
-      background: var(--bg-secondary); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); color: var(--text-primary);
-      font-family: inherit; font-size: 14px; outline: none; transition: border-color 0.2s;
-    }
-    .field input:focus { border-color: var(--accent-blue); }
-    .auth-error {
-      display: none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
-      color: var(--accent-red); font-size: 12px; font-weight: 600;
-      padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 14px;
-    }
-    .auth-error.show { display: block; }
-    .auth-btn {
-      width: 100%; padding: 12px; border: none; border-radius: var(--radius-sm);
-      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
-      font-family: inherit; transition: transform 0.15s, opacity 0.15s;
-    }
-    .auth-btn:hover { transform: translateY(-1px); opacity: 0.94; }
-    .auth-btn:disabled { opacity: 0.6; cursor: wait; }
-    .demo-btn {
-      width: 100%; margin-top: 4px; padding: 10px;
-      background: rgba(59,130,246,0.1); border: 1px dashed rgba(59,130,246,0.4);
-      border-radius: var(--radius-sm); color: var(--accent-blue);
-      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
-      transition: background 0.2s;
-    }
-    .demo-btn:hover { background: rgba(59,130,246,0.18); }
-    .auth-footnote { margin-top: 18px; font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.6; }
-    .auth-status { text-align: center; font-size: 12px; margin-top: 12px; color: var(--accent-green); font-weight: 600; min-height: 18px; }
-    .role-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-    .location-picker {
-      background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.18);
-      border-radius: var(--radius-sm); padding: 14px; margin-bottom: 16px;
-    }
-    .location-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
-    .location-picker-title { font-size: 12px; font-weight: 700; }
-    .location-picker .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-login:hover { opacity:0.9; }
+    .btn-login:disabled { opacity:0.5; cursor:not-allowed; }
+    .error-msg { color:var(--accent-red); font-size:12px; margin-top:12px; text-align:center; min-height:18px; }
+    .login-footer { text-align:center; margin-top:20px; font-size:11px; color:var(--text-muted); }
   </style>
 </head>
 <body>
-  <div class="auth-card fade-in">
-    <div class="auth-logo">
-      <div class="logo-icon">🏔️</div>
-      <div>
-        <div class="auth-title">Nepal FLDS</div>
-        <div class="auth-sub">Flood & Landslide Early Warning System</div>
-      </div>
-    </div>
-
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
-      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Create Account</button>
-    </div>
-
-    <!-- Alert location: province + district from the 77-district database.
-         Scopes the alerts this account sees and receives. -->
-    <div class="location-picker">
-      <div class="location-picker-head">
-        <span class="location-picker-title">📍 Alert Location</span>
-        <span class="role-hint">optional — nationwide by default</span>
-      </div>
-      <div class="grid-2">
-        <div class="field" style="margin-bottom:0;">
-          <label>Province</label>
-          <select id="loc-province">
-            <option value="">🇳🇵 All Nepal</option>
-          </select>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-icon-box">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
         </div>
-        <div class="field" style="margin-bottom:0;">
-          <label>District</label>
-          <select id="loc-district" disabled>
-            <option value="">All districts</option>
-          </select>
+        <h1>NepAlert</h1>
+        <p>Flood & Landslide Detection System</p>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="Enter your email" required autocomplete="email" />
         </div>
-      </div>
-      <div class="role-hint" style="margin-top:8px;">
-        Alerts are scoped to this location. Pick a province for province-wide alerts, or a district for its alerts only.
-      </div>
-    </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn-login" id="login-btn">Sign In</button>
+        <div class="error-msg" id="error-msg"></div>
+      </form>
 
-    <div id="auth-error" class="auth-error"></div>
-
-    <!-- LOGIN FORM -->
-    <form id="login-form" onsubmit="handleLogin(event)">
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="login-email" placeholder="admin@flds.demo" required />
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" required />
-      </div>
-      <button class="auth-btn" type="submit" id="login-submit">Sign In →</button>
-    </form>
-
-    <!-- REGISTER FORM -->
-    <form id="register-form" style="display:none;" onsubmit="handleRegister(event)">
-      <div class="field">
-        <label>Full Name</label>
-        <input type="text" id="reg-name" placeholder="e.g. Bagale Dada" required />
-      </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="reg-email" placeholder="you@example.com" required />
-      </div>
-      <div class="field">
-        <label>Password (min 8 chars)</label>
-        <input type="password" id="reg-password" placeholder="••••••••" minlength="8" required />
-      </div>
-      <div class="field">
-        <label>Role</label>
-        <select id="reg-role">
-          <option value="user">User</option>
-          <option value="responder">Responder</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <button class="auth-btn" type="submit" id="register-submit">Create Account →</button>
-    </form>
-
-    <div class="auth-status" id="auth-status"></div>
-    <button class="demo-btn" onclick="fillDemoLogin()">⚡ One-click demo login</button>
-    <div class="auth-footnote">
-      Demo admin: <strong>admin@flds.demo</strong> / <strong>demo12345</strong><br />
-      Data is served live from the Express + XGBoost backend on :5000.
+      <div class="login-footer">AI-based disaster detection system</div>
     </div>
   </div>
 
   <script src="js/api.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/nepal-districts.js"></script>
   <script>
-    // If already logged in with a VALID token, go straight to the dashboard.
-    // Stale/expired tokens are cleared so they don't trap the user in a
-    // redirect loop between the login page and the dashboard.
-    (async function redirectIfLoggedIn() {
-      if (!API.getToken()) return;
-      try {
-        await API.auth.me();
-        window.location.href = 'index.html';
-      } catch (err) {
-        API.clearSession();
-        if (err.status === 429) {
-          showError('Too many login attempts from this browser. Wait a few minutes and refresh.');
-        }
-      }
-    })();
+    // Redirect if already logged in
+    if (Auth.isLoggedIn()) window.location.href = 'index.html';
 
-    function switchTab(tab) {
-      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-      document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-      document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
-      document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
-      hideError();
-    }
+    // Add register toggle UI
+    const form = document.getElementById('login-form');
+    const footer = document.querySelector('.login-footer');
+    const errorEl = document.getElementById('error-msg');
+    const submitBtn = document.getElementById('login-btn');
 
-    // ── Location picker (province → district) ──
-    const provinceSel = document.getElementById('loc-province');
-    const districtSel = document.getElementById('loc-district');
+    // Inject name field and toggle link
+    const nameGroup = document.createElement('div');
+    nameGroup.className = 'form-group';
+    nameGroup.style.display = 'none';
+    nameGroup.id = 'name-group';
+    nameGroup.innerHTML = `
+      <label>Name</label>
+      <input type="text" id="name" placeholder="Full name" autocomplete="name" />
+    `;
+    form.insertBefore(nameGroup, form.firstChild);
 
-    NEPAL_PROVINCES.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.name;
-      opt.textContent = `${p.icon} ${p.name}`;
-      provinceSel.appendChild(opt);
+    const toggleWrap = document.createElement('div');
+    toggleWrap.style.textAlign = 'center';
+    toggleWrap.style.marginTop = '12px';
+    toggleWrap.innerHTML = `
+      <a href="#" id="toggle-auth">Create an account</a>
+    `;
+    form.appendChild(toggleWrap);
+
+    let isRegister = false;
+
+    document.getElementById('toggle-auth').addEventListener('click', (ev) => {
+      ev.preventDefault();
+      isRegister = !isRegister;
+      nameGroup.style.display = isRegister ? '' : 'none';
+      submitBtn.textContent = isRegister ? 'Register' : 'Sign In';
+      document.getElementById('toggle-auth').textContent = isRegister ? 'Back to sign in' : 'Create an account';
+      errorEl.textContent = '';
     });
 
-    provinceSel.addEventListener('change', () => populateDistrictSelect(districtSel, provinceSel.value));
-
-    // The chosen scope — empty means nationwide.
-    function selectedLocation() {
-      const district = districtSel.value;
-      const province = provinceSel.value;
-      if (district) return { district, province };
-      if (province) return { province };
-      return {};
-    }
-
-    function showError(msg) {
-      const el = document.getElementById('auth-error');
-      el.textContent = msg;
-      el.classList.add('show');
-    }
-    function clearStoredSession() {
-      API.clearSession();
-    }
-    function fillDemoLogin() {
-      document.getElementById('login-email').value = 'admin@flds.demo';
-      document.getElementById('login-password').value = 'demo12345';
-      document.getElementById('login-form').requestSubmit();
-    }
-    function hideError() { document.getElementById('auth-error').classList.remove('show'); }
-    function setStatus(msg) { document.getElementById('auth-status').textContent = msg; }
-
-    async function handleLogin(e) {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      hideError();
-      clearStoredSession();
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value;
-      const btn = document.getElementById('login-submit');
-      btn.disabled = true; setStatus('Signing in…');
-      try {
-        const res = await API.auth.login({ email, password, ...selectedLocation() });
-        API.setSession(res.token, res.data && res.data.user);
-        setStatus('✓ Signed in — redirecting…');
-        setTimeout(() => window.location.href = 'index.html', 400);
-      } catch (err) {
-        btn.disabled = false;
-        let msg;
-        if (err.offline) msg = 'Cannot reach the backend. Start it with: cd backend && npm start';
-        else if (err.status === 429) msg = 'Too many login attempts. Please wait 15 minutes and try again.';
-        else if (err.status === 401) msg = 'Invalid email or password. Try admin@flds.demo / demo12345.';
-        else msg = (err.data && (err.data.message || (err.data.errors && err.data.errors[0] && err.data.errors[0].msg))) || err.message;
-        showError(msg);
-        setStatus('');
-      }
-    }
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const name = document.getElementById('name')?.value?.trim();
 
-    async function handleRegister(e) {
-      e.preventDefault();
-      hideError();
-      const payload = {
-        name: document.getElementById('reg-name').value.trim(),
-        email: document.getElementById('reg-email').value.trim(),
-        password: document.getElementById('reg-password').value,
-        role: document.getElementById('reg-role').value,
-        ...selectedLocation(),
-      };
-      const btn = document.getElementById('register-submit');
-      btn.disabled = true; setStatus('Creating account…');
+      submitBtn.disabled = true;
+      submitBtn.textContent = isRegister ? 'Registering…' : 'Signing in…';
+      errorEl.textContent = '';
+
       try {
-        const res = await API.auth.register(payload);
-        API.setSession(res.token, res.data && res.data.user);
-        setStatus('✓ Account created — redirecting…');
-        setTimeout(() => window.location.href = 'index.html', 400);
+        if (isRegister) {
+          if (!name) {
+            throw new Error('Name is required for registration');
+          }
+          if (password.length < 8) {
+            throw new Error('Password must be at least 8 characters');
+          }
+          const res = await apiRegister(name, email, password);
+          if (res?.success) {
+            Auth.save(res.token, res.data.user);
+            window.location.href = 'index.html';
+            return;
+          } else if (res?.errors && res.errors.length) {
+            // express-validator returns an array of errors
+            throw new Error(res.errors[0].msg || res.errors[0].message || 'Registration failed');
+          } else {
+            throw new Error(res?.message || 'Registration failed');
+          }
+        } else {
+          const res = await apiLogin(email, password);
+          if (res?.success) {
+            Auth.save(res.token, res.data.user);
+            window.location.href = 'index.html';
+            return;
+          } else if (res?.errors && res.errors.length) {
+            throw new Error(res.errors[0].msg || res.errors[0].message || 'Invalid email or password.');
+          } else {
+            throw new Error(res?.message || 'Invalid email or password.');
+          }
+        }
       } catch (err) {
-        btn.disabled = false;
-        showError(err.offline ? 'Cannot reach the backend. Is it running on :5000?' : (err.data && (err.data.message || (err.data.errors && err.data.errors[0].msg))) || err.message);
-        setStatus('');
+        // Network errors from fetch often appear as 'Failed to fetch'
+        if (err && (err.message === 'Failed to fetch' || err.message === 'NetworkError when attempting to fetch resource.')) {
+          errorEl.textContent = 'Cannot reach server. Is the backend running?';
+        } else {
+          errorEl.textContent = err?.message || 'An error occurred';
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = isRegister ? 'Register' : 'Sign In';
       }
-    }
+    });
   </script>
 </body>
 </html>
