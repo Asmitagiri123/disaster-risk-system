@@ -25,6 +25,8 @@ const alertSchema = new mongoose.Schema(
       coordinates: [Number],
       address: String,
       city: String,
+      district: string,
+      municipality: string,
       country: String,
     },
     message: {

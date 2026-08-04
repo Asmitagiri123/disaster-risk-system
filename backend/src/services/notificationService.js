@@ -111,7 +111,7 @@ class NotificationService {
           </tr>
           <tr>
             <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6;">Location</td>
-            <td style="padding:10px;border:1px solid #dee2e6;">${alert.location?.city || 'N/A'}, ${alert.location?.country || 'N/A'}</td>
+            <td style="padding:10px;border:1px solid #dee2e6;">${[alert.location?.municipality, alert.location?.city, alert.location?.country].filter(Boolean).join(', ') || 'N/A'}</td>
           </tr>
           <tr style="background:#e9ecef;">
             <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6;">Affected Radius</td>
@@ -138,7 +138,10 @@ class NotificationService {
 
   buildAlertSMS(alert) {
     const probability = Math.round(alert.probability * 100);
-    return `⚠️ DISASTER ALERT: ${alert.riskLevel.toUpperCase()} ${alert.disasterType.toUpperCase()} risk detected near ${alert.location?.city || 'your area'} (${probability}% probability). ${this._getSafetyTips(alert.disasterType)[0]} Stay safe!`;
+    const locationText = [alert.location?.municipality, alert.location?.city]
+    .filter(Boolean)
+    .join(', ') || 'your area';
+    return `⚠️ DISASTER ALERT: ${alert.riskLevel.toUpperCase()} ${alert.disasterType.toUpperCase()} risk detected near ${locationText} (${probability}% probability). ${this._getSafetyTips(alert.disasterType)[0]} Stay safe!`;
   }
 
   _getSafetyTips(disasterType) {

@@ -66,14 +66,17 @@ exports.register = async (req, res) => {
   }
 
   try {
-    const { name, email, password, phone, location } = req.body;
+    const { name, email, password, phone, location: rawLocation } = req.body;
 
     // If MongoDB not connected, use in-memory store
     if (mongoose.connection.readyState !== 1) {
       const existing = inMemoryUsers.find(u => u.email === email);
       if (existing) return res.status(409).json({ success: false, message: 'Email already registered' });
       const hashed = await bcrypt.hash(password, 10);
-      const newUser = { _id: String(Date.now()), name, email, password: hashed, phone, location, role: 'user', isActive: true };
+      const newUser = { _id: String(Date.now()), name, email, password: hashed, phone, role: 'user', isActive: true };
+      if (rawLocation && typeof rawLocation === 'object' && Object.keys(rawLocation).length) {
+        newUser.location = rawLocation;
+      }
       inMemoryUsers.push(newUser);
       logger.info(`New in-memory user registered: ${email}`);
       return sendTokenResponsePlain(newUser, 201, res);
@@ -86,14 +89,18 @@ exports.register = async (req, res) => {
 
     // Alert location: canonical district + province from the login page picker.
     const choice = parseLocationChoice(req.body);
-    const user = await User.create({
+    const userData = {
       name,
       email,
       password,
       phone,
       ...choice,
-      location,
-    });
+    };
+    if (rawLocation && typeof rawLocation === 'object' && Object.keys(rawLocation).length) {
+      userData.location = rawLocation;
+    }
+
+    const user = await User.create(userData);
     logger.info(`New user registered: ${email}`);
     sendTokenResponse(user, 201, res);
   } catch (err) {

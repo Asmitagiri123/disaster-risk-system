@@ -27,6 +27,8 @@ const predictionSchema = new mongoose.Schema(
       coordinates: [Number], // [longitude, latitude]
       address: String,
       city: String,
+      district: String,
+      municipality: String,
       country: String,
     },
     inputData: {
