@@ -5,7 +5,7 @@ const errorHandler = (err, req, res, next) => {
   let message = err.message || 'Internal Server Error';
 
   // Mongoose duplicate key
-  if (err.code === 11000) {
+  if (err.code === 11000 && err.keyValue && Object.keys(err.keyValue).length > 0) {
     statusCode = 409;
     const field = Object.keys(err.keyValue)[0];
     message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;

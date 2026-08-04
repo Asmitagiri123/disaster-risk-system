@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nepal Map — Nepal FLDS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔️</text></svg>" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="../css/main.css" />
@@ -21,6 +22,8 @@
     }
     .map-filter-btn.active, .map-filter-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--border-light); }
     .map-filter-btn.active { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .map-filter-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .map-control-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-right: 2px; }
     .map-stats-bar {
       display: flex; gap: 16px; align-items: center;
       background: var(--bg-card); border: 1px solid var(--border);
@@ -45,7 +48,7 @@
     <nav class="sidebar-nav">
       <div class="nav-section-label">Overview</div>
       <a href="../index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-      <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">9</span></a>
+      <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">—</span></a>
       <a href="map.html" class="nav-item active"><span class="nav-icon">🗺️</span> Nepal Map</a>
       <div class="nav-section-label">Analysis</div>
       <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
@@ -55,7 +58,7 @@
       <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-footer">
-      <div class="nav-item"><span class="nav-icon">👤</span> NDRRMA Admin</div>
+      <div class="nav-item"><span class="nav-icon">👤</span> Bagale Dada</div>
     </div>
   </aside>
 
@@ -79,32 +82,32 @@
       <div class="map-stats-bar fade-in">
         <div class="map-stat">
           <span>🌊</span>
-          <span class="map-stat-val" style="color:var(--accent-blue);">5</span>
+          <span class="map-stat-val" style="color:var(--accent-blue);">—</span>
           <span style="color:var(--text-muted);">Flood Events</span>
         </div>
         <div style="width:1px;height:20px;background:var(--border);"></div>
         <div class="map-stat">
           <span>⛰️</span>
-          <span class="map-stat-val" style="color:var(--accent-purple);">4</span>
+          <span class="map-stat-val" style="color:var(--accent-purple);">—</span>
           <span style="color:var(--text-muted);">Landslide Events</span>
         </div>
         <div style="width:1px;height:20px;background:var(--border);"></div>
         <div class="map-stat">
           <span>🔴</span>
-          <span class="map-stat-val" style="color:var(--accent-red);">2</span>
+          <span class="map-stat-val" style="color:var(--accent-red);">—</span>
           <span style="color:var(--text-muted);">Critical</span>
         </div>
         <div style="width:1px;height:20px;background:var(--border);"></div>
         <div class="map-stat">
           <span>🟠</span>
-          <span class="map-stat-val" style="color:var(--accent-orange);">3</span>
+          <span class="map-stat-val" style="color:var(--accent-orange);">—</span>
           <span style="color:var(--text-muted);">High</span>
         </div>
         <div style="width:1px;height:20px;background:var(--border);"></div>
         <div class="map-stat">
           <span>👥</span>
-          <span class="map-stat-val">~258K</span>
-          <span style="color:var(--text-muted);">People at Risk</span>
+          <span class="map-stat-val" id="map-districts-val">—</span>
+          <span style="color:var(--text-muted);">Districts Alerted</span>
         </div>
         <div style="margin-left:auto;font-size:11px;color:var(--text-muted);">
           Updated: <span style="color:var(--text-secondary);" id="map-time">—</span>
@@ -112,12 +115,19 @@
       </div>
 
       <div class="map-controls fade-in fade-in-delay-1">
-        <button class="map-filter-btn active">🌐 All Events</button>
-        <button class="map-filter-btn">🌊 Flood Only</button>
-        <button class="map-filter-btn">⛰️ Landslide Only</button>
-        <button class="map-filter-btn">🔴 Critical</button>
-        <button class="map-filter-btn">🟠 High</button>
-        <button class="map-filter-btn">🟡 Medium & Low</button>
+        <div class="map-filter-group">
+          <span class="map-control-label">Event</span>
+          <button class="map-filter-btn active" data-filter="all">🌐 All Events</button>
+          <button class="map-filter-btn" data-filter="flood">🌊 Flood Only</button>
+          <button class="map-filter-btn" data-filter="landslide">⛰️ Landslide Only</button>
+          <button class="map-filter-btn" data-filter="critical">🔴 Critical</button>
+          <button class="map-filter-btn" data-filter="high">🟠 High</button>
+          <button class="map-filter-btn" data-filter="low">🟡 Medium & Low</button>
+        </div>
+        <div class="map-filter-group" id="province-chips">
+          <span class="map-control-label">Province</span>
+          <button class="map-filter-btn active" data-province="all">🇳🇵 All Nepal</button>
+        </div>
       </div>
 
       <div class="card map-page-container fade-in fade-in-delay-2" style="padding:0;overflow:hidden;">
@@ -139,53 +149,135 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="../js/mock-data.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/nepal-districts.js"></script>
+<script src="../js/live-data.js"></script>
 <script src="../js/map.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
   document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
-  initMap('full-map');
 
-  function applyMapFilter(btn) {
-    document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const label = btn.textContent.trim();
+  // Auth-gated bootstrap: init the map + markers only for logged-in users.
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!requireAuth()) return;
+    initMap('full-map');
 
-    // Remove all existing markers
-    mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
-
-    let filtered = MOCK.mapMarkers;
-    if (label.includes('Flood Only'))      filtered = MOCK.mapMarkers.filter(m => m.type === 'flood');
-    else if (label.includes('Landslide'))  filtered = MOCK.mapMarkers.filter(m => m.type === 'landslide');
-    else if (label.includes('Critical'))   filtered = MOCK.mapMarkers.filter(m => m.severity === 'critical');
-    else if (label.includes('High'))       filtered = MOCK.mapMarkers.filter(m => m.severity === 'high');
-    else if (label.includes('Medium'))     filtered = MOCK.mapMarkers.filter(m => m.severity === 'medium' || m.severity === 'low');
-
-    filtered.forEach(m => addMarker(m));
-    showToast(`Showing ${filtered.length} event(s) — ${label}`, 'info', 2000);
-  }
-
-  document.querySelectorAll('.map-filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => applyMapFilter(btn));
+    withLiveData(async () => {
+      await loadLiveAlerts();
+      buildProvinceChips();
+      renderMarkers();
+      updateMapStats(getSourceMarkers());
+      document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
+      showToast(`Map loaded ${LIVE.mapMarkers.length} live alert(s)`, 'success');
+    });
   });
 
-  // Marker click → show detail panel
-  // (handled inside addMarker popup — already wired)
+  function updateMapStats(markers) {
+    const count = (type, sev) => markers.filter(m => m.type === type && (!sev || m.severity === sev)).length;
+    const floodEl = document.querySelector('.map-stat-val[style*="accent-blue"]');
+    const lsEl    = document.querySelector('.map-stat-val[style*="accent-purple"]');
+    const critEl  = document.querySelector('.map-stat-val[style*="accent-red"]');
+    const highEl  = document.querySelector('.map-stat-val[style*="accent-orange"]');
+    const districtsEl = document.getElementById('map-districts-val');
+    if (floodEl) floodEl.textContent = count('flood');
+    if (lsEl)    lsEl.textContent    = count('landslide');
+    if (critEl)  critEl.textContent  = count('flood', 'critical') + count('landslide', 'critical');
+    if (highEl)  highEl.textContent  = count('flood', 'high') + count('landslide', 'high');
+    // Distinct districts with at least one alert
+    if (districtsEl) {
+      const districts = new Set(markers.map(m => (m.district || '').trim()).filter(Boolean));
+      districtsEl.textContent = districts.size ? districts.size : '—';
+    }
+  }
 
-  // Stats bar items clickable
+  // ── Map filtering: event type × province ──
+  let currentEventFilter = 'all';
+  let currentProvince = 'all';
+
+  function getSourceMarkers() {
+    const src = (window.LIVE && LIVE.mapMarkers.length) ? LIVE.mapMarkers : []; // empty when offline
+    return src.map(m => ({ ...m, province: m.province || nepalProvinceOf(m.label || '') }));
+  }
+
+  function renderMarkers() {
+    mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
+
+    const all = getSourceMarkers();
+    let filtered = all;
+    if (currentEventFilter === 'flood')         filtered = filtered.filter(m => m.type === 'flood');
+    else if (currentEventFilter === 'landslide') filtered = filtered.filter(m => m.type === 'landslide');
+    else if (currentEventFilter === 'critical')  filtered = filtered.filter(m => m.severity === 'critical');
+    else if (currentEventFilter === 'high')      filtered = filtered.filter(m => m.severity === 'high');
+    else if (currentEventFilter === 'low')       filtered = filtered.filter(m => m.severity === 'medium' || m.severity === 'low');
+    if (currentProvince !== 'all') filtered = filtered.filter(m => m.province === currentProvince);
+
+    filtered.forEach(m => addMarker(m));
+    return { total: all.length, shown: filtered.length };
+  }
+
+  // Event type buttons
+  document.querySelectorAll('.map-filter-btn[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.map-filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentEventFilter = btn.dataset.filter;
+      const r = renderMarkers();
+      showToast(`Showing ${r.shown} of ${r.total} event(s) — ${btn.textContent.trim()}`, 'info', 2000);
+    });
+  });
+
+  // Province chips (built from NEPAL_PROVINCES with per-province counts)
+  function buildProvinceChips() {
+    const wrap = document.getElementById('province-chips');
+    if (!wrap) return;
+    wrap.querySelectorAll('[data-province]:not([data-province="all"])').forEach(el => el.remove());
+
+    const all = getSourceMarkers();
+    NEPAL_PROVINCES.forEach(p => {
+      const count = all.filter(m => m.province === p.name).length;
+      const btn = document.createElement('button');
+      btn.className = 'map-filter-btn';
+      btn.dataset.province = p.name;
+      btn.style.borderColor = count ? p.color : undefined;
+      btn.innerHTML = `${p.icon} ${p.name} <span style="opacity:0.65;font-size:10px;">${count}</span>`;
+      btn.title = `${p.name} province — ${count} event(s)`;
+      if (currentProvince === p.name) btn.classList.add('active'); // keep active across refreshes
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#province-chips .map-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentProvince = p.name;
+        const r = renderMarkers();
+        showToast(`Showing ${r.shown} event(s) in ${p.name}`, 'info', 2000);
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  // "All Nepal" province chip
+  document.querySelector('#province-chips [data-province="all"]')?.addEventListener('click', function () {
+    document.querySelectorAll('#province-chips .map-filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentProvince = 'all';
+    const r = renderMarkers();
+    showToast(`Showing ${r.shown} of ${r.total} event(s) — All Nepal`, 'info', 2000);
+  });
+
+  buildProvinceChips();
+
+  // Stats bar items clickable → apply matching event filter
+  const STAT_FILTER_MAP = { 'Flood': 'flood', 'Landslide': 'landslide', 'Critical': 'critical', 'High': 'high' };
   document.querySelectorAll('.map-stat').forEach(stat => {
     stat.style.cursor = 'pointer';
     stat.addEventListener('click', () => {
       const text = stat.textContent.trim();
-      if (text.includes('Flood')) {
-        const floodBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Flood Only'));
-        if (floodBtn) applyMapFilter(floodBtn);
-      } else if (text.includes('Landslide')) {
-        const lsBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Landslide'));
-        if (lsBtn) applyMapFilter(lsBtn);
-      } else if (text.includes('Critical')) {
-        const critBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Critical'));
-        if (critBtn) applyMapFilter(critBtn);
+      for (const [key, filter] of Object.entries(STAT_FILTER_MAP)) {
+        if (text.includes(key)) {
+          document.querySelectorAll('.map-filter-btn[data-filter]').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+          currentEventFilter = filter;
+          renderMarkers();
+          return;
+        }
       }
     });
   });

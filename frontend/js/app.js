@@ -1,6 +1,33 @@
-// app.js — Dashboard rendering + full interactivity
+// Dashboard rendering + interactivity, reading only real data from LIVE.
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth()) return;
+
+  renderAll();
+  startClock();
+  wireStatCards();
+  wireMapFilter();
+  wireTableRows();
+  wireExportBtn();
+  wireRecentEventsTabs();
+
+  withLiveData(async () => {
+    await Promise.all([
+      loadLiveDashboard(),
+      loadLiveAlerts(),
+      loadLivePredictions(),
+      loadLiveDisasterTypes(),
+    ]);
+    renderAll();
+    // Alerts are in — draw map markers and the Recent Events table
+    if (window.syncMapMarkers) syncMapMarkers();
+    renderTableRows('All');
+    startLiveFeed();
+  });
+});
+
+// Renders everything from the LIVE data in live-data.js.
+function renderAll() {
   renderStats();
   renderAlerts();
   renderPredictions();
@@ -11,36 +38,51 @@ document.addEventListener('DOMContentLoaded', () => {
   initRiskTrendChart('riskTrendChart');
   initSensorRadarChart('sensorRadarChart');
   initMap('leaflet-map');
-  startClock();
-  startLiveCounter();
-  wireStatCards();
-  wireMapFilter();
-  wireTableRows();
-  wireExportBtn();
-  wireRecentEventsTabs();
-});
+}
 
-// ─── RENDER ──────────────────────────────────────────────────────────────────
+// Render functions read only from LIVE (no mock fallback; offline shows the
+// auth.js banner and empty lists).
+function data(key) {
+  const live = window.LIVE && LIVE[key];
+  return Array.isArray(live) ? live : (live || null);
+}
+
+// Rendering
 
 function renderStats() {
-  const s = MOCK.stats;
+  const s = data('stats');
+  if (!s) return;
   document.getElementById('stat-alerts').textContent    = s.activeAlerts;
   document.getElementById('stat-critical').textContent  = s.criticalZones;
   document.getElementById('stat-monitored').textContent = s.monitored;
-  document.getElementById('stat-accuracy').textContent  = s.accuracy + '%';
-  document.getElementById('stat-response').textContent  = s.responseTime;
+  document.getElementById('stat-accuracy').textContent  = s.accuracy ? s.accuracy + '%' : '—';
+  document.getElementById('stat-response').textContent  = s.responseTime || '—';
   document.getElementById('stat-resolved').textContent  = s.resolved24h;
+  // Peak 24h rainfall across alerted districts + avg soil moisture from sensors
+  const rainEl = document.getElementById('stat-rainfall-peak');
+  if (rainEl) rainEl.textContent = s.rainfallPeak !== null && s.rainfallPeak !== undefined ? `${s.rainfallPeak.toFixed(1)} mm` : '—';
+  const soilEl = document.getElementById('stat-soil');
+  if (soilEl) soilEl.textContent = s.soilSaturation ? `${s.soilSaturation}%` : '—';
+
+  const accNote = document.getElementById('stat-accuracy-note');
+  if (accNote) accNote.textContent = s.accuracy && s.modelVersion ? `XGBoost v${s.modelVersion} · 77 districts` : 'model validation';
+  const soilNote = document.getElementById('stat-soil-note');
+  if (soilNote) soilNote.textContent = s.soilSaturation ? 'avg live sensor soil' : 'live sensor avg';
 }
 
 function renderAlerts() {
   const container = document.getElementById('alerts-list');
   if (!container) return;
-  container.innerHTML = MOCK.alerts.map(a => `
+  const alerts = data('alerts');
+  container.innerHTML = alerts.map(a => `
     <div class="alert-item fade-in" data-id="${a.id}" style="cursor:pointer;">
       <div class="alert-dot ${a.severity}"></div>
       <div style="flex:1;min-width:0;">
-        <div class="alert-title">${a.type} — ${a.location}</div>
+        <div class="alert-title">${a.type} — ${a.location}
+          ${a.crossVerified ? '<span class="badge badge-info" style="font-size:9px;margin-left:6px;">✓ verified</span>' : ''}
+        </div>
         <div class="alert-meta">${a.magnitude} &nbsp;·&nbsp; ${a.time}</div>
+        ${a.evidenceChips ? `<div class="alert-evidence" title="Live weather evidence behind this alert">${a.evidenceChips}</div>` : ''}
       </div>
       <span class="badge badge-${a.severity}">${a.severity}</span>
     </div>
@@ -48,7 +90,7 @@ function renderAlerts() {
 
   container.querySelectorAll('.alert-item').forEach(el => {
     el.addEventListener('click', () => {
-      const alert = MOCK.alerts.find(a => a.id === +el.dataset.id);
+      const alert = data('alerts').find(a => String(a.id) === String(el.dataset.id));
       if (alert) showAlertDetailModal(alert);
     });
   });
@@ -57,7 +99,7 @@ function renderAlerts() {
 function renderPredictions() {
   const container = document.getElementById('predictions-list');
   if (!container) return;
-  container.innerHTML = MOCK.predictions.map((p, i) => {
+  container.innerHTML = data('predictions').map((p, i) => {
     const trendIcon  = p.trend === 'up' ? '↑' : p.trend === 'down' ? '↓' : '→';
     const trendColor = p.trend === 'up' ? 'var(--accent-red)' : p.trend === 'down' ? 'var(--accent-green)' : 'var(--text-muted)';
     return `
@@ -78,7 +120,7 @@ function renderPredictions() {
 
   container.querySelectorAll('.prediction-card').forEach(el => {
     el.addEventListener('click', () => {
-      const p = MOCK.predictions[+el.dataset.idx];
+      const p = data('predictions')[+el.dataset.idx];
       showPredictionDetailModal(p);
     });
   });
@@ -87,7 +129,7 @@ function renderPredictions() {
 function renderSensors() {
   const container = document.getElementById('sensor-grid');
   if (!container) return;
-  container.innerHTML = MOCK.sensors.map((s, i) => `
+  container.innerHTML = data('sensors').map((s, i) => `
     <div class="sensor-item ${s.status}" data-idx="${i}" style="cursor:pointer;">
       <div class="sensor-icon">${s.icon}</div>
       <div class="sensor-value">${s.value}</div>
@@ -96,9 +138,13 @@ function renderSensors() {
     </div>
   `).join('');
 
+  // Sensor total from the backend (one weather feed per district)
+  const badge = document.getElementById('sensor-count-badge');
+  if (badge) badge.textContent = `${(window.LIVE && LIVE.sensorsTotal) || data('sensors').length} Active`;
+
   container.querySelectorAll('.sensor-item').forEach(el => {
     el.addEventListener('click', () => {
-      const s = MOCK.sensors[+el.dataset.idx];
+      const s = data('sensors')[+el.dataset.idx];
       showSensorModal(s);
     });
   });
@@ -107,7 +153,7 @@ function renderSensors() {
 function renderTimeline() {
   const container = document.getElementById('timeline');
   if (!container) return;
-  container.innerHTML = MOCK.timeline.map(t => `
+  container.innerHTML = data('timeline').map(t => `
     <div class="timeline-item ${t.type}" style="cursor:pointer;" data-title="${t.title}" data-desc="${t.desc}" data-time="${t.time}">
       <div class="timeline-time">${t.time}</div>
       <div class="timeline-title">${t.title}</div>
@@ -133,7 +179,7 @@ function renderTimeline() {
 function renderDisasterTypeDonut() {
   const container = document.getElementById('donut-legend');
   if (!container) return;
-  container.innerHTML = MOCK.disasterTypes.map(d => `
+  container.innerHTML = data('disasterTypes').map(d => `
     <div class="donut-legend-item" style="cursor:pointer;" data-label="${d.label}">
       <div class="donut-legend-dot" style="background:${d.color}"></div>
       <span class="donut-legend-label">${d.label}</span>
@@ -145,7 +191,7 @@ function renderDisasterTypeDonut() {
   container.querySelectorAll('.donut-legend-item').forEach(el => {
     el.addEventListener('click', () => {
       const label = el.dataset.label;
-      const filtered = MOCK.alerts.filter(a => a.type === label);
+      const filtered = data('alerts').filter(a => a.type === label);
       showModal({
         title: `${label === 'Flood' ? '🌊' : '⛰️'} ${label} Events`,
         body: filtered.length
@@ -165,7 +211,7 @@ function renderDisasterTypeDonut() {
   });
 }
 
-// ─── STAT CARD CLICKS ────────────────────────────────────────────────────────
+// Stat cards
 function wireStatCards() {
   const statCards = document.querySelectorAll('.stat-card');
   statCards.forEach(card => {
@@ -198,43 +244,63 @@ function wireStatCards() {
   });
 }
 
-// ─── MAP FILTER SELECT ───────────────────────────────────────────────────────
+// Map filter
 function wireMapFilter() {
-  const sel = document.querySelector('.filter-select');
-  if (!sel) return;
-  sel.addEventListener('change', () => {
-    const val = sel.value;
+  const typeSel = document.getElementById('map-type-filter') || document.querySelector('.filter-select');
+  if (!typeSel) return;
+
+  const provSel = document.getElementById('map-province-filter');
+  if (provSel) {
+    NEPAL_PROVINCES.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.name;
+      opt.textContent = `${p.icon} ${p.name}`;
+      provSel.appendChild(opt);
+    });
+  }
+
+  const applyMapFilters = () => {
     if (!mapInstance) return;
+    const src = (window.LIVE && LIVE.mapMarkers.length) ? LIVE.mapMarkers : [];
     mapInstance.eachLayer(layer => {
       if (layer instanceof L.Marker) mapInstance.removeLayer(layer);
     });
-    const filtered = val === 'All Events' ? MOCK.mapMarkers
-      : val === 'Flood Only'     ? MOCK.mapMarkers.filter(m => m.type === 'flood')
-      : val === 'Landslide Only' ? MOCK.mapMarkers.filter(m => m.type === 'landslide')
-      : MOCK.mapMarkers;
+
+    let filtered = src;
+    const typeVal = typeSel.value;
+    if (typeVal === 'Flood Only')     filtered = filtered.filter(m => m.type === 'flood');
+    else if (typeVal === 'Landslide Only') filtered = filtered.filter(m => m.type === 'landslide');
+
+    const provVal = provSel ? provSel.value : 'all';
+    if (provVal !== 'all') filtered = filtered.filter(m => (m.province || nepalProvinceOf(m.label || '')) === provVal);
+
     filtered.forEach(m => addMarker(m));
-    showToast(`Map filtered: ${val}`, 'info', 2000);
-  });
+    const suffix = provVal !== 'all' ? ` · ${provVal}` : '';
+    showToast(`Map filtered: ${typeVal}${suffix}`, 'info', 2000);
+  };
+
+  typeSel.addEventListener('change', applyMapFilters);
+  if (provSel) provSel.addEventListener('change', applyMapFilters);
 }
 
-// ─── RECENT EVENTS TABLE TABS ────────────────────────────────────────────────
-const TABLE_ROWS_DATA = [
-  { event: '🌊 Flood Level 4',   location: 'Koshi River, Sunsari',   severity: 'critical', time: '14:52', status: 'Active',     type: 'Flood'     },
-  { event: '⛰️ Major Landslide', location: 'Sindhupalchok',          severity: 'critical', time: '14:30', status: 'Active',     type: 'Landslide' },
-  { event: '🌊 Flood Level 3',   location: 'Rapti River, Dang',      severity: 'high',     time: '13:45', status: 'Monitoring', type: 'Flood'     },
-  { event: '⛰️ Landslide Risk 3',location: 'Myagdi District',        severity: 'high',     time: '12:20', status: 'Monitoring', type: 'Landslide' },
-  { event: '🌊 Flood Level 3',   location: 'Bagmati River, Sarlahi', severity: 'high',     time: '12:00', status: 'Monitoring', type: 'Flood'     },
-  { event: '🌊 Flood Watch',     location: 'Bagmati, Lalitpur',      severity: 'medium',   time: '11:00', status: 'Resolved',   type: 'Flood'     },
-  { event: '⛰️ Landslide Risk 2',location: 'Kaski District',         severity: 'medium',   time: '09:30', status: 'Watch',      type: 'Landslide' },
-];
-
+// Recent events tabs
 const statusTextColors = { Active: 'var(--accent-red)', Monitoring: 'var(--accent-orange)', Resolved: 'var(--accent-green)', Watch: 'var(--accent-yellow)' };
 
+// Recent events table, from LIVE alerts.
 function renderTableRows(filter = 'All') {
   const tbody = document.querySelector('.data-table tbody');
   if (!tbody) return;
-  const rows = filter === 'All' ? TABLE_ROWS_DATA : TABLE_ROWS_DATA.filter(r => r.type === filter);
-  tbody.innerHTML = rows.map(r => `
+  const alerts = data('alerts');
+  const rows = alerts.map(a => ({
+    event: `${a.type === 'Flood' ? '🌊' : '⛰️'} ${a.type} alert`,
+    location: a.location,
+    severity: a.severity,
+    time: a.time,
+    status: 'Active',
+    type: a.type,
+  }));
+  const filtered = filter === 'All' ? rows : rows.filter(r => r.type === filter);
+  tbody.innerHTML = filtered.length ? filtered.map(r => `
     <tr style="cursor:pointer;" data-event="${r.event}" data-location="${r.location}" data-severity="${r.severity}" data-status="${r.status}">
       <td>${r.event}</td>
       <td>${r.location}</td>
@@ -242,7 +308,10 @@ function renderTableRows(filter = 'All') {
       <td>${r.time}</td>
       <td><span style="color:${statusTextColors[r.status]};font-size:11px;font-weight:600;">● ${r.status}</span></td>
     </tr>
-  `).join('');
+  `).join('') : `
+    <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;font-size:13px;">
+      ${window.LIVE && LIVE.online === false ? '⚠️ Backend offline — no live alerts available' : 'No active alerts right now'}
+    </td></tr>`;
 
   tbody.querySelectorAll('tr').forEach(row => {
     row.addEventListener('click', () => {
@@ -291,13 +360,13 @@ function wireRecentEventsTabs() {
   });
 }
 
-// ─── EXPORT ──────────────────────────────────────────────────────────────────
+// Export
 function wireExportBtn() {
   document.querySelectorAll('.btn-secondary').forEach(btn => {
     if (btn.textContent.includes('Export')) {
       btn.addEventListener('click', () => {
         exportCSV(
-          MOCK.alerts.map(a => ({ type: a.type, severity: a.severity, location: a.location, magnitude: a.magnitude, time: a.time })),
+          data('alerts').map(a => ({ type: a.type, severity: a.severity, location: a.location, magnitude: a.magnitude, time: a.time })),
           'nepal-flds-alerts.csv'
         );
       });
@@ -305,9 +374,36 @@ function wireExportBtn() {
   });
 }
 
-// ─── DETAIL MODALS ───────────────────────────────────────────────────────────
+// Detail modals
 function showAlertDetailModal(a) {
   const colors = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' };
+  const ev = a.evidence;
+  const sourceLabel = (ev && (window.EVIDENCE_SOURCE_LABEL[ev.source] || ev.source)) || 'Live feed';
+  const evidenceHtml = ev ? `
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);">📊 Why this alert — live evidence</div>
+        <span class="badge badge-info" style="font-size:10px;">${escapeHtml(sourceLabel)}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;">
+        ${[
+          ['Rainfall', ev.rainfall, '🌧'],
+          ['Humidity', ev.humidity, '💧'],
+          ['Temp', ev.temperature, '🌡'],
+          ['River Flow', ev.riverFlow, '🏞'],
+        ].filter(([, v]) => v).map(([label, value, icon]) => `
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 12px;text-align:center;">
+            <div style="font-size:16px;">${icon}</div>
+            <div style="font-size:16px;font-weight:700;margin-top:2px;">${escapeHtml(value)}</div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;">${label}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+        ⚙️ Model v${escapeHtml(ev.modelVersion)} · Source: ${escapeHtml(sourceLabel)}
+        ${a.crossVerified ? '<br>✅ <strong style="color:var(--accent-green);">Cross-verified</strong> — model and rainfall rule agree' : ''}
+      </div>
+    </div>` : '';
   showModal({
     title: `${a.type === 'Flood' ? '🌊' : '⛰️'} ${a.type} — ${a.location}`,
     size: 'md',
@@ -318,7 +414,7 @@ function showAlertDetailModal(a) {
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Magnitude</div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Probability</div>
           <div style="font-size:16px;font-weight:700;margin-top:4px;color:${colors[a.severity]};">${a.magnitude}</div>
         </div>
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
@@ -326,8 +422,9 @@ function showAlertDetailModal(a) {
           <div style="font-size:13px;font-weight:600;margin-top:4px;">${a.coords[0].toFixed(2)}°N, ${a.coords[1].toFixed(2)}°E</div>
         </div>
       </div>
+      ${evidenceHtml}
       <div style="background:rgba(${a.severity === 'critical' ? '239,68,68' : '249,115,22'},0.08);border:1px solid rgba(${a.severity === 'critical' ? '239,68,68' : '249,115,22'},0.2);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--text-secondary);line-height:1.6;">
-        This ${a.type.toLowerCase()} event is currently at <strong style="color:${colors[a.severity]};">${a.severity}</strong> severity level. Monitoring teams have been notified and response protocols are in effect.
+        This ${a.type.toLowerCase()} alert was raised by the prediction model at <strong style="color:${colors[a.severity]};">${a.severity}</strong> risk using the live weather readings above. Alerts auto-resolve once conditions no longer warrant them.
       </div>`,
     actions: [
       { id: 'map', label: '🗺️ View on Map', style: 'secondary', onClick: () => window.location.href = (window.location.pathname.includes('pages') ? '' : 'pages/') + 'map.html' },
@@ -337,15 +434,18 @@ function showAlertDetailModal(a) {
 }
 
 function showPredictionDetailModal(p) {
-  const riskLevel = p.probability >= 75 ? 'critical' : p.probability >= 60 ? 'high' : p.probability >= 40 ? 'medium' : 'low';
+  // Prefer the model's risk label over one derived from the capped probability.
+  const modelRisk = (p._raw && p._raw.riskLevel) || undefined;
+  const severity = ({ critical: 'critical', high: 'high', moderate: 'medium', low: 'low' })[modelRisk]
+    || (p.probability >= 75 ? 'critical' : p.probability >= 60 ? 'high' : p.probability >= 40 ? 'medium' : 'low');
   showModal({
     title: `${p.icon} ${p.type} Prediction`,
     size: 'sm',
     body: `
       <div style="text-align:center;padding:12px 0 20px;">
         <div style="font-size:48px;font-weight:800;color:${p.color};letter-spacing:-2px;">${p.probability}%</div>
-        <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Probability in next 72h</div>
-        <span class="badge badge-${riskLevel}" style="margin-top:8px;display:inline-flex;">${riskLevel} risk</span>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Model probability (risk class)</div>
+        <span class="badge badge-${severity}" style="margin-top:8px;display:inline-flex;">${modelRisk || severity} risk</span>
       </div>
       <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;">
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Location</div>
@@ -399,7 +499,7 @@ function showSensorModal(s) {
   });
 }
 
-// ─── CLOCK & LIVE COUNTER ────────────────────────────────────────────────────
+// Clock
 function startClock() {
   const el = document.getElementById('live-clock');
   if (!el) return;
@@ -408,19 +508,7 @@ function startClock() {
   setInterval(update, 1000);
 }
 
-function startLiveCounter() {
-  simulateLiveUpdate(delta => {
-    const el = document.getElementById('stat-alerts');
-    if (!el) return;
-    const next = Math.max(0, parseInt(el.textContent) + delta);
-    el.textContent = next;
-    if (delta > 0) { el.style.color = 'var(--accent-red)'; showToast('New alert detected in Nepal', 'warning', 3000); }
-    else if (delta < 0) el.style.color = 'var(--accent-green)';
-    setTimeout(() => el.style.color = '', 1200);
-  });
-}
-
-// ─── UTIL ────────────────────────────────────────────────────────────────────
+// Utilities
 function hexToRgbStr(hex) {
   return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)].join(',');
 }

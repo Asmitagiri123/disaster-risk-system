@@ -9,7 +9,7 @@ class NotificationService {
   }
 
   _getEmailTransporter() {
-    if (!this.emailTransporter) {
+    if (!this.emailTransporter && process.env.EMAIL_HOST && process.env.EMAIL_USER) {
       this.emailTransporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT || '587', 10),
@@ -38,6 +38,9 @@ class NotificationService {
   async sendEmail(to, subject, htmlBody) {
     try {
       const transporter = this._getEmailTransporter();
+      if (!transporter) {
+        return { success: false, error: 'Email credentials not configured' };
+      }
       const info = await transporter.sendMail({
         from: process.env.EMAIL_FROM,
         to,

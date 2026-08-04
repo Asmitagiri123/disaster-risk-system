@@ -5,3 +5,11 @@ logs/
 src/ml/models/
 coverage/
 .DS_Store
+
+# ML training artifacts (regenerate with python models/train.py)
+models/weather_cache/
+models/*.bak
+
+# Python bytecode
+__pycache__/
+*.pyc

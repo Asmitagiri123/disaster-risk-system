@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const predictionService = require('../services/predictionService');
+const mlService = require('../ml/modelBridge');
 const { DISASTER_TYPES } = require('../config/constants');
 const logger = require('../utils/logger');
 
@@ -42,6 +43,12 @@ exports.predict = async (req, res) => {
         modelResult: {
           shouldAlert: mlResult.shouldAlert,
           threshold: mlResult.threshold,
+          modelVersion: mlResult.modelVersion,
+          district: mlResult.district || location?.city || null,
+          terrain: mlResult.terrain || null,
+          riskLevel: mlResult.riskLevel || prediction.riskLevel,
+          predictedClass: mlResult.predictedClass ?? null,
+          verification: mlResult.verification || null,
         },
         createdAt: prediction.createdAt,
       },
@@ -83,6 +90,19 @@ exports.getPredictionById = async (req, res) => {
     res.json({ success: true, data: { prediction } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to fetch prediction' });
+  }
+};
+
+exports.getModelInfo = async (req, res) => {
+  try {
+    const info = await mlService.getModelInfo();
+    if (!info) {
+      return res.status(503).json({ success: false, message: 'ML service unavailable' });
+    }
+    res.json({ success: true, data: info });
+  } catch (err) {
+    logger.error(`Get model info error: ${err.message}`);
+    res.status(500).json({ success: false, message: 'Failed to fetch model info' });
   }
 };
 

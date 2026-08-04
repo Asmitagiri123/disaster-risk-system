@@ -54,6 +54,27 @@ const alertSchema = new mongoose.Schema(
       },
     ],
     totalNotified: { type: Number, default: 0 },
+    // Cross-check status copied from the source prediction at creation time
+    // (method, ruleAgreed, ruleRiskLevel, modelRiskLevel). Lets the UI show
+    // "cross-verified" without joining back to the prediction.
+    verification: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    // Human ground truth: responders mark an alert confirmed/not-confirmed
+    // against what happened on the ground. Powers the "model confidence vs
+    // confirmed events" view (predictions cross-check the rule; alerts check
+    // reality).
+    groundTruth: {
+      status: {
+        type: String,
+        enum: ['pending', 'confirmed', 'not-confirmed'],
+        default: 'pending',
+      },
+      by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      at: Date,
+      note: String,
+    },
     isActive: { type: Boolean, default: true },
     resolvedAt: Date,
   },

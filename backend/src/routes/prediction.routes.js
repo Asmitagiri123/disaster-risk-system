@@ -21,6 +21,8 @@ router.post(
 
 router.get('/', predictionController.getPredictions);
 router.get('/stats', restrictTo('admin', 'responder'), predictionController.getStats);
+// Must be registered before /:id so 'models' isn't treated as an id
+router.get('/models/info', predictionController.getModelInfo);
 router.get('/:id', predictionController.getPredictionById);
 
 module.exports = router;

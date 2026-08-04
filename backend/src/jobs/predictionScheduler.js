@@ -1,12 +1,10 @@
 const cron = require('node-cron');
 const SensorData = require('../models/SensorData');
 const predictionService = require('../services/predictionService');
+const externalDataService = require('../services/externalDataService');
 const logger = require('../utils/logger');
 
-/**
- * Process unprocessed sensor readings and run predictions
- * Runs every N minutes (set via SENSOR_POLL_INTERVAL)
- */
+// Predict for unprocessed sensor readings every SENSOR_POLL_INTERVAL min
 const schedulePredictions = () => {
   const interval = parseInt(process.env.SENSOR_POLL_INTERVAL) || 15;
   const cronExpression = `*/${interval} * * * *`;
@@ -15,15 +13,14 @@ const schedulePredictions = () => {
     logger.info('Running scheduled prediction job...');
 
     try {
-      // Find sensor data not yet processed into predictions
-      const unprocesed = await SensorData.find({
+      const unprocessed = await SensorData.find({
         predictionTriggered: false,
         createdAt: { $gte: new Date(Date.now() - interval * 60 * 1000) },
       }).limit(100);
 
-      logger.info(`Found ${unprocesed.length} unprocessed sensor readings`);
+      logger.info(`Found ${unprocessed.length} unprocessed sensor readings`);
 
-      for (const sensor of unprocesed) {
+      for (const sensor of unprocessed) {
         try {
           const { prediction } = await predictionService.predict(
             sensor.disasterType,
@@ -49,10 +46,7 @@ const schedulePredictions = () => {
   logger.info(`Prediction scheduler started — runs every ${interval} minutes`);
 };
 
-/**
- * Daily cleanup job — removes old sensor data older than 90 days
- * Runs daily at 2:00 AM
- */
+// Daily 2:00 AM job — drop sensor data older than 90 days
 const scheduleCleanup = () => {
   cron.schedule('0 2 * * *', async () => {
     logger.info('Running daily cleanup job...');
@@ -68,9 +62,27 @@ const scheduleCleanup = () => {
   logger.info('Daily cleanup scheduler started (runs at 2:00 AM)');
 };
 
+// Pull Open-Meteo weather through the ML pipeline every EXTERNAL_POLL_INTERVAL min
+const scheduleExternalData = () => {
+  const interval = parseInt(process.env.EXTERNAL_POLL_INTERVAL) || 10;
+  const cronExpression = `*/${interval} * * * *`;
+
+  cron.schedule(cronExpression, async () => {
+    logger.info('Polling external data sources (Open-Meteo weather)...');
+    try {
+      await externalDataService.pollAll();
+    } catch (err) {
+      logger.error(`External data poll failed: ${err.message}`);
+    }
+  });
+
+  logger.info(`External data scheduler started — polls weather every ${interval} minutes`);
+};
+
 const startAllJobs = () => {
   schedulePredictions();
   scheduleCleanup();
+  scheduleExternalData();
 };
 
 module.exports = { startAllJobs };

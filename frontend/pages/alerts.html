@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Active Alerts — Nepal FLDS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔️</text></svg>" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/main.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
@@ -22,7 +23,7 @@
     <nav class="sidebar-nav">
       <div class="nav-section-label">Overview</div>
       <a href="../index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-      <a href="alerts.html" class="nav-item active"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">9</span></a>
+      <a href="alerts.html" class="nav-item active"><span class="nav-icon">🚨</span> Active Alerts <span class="nav-badge">—</span></a>
       <a href="map.html" class="nav-item"><span class="nav-icon">🗺️</span> Nepal Map</a>
       <div class="nav-section-label">Analysis</div>
       <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
@@ -32,7 +33,7 @@
       <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-footer">
-      <div class="nav-item"><span class="nav-icon">👤</span> NDRRMA Admin</div>
+      <div class="nav-item"><span class="nav-icon">👤</span> Bagale Dada</div>
     </div>
   </aside>
 
@@ -41,10 +42,11 @@
       <div class="header-left">
         <div>
           <div class="page-title">Active Alerts</div>
-          <div class="page-subtitle">9 incidents requiring attention</div>
+          <div class="page-subtitle" id="alert-count-subtitle">Loading incidents…</div>
         </div>
       </div>
       <div class="header-right">
+        <div class="location-chip" id="location-chip" onclick="showLocationModal()" title="Change your alert location">📍 All Nepal</div>
         <div class="status-indicator"><div class="status-dot"></div> Live Feed</div>
         <button class="header-btn">🔔<span class="notif-badge">4</span></button>
         <div class="avatar">ND</div>
@@ -72,31 +74,37 @@
             <option>Landslide</option>
           </select>
           <button class="btn btn-danger">🚨 Broadcast All</button>
+          <!-- Broadcast modal is wired by interactions.js (shared) -->
         </div>
       </div>
 
       <div class="grid grid-4 fade-in fade-in-delay-1" style="margin-bottom:20px;">
         <div class="stat-card red">
           <div class="stat-icon red">🔴</div>
-          <div class="stat-value">2</div>
+          <div class="stat-value">—</div>
           <div class="stat-label">Critical</div>
         </div>
         <div class="stat-card orange">
           <div class="stat-icon orange">🟠</div>
-          <div class="stat-value">3</div>
+          <div class="stat-value">—</div>
           <div class="stat-label">High</div>
         </div>
         <div class="stat-card yellow">
           <div class="stat-icon yellow">🟡</div>
-          <div class="stat-value">2</div>
+          <div class="stat-value">—</div>
           <div class="stat-label">Medium</div>
         </div>
         <div class="stat-card green">
           <div class="stat-icon green">🟢</div>
-          <div class="stat-value">2</div>
+          <div class="stat-value">—</div>
           <div class="stat-label">Low</div>
         </div>
       </div>
+
+      <div class="card fade-in" id="ground-truth-summary" style="margin-bottom:20px;padding:14px 18px;display:none;"></div>
+
+      <!-- Location scope banner (shown when the account is scoped to a district/province) -->
+      <div class="scope-banner" id="scope-banner" style="display:none;"></div>
 
       <div class="grid grid-2 fade-in fade-in-delay-2" id="alert-cards"></div>
 
@@ -104,126 +112,237 @@
   </div>
 </div>
 
-<script src="../js/mock-data.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/nepal-districts.js"></script>
+<script src="../js/live-data.js"></script>
+<script src="../js/live-feed.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
-const ALERT_DETAILS = [
-  {
-    type: 'Flood', icon: '🌊', severity: 'critical',
-    location: 'Koshi River, Sunsari District',
-    magnitude: 'Level 4', time: '8 min ago',
-    affected: '~85,000 people', status: 'Active Response',
-    desc: 'Koshi River has breached danger level at Chatara gauge station. Embankment breach risk in Sunsari and Saptari. NDRRMA and Army deployed. Evacuation of riverbank settlements underway.',
-    river: 'Koshi River', province: 'Province 1'
-  },
-  {
-    type: 'Landslide', icon: '⛰️', severity: 'critical',
-    location: 'Sindhupalchok District, Bagmati Province',
-    magnitude: 'Major', time: '22 min ago',
-    affected: '~12,000 people', status: 'Rescue Ongoing',
-    desc: 'Major landslide triggered by continuous rainfall (>200mm/24h) on Araniko Highway near Tatopani. Road blocked. Multiple households at risk. Rescue teams from Bhaktapur dispatched.',
-    river: '—', province: 'Bagmati Province'
-  },
-  {
-    type: 'Flood', icon: '🌊', severity: 'high',
-    location: 'Rapti River, Dang District',
-    magnitude: 'Level 3', time: '1h ago',
-    affected: '~42,000 people', status: 'Evacuation Advisory',
-    desc: 'Rapti River rising rapidly at Kusum gauge. Level 3 flood alert issued. Low-lying areas of Ghorahi and Tulsipur at risk. Relief camps established at Dang campus.',
-    river: 'Rapti River', province: 'Lumbini Province'
-  },
-  {
-    type: 'Landslide', icon: '⛰️', severity: 'high',
-    location: 'Myagdi District, Gandaki Province',
-    magnitude: 'Risk Level 3', time: '2h ago',
-    affected: '~8,500 people', status: 'Monitoring',
-    desc: 'Continuous rainfall saturating slopes along Kali Gandaki corridor. Slope stability index critical. Beni–Jomsom road at risk. Vulnerable settlements alerted.',
-    river: 'Kali Gandaki', province: 'Gandaki Province'
-  },
-  {
-    type: 'Flood', icon: '🌊', severity: 'high',
-    location: 'Bagmati River, Sarlahi District',
-    magnitude: 'Level 3', time: '2h ago',
-    affected: '~60,000 people', status: 'Monitoring',
-    desc: 'Bagmati River exceeding danger level at Karmaiya gauge. Madhesh Province terai settlements at risk. Embankment monitoring intensified. Relief pre-positioned.',
-    river: 'Bagmati River', province: 'Madhesh Province'
-  },
-  {
-    type: 'Landslide', icon: '⛰️', severity: 'medium',
-    location: 'Kaski District, Gandaki Province',
-    magnitude: 'Risk Level 2', time: '3h ago',
-    affected: '~5,200 people', status: 'Watch',
-    desc: 'Soil saturation at 92% on slopes above Pokhara outskirts. Landslide watch issued for Hemja and Lekhnath areas. Residents advised to stay alert.',
-    river: '—', province: 'Gandaki Province'
-  },
-  {
-    type: 'Flood', icon: '🌊', severity: 'medium',
-    location: 'Narayani River, Chitwan District',
-    magnitude: 'Level 2', time: '4h ago',
-    affected: '~28,000 people', status: 'Watch',
-    desc: 'Narayani River at warning level at Narayanghat gauge. Riverbank communities in Bharatpur advised to monitor. No evacuation yet but pre-positioning of boats underway.',
-    river: 'Narayani River', province: 'Bagmati Province'
-  },
-  {
-    type: 'Landslide', icon: '⛰️', severity: 'low',
-    location: 'Dolakha District, Bagmati Province',
-    magnitude: 'Watch', time: '5h ago',
-    affected: '~3,000 people', status: 'Watch',
-    desc: 'Minor slope instability detected near Charikot. Rainfall forecast to continue. Precautionary watch issued. No immediate threat but monitoring ongoing.',
-    river: 'Tamakoshi River', province: 'Bagmati Province'
-  },
-  {
-    type: 'Flood', icon: '🌊', severity: 'low',
-    location: 'Karnali River, Surkhet District',
-    magnitude: 'Level 1', time: '6h ago',
-    affected: '~15,000 people', status: 'Advisory',
-    desc: 'Karnali River at advisory level. Upstream rainfall in Humla and Mugu may cause rise. Birendranagar municipality on standby. Situation being monitored.',
-    river: 'Karnali River', province: 'Karnali Province'
-  },
-];
-
 const statusColors = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' };
+// NOTE: TYPE_ICON is provided globally by live-data.js — do not redeclare it.
+
+// Normalized alerts used by all render + filter logic
+let ALERTS = [];
+
+function currentAlerts() {
+  if (ALERTS.length) return ALERTS;
+  return []; // offline shows the auth.js banner, never fake data
+}
+
+// Ground-truth badge for an alert (model confidence vs confirmed events)
+function groundTruthBadge(a) {
+  const st = (a.groundTruth && a.groundTruth.status) || 'pending';
+  if (st === 'confirmed') return '<span class="badge" style="font-size:9px;margin-left:6px;background:rgba(34,197,94,0.15);color:var(--accent-green);border:1px solid rgba(34,197,94,0.35);">✅ confirmed</span>';
+  if (st === 'not-confirmed') return '<span class="badge" style="font-size:9px;margin-left:6px;background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.35);">❌ not confirmed</span>';
+  return '';
+}
 
 function renderAlertCards(data) {
-  document.getElementById('alert-cards').innerHTML = data.map((a, i) => `
+  const container = document.getElementById('alert-cards');
+  container.innerHTML = data.map((a, i) => `
     <div class="card fade-in" style="border-left:3px solid ${statusColors[a.severity]};">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="font-size:28px;">${a.icon}</div>
+          <div style="font-size:28px;">${a.icon || TYPE_ICON[a.type] || '⚠️'}</div>
           <div>
-            <div style="font-size:15px;font-weight:700;">${a.type} — ${a.magnitude}</div>
+            <div style="font-size:15px;font-weight:700;">${a.type} — ${a.magnitude}
+              ${a.crossVerified ? '<span class="badge badge-info" style="font-size:9px;margin-left:6px;">✓ cross-verified</span>' : ''}
+              ${groundTruthBadge(a)}
+            </div>
             <div style="font-size:12px;color:var(--text-muted);">📍 ${a.location}</div>
           </div>
         </div>
         <span class="badge badge-${a.severity}">${a.severity}</span>
       </div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;">${a.desc}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;">${escapeHtml(a.desc || 'Monitoring in progress.')}</div>
+      ${a.evidenceChips ? `<div style="font-size:11px;color:var(--text-muted);background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.12);border-radius:6px;padding:8px 10px;margin-bottom:12px;">📊 <strong style="color:var(--text-secondary);">Live evidence:</strong> ${a.evidenceChips}</div>` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
         <div style="background:var(--bg-secondary);border-radius:6px;padding:8px;">
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Affected</div>
-          <div style="font-size:12px;font-weight:700;margin-top:2px;">${a.affected}</div>
+          <div style="font-size:12px;font-weight:700;margin-top:2px;">${a.affected || '—'}</div>
         </div>
         <div style="background:var(--bg-secondary);border-radius:6px;padding:8px;">
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Province</div>
-          <div style="font-size:12px;font-weight:700;margin-top:2px;">${a.province}</div>
+          <div style="font-size:12px;font-weight:700;margin-top:2px;">${a.province || 'Nepal'}</div>
         </div>
         <div style="background:var(--bg-secondary);border-radius:6px;padding:8px;">
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Status</div>
-          <div style="font-size:12px;font-weight:700;margin-top:2px;color:${statusColors[a.severity]};">${a.status}</div>
+          <div style="font-size:12px;font-weight:700;margin-top:2px;color:${statusColors[a.severity]};">${a.status || 'Monitoring'}</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div style="font-size:11px;color:var(--text-muted);">🕐 ${a.time}</div>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" data-idx="${i}" onclick="openDetailsModal(${i})">Details</button>
-          <button class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="openRespondModal(${i})">Respond</button>
+          <button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="openDetailsModal(${i})">Details</button>
+          ${(a.groundTruth && a.groundTruth.status === 'confirmed')
+            ? '<button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="confirmAlertGroundTruth(${i},\'not-confirmed\')">❌ Mark not confirmed</button>'
+            : (a.groundTruth && a.groundTruth.status === 'not-confirmed')
+              ? '<button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="confirmAlertGroundTruth(${i},\'confirmed\')">✅ Mark confirmed</button>'
+              : '<button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="confirmAlertGroundTruth(${i},\'confirmed\')">✅ Confirm</button>'}
+          <button class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="resolveAlert(${i})">✓ Resolve</button>
         </div>
       </div>
     </div>
   `).join('');
 }
 
-renderAlertCards(ALERT_DETAILS);
+// Counts per severity from the live list
+function updateSeverityStats(list) {
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  list.forEach(a => { if (counts[a.severity] !== undefined) counts[a.severity] += 1; });
+  document.querySelectorAll('.stat-card').forEach(card => {
+    const label = card.querySelector('.stat-label')?.textContent?.trim().toLowerCase();
+    if (counts[label] !== undefined) card.querySelector('.stat-value').textContent = counts[label];
+  });
+  document.getElementById('alert-count-subtitle').textContent =
+    `${list.length} incident${list.length === 1 ? '' : 's'} requiring attention`;
+}
+
+// ── Resolve alert through the API ──
+function resolveAlert(i) {
+  const a = currentAlerts()[i];
+  showConfirm(`Mark the ${a.type} alert at ${a.location} as resolved?`, async () => {
+    try {
+      if (a._raw && a._raw._id) await resolveLiveAlert(a._raw._id);
+      ALERTS.splice(i, 1);
+      renderAlertCards(ALERTS);
+      updateSeverityStats(ALERTS);
+      showToast(`✅ ${a.type} alert at ${a.location} resolved`, 'success');
+    } catch (err) {
+      showToast(`Failed to resolve alert: ${err.message}`, 'error');
+    }
+  }, 'Resolve Alert');
+}
+
+// ── Ground truth: mark alert confirmed / not-confirmed (field report) ──
+function confirmAlertGroundTruth(i, status) {
+  const a = currentAlerts()[i];
+  const label = status === 'confirmed' ? 'CONFIRMED' : 'NOT CONFIRMED';
+  showConfirm(
+    `Mark this ${a.type} alert at ${a.location} as ${label}?\n\nRecords a human field report against the model's prediction.`,
+    async () => {
+      try {
+        const id = a._raw && a._raw._id;
+        if (!id) throw new Error('Alert id missing');
+        const res = await API.alerts.confirm(id, status, '');
+        const updated = res.data && res.data.alert;
+        // Update local state so the badge + buttons reflect the new truth
+        a.groundTruth = {
+          status,
+          by: (updated && updated.groundTruth && updated.groundTruth.by) || null,
+          at: (updated && updated.groundTruth && updated.groundTruth.at) || new Date().toISOString(),
+          note: '',
+        };
+        ALERTS[i] = a;
+        renderAlertCards(ALERTS);
+        // Refresh the summary counts after the report
+        if (typeof loadLiveGroundTruth === 'function') {
+          loadLiveGroundTruth().then(renderGroundTruthSummary).catch(() => {});
+        }
+        showToast(`📋 Alert marked ${label} — field report recorded`, 'success');
+      } catch (err) {
+        showToast(`Failed to record confirmation: ${err.message}`, 'error');
+      }
+    },
+    `${label} Alert`
+  );
+}
+
+// ── Live data bootstrapping ──
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth()) return;
+
+  withLiveData(async () => {
+    await loadLiveAlerts();
+    ALERTS = LIVE.alerts.map(a => ({
+      ...a,
+      icon: TYPE_ICON[a.type] || '⚠️',
+      // desc is built from parts in live-data.js (risk label + calibrated
+      // probability) — never display the stored legacy message.
+      desc: a.desc || `${a.type} alert at ${a.location}.`,
+      affected: '—',
+      province: 'Nepal',
+      status: 'Monitoring',
+    }));
+    renderAlertCards(ALERTS);
+    updateSeverityStats(ALERTS);
+    applyFilters();
+    await loadLiveGroundTruth();
+    renderGroundTruthSummary();
+    startLiveFeed();
+  });
+
+  // Live resolved-alert handler: remove the card the instant it clears
+  document.addEventListener('flds:alert:resolved', (e) => {
+    const id = e.detail && e.detail.alertId;
+    if (!id) return;
+    const idx = ALERTS.findIndex(a =>
+      String(a.id) === String(id) || String(a._raw && a._raw._id) === String(id)
+    );
+    if (idx >= 0) {
+      ALERTS.splice(idx, 1);
+      renderAlertCards(ALERTS);
+      updateSeverityStats(ALERTS);
+      // Toast already shown globally by live-feed.js — no duplicate here
+    }
+  });
+
+  // Live ground-truth handler: a field report arrived for an alert
+  document.addEventListener('flds:alert:confirmed', (e) => {
+    const id = e.detail && e.detail.alertId;
+    const status = e.detail && e.detail.status;
+    if (!id || !status) return;
+    const idx = ALERTS.findIndex(a =>
+      String(a.id) === String(id) || String(a._raw && a._raw._id) === String(id)
+    );
+    if (idx >= 0) {
+      ALERTS[idx].groundTruth = {
+        status,
+        by: e.detail.by || null,
+        at: new Date().toISOString(),
+        note: e.detail.note || '',
+      };
+      renderAlertCards(ALERTS);
+      if (typeof loadLiveGroundTruth === 'function') {
+        loadLiveGroundTruth().then(renderGroundTruthSummary).catch(() => {});
+      } else {
+        renderGroundTruthSummary();
+      }
+    }
+  });
+
+  // Live new-alert handler for this page: prepend card + bump severity count
+  document.addEventListener('flds:alert:new', (e) => {
+    const a = e.detail && e.detail.alert;
+    if (!a) return;
+    const sev = a.riskLevel || 'high';
+    const typeLabel = (a.disasterType || 'alert');
+    const typeDisplay = typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1);
+    const loc = (a.location && (a.location.city || a.location.address)) || 'Nepal';
+    const prob = window.displayProbability ? window.displayProbability(a.probability, a.riskLevel) : Math.round((a.probability || 0) * 100);
+    const verification = (typeof window.alertVerification === 'function') ? window.alertVerification(a) : null;
+    ALERTS.unshift({
+      id: a.id || a._id,
+      type: typeDisplay,
+      severity: sev,
+      riskLevel: a.riskLevel,
+      location: loc,
+      magnitude: `Prob ${prob}%`,
+      time: 'just now',
+      icon: TYPE_ICON[typeDisplay] || '⚠️',
+      desc: `${a.riskLevel || sev} risk ${typeLabel} near ${loc} — ${prob}% model probability`,
+      affected: '—',
+      province: 'Nepal',
+      status: 'Monitoring',
+      verification,
+      crossVerified: !!(verification && verification.ruleAgreed),
+      _raw: { _id: a.id || a._id },
+    });
+    renderAlertCards(ALERTS);
+    updateSeverityStats(ALERTS);
+  });
+});
 
 // ── Severity filter cards ──
 document.querySelectorAll('.stat-card').forEach(card => {
@@ -231,8 +350,8 @@ document.querySelectorAll('.stat-card').forEach(card => {
   card.addEventListener('click', () => {
     const label = card.querySelector('.stat-label')?.textContent?.trim().toLowerCase();
     const filtered = label === 'critical' || label === 'high' || label === 'medium' || label === 'low'
-      ? ALERT_DETAILS.filter(a => a.severity === label)
-      : ALERT_DETAILS;
+      ? currentAlerts().filter(a => a.severity === label)
+      : currentAlerts();
     renderAlertCards(filtered);
     showToast(`Showing ${filtered.length} ${label !== 'all' ? label : ''} alerts`, 'info', 2000);
   });
@@ -243,96 +362,107 @@ const [severitySelect, typeSelect] = document.querySelectorAll('.filter-select')
 function applyFilters() {
   const sev  = severitySelect.value;
   const type = typeSelect.value;
-  const filtered = ALERT_DETAILS.filter(a =>
+  const filtered = currentAlerts().filter(a =>
     (sev  === 'All Severities' || a.severity === sev.toLowerCase()) &&
     (type === 'All Types'      || a.type     === type)
   );
   renderAlertCards(filtered);
-  showToast(`${filtered.length} alert(s) match filters`, 'info', 2000);
 }
 if (severitySelect) severitySelect.addEventListener('change', applyFilters);
 if (typeSelect)     typeSelect.addEventListener('change', applyFilters);
 
 // ── Details modal ──
+// escapeHtml is provided globally by live-data.js
 function openDetailsModal(i) {
-  const a = ALERT_DETAILS[i];
+  const a = currentAlerts()[i];
+  const loc = escapeHtml(a.location || 'Nepal');
+  const desc = escapeHtml(a.desc || '');
+  const mag = escapeHtml(a.magnitude || '—');
+  const ev = a.evidence;
+  const sourceLabel = (ev && (window.EVIDENCE_SOURCE_LABEL[ev.source] || ev.source)) || 'Live feed';
+  const evidenceHtml = ev ? `
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);">📊 Why this alert — live evidence</div>
+        <span class="badge badge-info" style="font-size:10px;">${escapeHtml(sourceLabel)}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;">
+        ${[
+          ['Rainfall', ev.rainfall, '🌧'],
+          ['Humidity', ev.humidity, '💧'],
+          ['Temp', ev.temperature, '🌡'],
+          ['River Flow', ev.riverFlow, '🏞'],
+        ].filter(([, v]) => v).map(([label, value, icon]) => `
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 12px;text-align:center;">
+            <div style="font-size:16px;">${icon}</div>
+            <div style="font-size:16px;font-weight:700;margin-top:2px;">${escapeHtml(value)}</div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;">${label}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+        ⚙️ Model v${escapeHtml(ev.modelVersion)} · Source: ${escapeHtml(sourceLabel)}
+        ${a.crossVerified ? '<br>✅ <strong style="color:var(--accent-green);">Cross-verified</strong> — model and rainfall rule agree' : ''}
+      </div>
+    </div>` : '';
   showModal({
-    title: `${a.icon} ${a.type} — ${a.location}`,
+    title: `${a.icon || TYPE_ICON[a.type] || '⚠️'} ${escapeHtml(a.type)} — ${loc}`,
     size: 'md',
     body: `
       <div style="margin-bottom:14px;">
         <span class="badge badge-${a.severity}" style="margin-right:8px;">${a.severity}</span>
         <span style="font-size:12px;color:var(--text-muted);">🕐 ${a.time}</span>
       </div>
-      <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;">${a.desc}</p>
+      <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;">${desc}</p>
+      ${evidenceHtml}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Magnitude</div>
-          <div style="font-size:15px;font-weight:700;margin-top:4px;color:${statusColors[a.severity]};">${a.magnitude}</div>
+          <div style="font-size:15px;font-weight:700;margin-top:4px;color:${statusColors[a.severity]};">${mag}</div>
         </div>
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Affected</div>
-          <div style="font-size:15px;font-weight:700;margin-top:4px;">${a.affected}</div>
+          <div style="font-size:15px;font-weight:700;margin-top:4px;">${a.affected || '—'}</div>
         </div>
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Province</div>
-          <div style="font-size:13px;font-weight:600;margin-top:4px;">${a.province}</div>
+          <div style="font-size:13px;font-weight:600;margin-top:4px;">${a.province || 'Nepal'}</div>
         </div>
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">River</div>
-          <div style="font-size:13px;font-weight:600;margin-top:4px;">${a.river}</div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Coordinates</div>
+          <div style="font-size:12px;font-weight:600;margin-top:4px;">${a.coords ? a.coords.map(c => Number(c).toFixed(2)).join(', ') : '—'}</div>
         </div>
       </div>`,
     actions: [
       { id: 'map', label: '🗺️ View on Map', style: 'secondary', onClick: () => window.location.href = 'map.html' },
-      { id: 'respond', label: '⚡ Respond', style: 'primary', onClick: () => openRespondModal(i) }
+      { id: 'confirm', label: a.groundTruth && a.groundTruth.status === 'confirmed' ? '❌ Mark Not Confirmed' : '✅ Confirm (Field Report)', style: 'secondary', onClick: () => confirmAlertGroundTruth(i, a.groundTruth && a.groundTruth.status === 'confirmed' ? 'not-confirmed' : 'confirmed') },
+      { id: 'resolve', label: '✓ Resolve Alert', style: 'primary', onClick: () => resolveAlert(i) }
     ]
   });
 }
 
-// ── Respond modal ──
-function openRespondModal(i) {
-  const a = ALERT_DETAILS[i];
-  showModal({
-    title: `⚡ Respond — ${a.type} at ${a.location}`,
-    size: 'md',
-    body: `
-      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--accent-red);font-weight:600;">
-        ⚠️ ${a.severity.toUpperCase()} severity — ${a.affected} affected
-      </div>
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Response Team</label>
-        <select class="filter-select" style="width:100%;padding:10px;" id="resp-team">
-          <option>NDRRMA Rapid Response</option>
-          <option>Nepal Army Disaster Unit</option>
-          <option>Nepal Police Emergency</option>
-          <option>Red Cross Nepal</option>
-          <option>Local Municipality Team</option>
-        </select>
-      </div>
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Action</label>
-        <select class="filter-select" style="width:100%;padding:10px;" id="resp-action">
-          <option>Deploy rescue team</option>
-          <option>Issue evacuation order</option>
-          <option>Pre-position relief supplies</option>
-          <option>Activate emergency shelter</option>
-          <option>Monitor and report</option>
-        </select>
-      </div>
-      <div>
-        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Notes</label>
-        <textarea style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:inherit;font-size:13px;padding:10px;resize:vertical;min-height:60px;outline:none;" placeholder="Additional instructions..."></textarea>
-      </div>`,
-    actions: [
-      { id: 'cancel', label: 'Cancel', style: 'secondary' },
-      { id: 'dispatch', label: '🚁 Dispatch', style: 'primary', onClick: () => {
-        const team   = document.getElementById('resp-team')?.value;
-        const action = document.getElementById('resp-action')?.value;
-        showToast(`✅ ${team} dispatched — ${action}`, 'success', 5000);
-      }}
-    ]
-  });
+// ── Ground-truth summary strip (model confidence vs confirmed events) ──
+function renderGroundTruthSummary() {
+  const el = document.getElementById('ground-truth-summary');
+  if (!el) return;
+  if (!(window.LIVE && LIVE.groundTruth)) {
+    el.style.display = 'none';
+    return;
+  }
+  const gt = LIVE.groundTruth;
+  const rate = gt.confirmationRate !== null && gt.confirmationRate !== undefined
+    ? `${gt.confirmationRate}%`
+    : '—';
+  el.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
+      <div><span style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);">Model confidence vs confirmed events</span></div>
+      <div style="font-size:12px;">✅ <strong>${gt.confirmed}</strong> confirmed</div>
+      <div style="font-size:12px;">❌ <strong>${gt.notConfirmed}</strong> not confirmed</div>
+      <div style="font-size:12px;">⏳ <strong>${gt.pending}</strong> pending review</div>
+      <div style="font-size:12px;">🎯 Confirmation rate <strong>${rate}</strong></div>
+      <div style="font-size:11px;color:var(--text-muted);">based on ${gt.reviewed} field-reviewed alert(s)</div>
+    </div>`;
+  el.style.display = '';
 }
 </script>
 </body>

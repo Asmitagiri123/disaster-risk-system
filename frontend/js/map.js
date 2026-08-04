@@ -1,4 +1,4 @@
-// map.js — Leaflet map initialization — Nepal Flood & Landslide focus
+// Leaflet map — Nepal flood & landslide focus
 
 let mapInstance = null;
 
@@ -29,14 +29,23 @@ function initMap(containerId = 'leaflet-map') {
     maxZoom: 18,
   }).addTo(mapInstance);
 
-  MOCK.mapMarkers.forEach(marker => addMarker(marker));
-
   L.control.zoom({ position: 'bottomright' }).addTo(mapInstance);
 
   return mapInstance;
 }
 
-function addMarker({ coords, type, severity, label }) {
+// (Re)draw markers from LIVE data. Called after alerts load, since initMap
+// may have run before the first fetch completed.
+function syncMapMarkers() {
+  if (!mapInstance) return;
+  mapInstance.eachLayer(layer => {
+    if (layer instanceof L.Marker) mapInstance.removeLayer(layer);
+  });
+  const markers = (window.LIVE && LIVE.mapMarkers.length) ? LIVE.mapMarkers : [];
+  markers.forEach(marker => addMarker(marker));
+}
+
+function addMarker({ coords, type, severity, label, province, evidence }) {
   if (!mapInstance) return;
 
   const color = MARKER_COLORS[severity] || '#94a3b8';
@@ -78,9 +87,11 @@ function addMarker({ coords, type, severity, label }) {
       padding:10px 14px;min-width:180px;font-family:Inter,sans-serif;
     ">
       <div style="font-size:13px;font-weight:700;color:#f1f5f9;margin-bottom:4px;">${label}</div>
+      ${province ? `<div style="font-size:11px;color:#64748b;margin-bottom:2px;">📍 ${province} Province</div>` : ''}
       <div style="font-size:11px;color:#94a3b8;text-transform:capitalize;">
         ${type} · <span style="color:${color};font-weight:600;">${severity}</span>
       </div>
+      ${evidence ? `<div style="font-size:10px;color:#64748b;margin-top:6px;border-top:1px solid #2d3748;padding-top:6px;">📊 ${evidence}</div>` : ''}
     </div>
   `);
 
@@ -99,3 +110,5 @@ mapStyles.textContent = `
   .leaflet-popup-content{margin:0!important;}
 `;
 document.head.appendChild(mapStyles);
+
+window.syncMapMarkers = syncMapMarkers;

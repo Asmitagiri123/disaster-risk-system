@@ -1,9 +1,6 @@
 const { DISASTER_TYPES } = require('../config/constants');
 
-/**
- * Normalize earthquake sensor data into ML-ready feature array
- * Features: [magnitude, depth, latitude, longitude, seismicActivity, groundVibration]
- */
+// Feature order: [magnitude, depth, latitude, longitude, seismicActivity, groundVibration]
 const parseEarthquakeData = (data) => {
   return [
     normalizeValue(data.magnitude, 0, 10),
@@ -15,10 +12,7 @@ const parseEarthquakeData = (data) => {
   ];
 };
 
-/**
- * Normalize flood sensor data into ML-ready feature array
- * Features: [rainfall, waterLevel, soilMoisture, riverFlow, humidity, elevation]
- */
+// Feature order: [rainfall, waterLevel, soilMoisture, riverFlow, humidity, elevation]
 const parseFloodData = (data) => {
   return [
     normalizeValue(data.rainfall, 0, 500),
@@ -30,10 +24,7 @@ const parseFloodData = (data) => {
   ];
 };
 
-/**
- * Normalize landslide sensor data into ML-ready feature array
- * Features: [rainfall, soilMoisture, slopeAngle, soilType, vegetationCover, groundDisplacement]
- */
+// Feature order: [rainfall, soilMoisture, slopeAngle, soilType, vegetationCover, groundDisplacement]
 const parseLandslideData = (data) => {
   return [
     normalizeValue(data.rainfall, 0, 500),

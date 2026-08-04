@@ -1,11 +1,12 @@
 const Prediction = require('../models/Prediction');
 const mlService = require('../ml/modelBridge');
 const alertService = require('./alertService');
+const liveBus = require('./liveEventBus');
 const logger = require('../utils/logger');
 
 class PredictionService {
   async predict(disasterType, inputData, location, options = {}) {
-    const result = await mlService.predict(disasterType, inputData);
+    const result = await mlService.predict(disasterType, inputData, location);
 
     const prediction = await Prediction.create({
       disasterType,
@@ -13,16 +14,16 @@ class PredictionService {
       riskLevel: result.riskLevel,
       location,
       inputData,
-      modelVersion: '1.0.0',
+      modelVersion: result.modelVersion || '1.0.0',
       predictedBy: options.predictedBy || 'manual',
       createdBy: options.userId || null,
+      verification: result.verification || null,
     });
 
     logger.info(
       `Prediction created: ${disasterType} | ${result.riskLevel} | ${(result.probability * 100).toFixed(1)}%`
     );
 
-    // Dispatch alert if threshold exceeded
     if (result.shouldAlert) {
       try {
         const alert = await alertService.createAndDispatch({
@@ -37,6 +38,20 @@ class PredictionService {
         logger.error(`Alert dispatch failed: ${err.message}`);
       }
     }
+
+    liveBus.emit('prediction:new', {
+      prediction: {
+        id: prediction._id,
+        disasterType: prediction.disasterType,
+        riskLevel: prediction.riskLevel,
+        probability: prediction.probability,
+        alertTriggered: prediction.alertTriggered,
+        alertId: prediction.alertId,
+        location: prediction.location || {},
+        createdAt: prediction.createdAt,
+        verification: prediction.verification || null,
+      },
+    });
 
     return {
       prediction,

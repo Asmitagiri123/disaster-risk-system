@@ -1,6 +1,6 @@
-// interactions.js — Shared UI: modal, toast, notification panel, confirm dialog
+// Shared UI: toast, modal, confirm dialog, notification panel
 
-// ─── TOAST ───────────────────────────────────────────────────────────────────
+// Toast
 function showToast(message, type = 'info', duration = 3500) {
   let container = document.getElementById('toast-container');
   if (!container) {
@@ -38,7 +38,7 @@ function showToast(message, type = 'info', duration = 3500) {
   }, duration);
 }
 
-// ─── MODAL ───────────────────────────────────────────────────────────────────
+// Modal
 function showModal({ title, body, actions = [], size = 'md' }) {
   closeModal();
   const widths = { sm: '400px', md: '560px', lg: '720px' };
@@ -92,7 +92,7 @@ function closeModal() {
   if (overlay) overlay.remove();
 }
 
-// ─── CONFIRM DIALOG ──────────────────────────────────────────────────────────
+// Confirm dialog
 function showConfirm(message, onConfirm, confirmLabel = 'Confirm', confirmStyle = 'danger') {
   showModal({
     title: '⚠️ Confirm Action',
@@ -105,47 +105,63 @@ function showConfirm(message, onConfirm, confirmLabel = 'Confirm', confirmStyle 
   });
 }
 
-// ─── NOTIFICATION PANEL ──────────────────────────────────────────────────────
-const NOTIFICATIONS = [
-  { id: 1, title: 'Koshi River — Level 4 Flood', desc: 'Embankment breach risk. NDRRMA alerted.', time: '8 min ago', type: 'critical', read: false },
-  { id: 2, title: 'Sindhupalchok Landslide', desc: 'Major landslide on Araniko Highway.', time: '22 min ago', type: 'critical', read: false },
-  { id: 3, title: 'Rapti River rising', desc: 'Level 3 alert issued for Dang district.', time: '1h ago', type: 'warning', read: false },
-  { id: 4, title: 'Model accuracy updated', desc: 'Prediction model retrained — 91.8%', time: '2h ago', type: 'info', read: true },
-];
-
+// Notification panel — live alerts plus the desktop-push toggle
 function openNotificationPanel() {
-  const unread = NOTIFICATIONS.filter(n => !n.read);
-  const typeColors = { critical: 'var(--accent-red)', warning: 'var(--accent-orange)', info: 'var(--accent-blue)' };
+  const alerts = (window.LIVE && LIVE.alerts) || [];
+  const typeColors = { critical: 'var(--accent-red)', high: 'var(--accent-orange)', medium: 'var(--accent-yellow)', low: 'var(--accent-green)' };
+  const desktopOn = localStorage.getItem('flds-desktop-notify') === 'on';
 
   showModal({
-    title: `🔔 Notifications (${unread.length} unread)`,
+    title: `🔔 Live Notifications (${alerts.length} active)`,
     size: 'sm',
-    body: NOTIFICATIONS.map(n => `
-      <div style="
-        display:flex;gap:12px;padding:12px;border-radius:var(--radius-sm);
-        background:${n.read ? 'transparent' : 'rgba(59,130,246,0.05)'};
-        border:1px solid ${n.read ? 'transparent' : 'rgba(59,130,246,0.15)'};
-        margin-bottom:8px;
-      ">
-        <div style="width:8px;height:8px;border-radius:50%;background:${typeColors[n.type]};margin-top:5px;flex-shrink:0;${n.read ? 'opacity:0.3' : ''}"></div>
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:${n.read ? '500' : '700'};margin-bottom:2px;">${n.title}</div>
-          <div style="font-size:11px;color:var(--text-muted);">${n.desc}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">🕐 ${n.time}</div>
+    body: `
+      ${alerts.length ? alerts.slice(0, 10).map(n => `
+        <div style="display:flex;gap:12px;padding:12px;border-radius:var(--radius-sm);background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.15);margin-bottom:8px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${typeColors[n.severity] || 'var(--accent-blue)'};margin-top:5px;flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:2px;">${n.type === 'Flood' ? '🌊' : '⛰️'} ${escapeHtml(n.type)} alert — ${escapeHtml(n.location)}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${escapeHtml(n.magnitude)} · ${escapeHtml(n.time)}</div>
+          </div>
         </div>
-      </div>
-    `).join(''),
+      `).join('') : `
+        <div style="text-align:center;padding:28px 12px;color:var(--text-muted);font-size:13px;">
+          ${window.LIVE && LIVE.online === false ? '⚠️ Backend offline — no live notifications available' : 'No active alerts right now 🎉'}
+        </div>`}
+      <div style="margin-top:12px;padding:12px;border:1px dashed var(--border);border-radius:var(--radius-sm);background:rgba(59,130,246,0.03);">
+        <div style="font-size:12px;font-weight:600;margin-bottom:2px;">🔔 Desktop push alerts</div>
+        <div style="font-size:11px;color:var(--text-muted);">Native OS notifications when a new high/critical risk is detected — even in the background. Status: <strong id="desktop-notify-status">${desktopOn ? 'Enabled' : 'Off'}</strong></div>
+      </div>`,
     actions: [
-      { id: 'mark-all', label: 'Mark All Read', style: 'secondary', onClick: () => {
-        NOTIFICATIONS.forEach(n => n.read = true);
-        document.querySelectorAll('.notif-badge').forEach(b => b.style.display = 'none');
-        showToast('All notifications marked as read', 'success');
-      }, closeOnClick: false }
+      {
+        id: 'toggle-notify',
+        label: desktopOn ? '🔕 Disable Desktop Alerts' : '🔔 Enable Desktop Alerts',
+        style: desktopOn ? 'secondary' : 'primary',
+        onClick: () => {
+          const update = (on) => {
+            const btn = document.querySelector('[data-action="toggle-notify"]');
+            if (btn) {
+              btn.textContent = on ? '🔕 Disable Desktop Alerts' : '🔔 Enable Desktop Alerts';
+              btn.className = `btn ${on ? 'btn-secondary' : 'btn-primary'}`;
+            }
+            const statusEl = document.getElementById('desktop-notify-status');
+            if (statusEl) statusEl.textContent = on ? 'Enabled' : 'Off';
+          };
+          if (desktopOn) {
+            window.disableBrowserNotifications && window.disableBrowserNotifications();
+            update(false);
+          } else if (window.enableBrowserNotifications) {
+            // Enable is async (permission prompt) — refresh UI when it settles
+            Promise.resolve(window.enableBrowserNotifications()).then(on => update(!!on));
+          }
+        },
+        closeOnClick: false
+      },
+      { id: 'close', label: 'Close', style: 'secondary' }
     ]
   });
 }
 
-// ─── BROADCAST MODAL ─────────────────────────────────────────────────────────
+// Broadcast modal
 function openBroadcastModal() {
   showModal({
     title: '🚨 Broadcast Emergency Alert',
@@ -196,7 +212,7 @@ function openBroadcastModal() {
   });
 }
 
-// ─── EXPORT CSV ──────────────────────────────────────────────────────────────
+// CSV export
 function exportCSV(data, filename) {
   if (!data || !data.length) { showToast('No data to export', 'warning'); return; }
   const headers = Object.keys(data[0]);
@@ -209,21 +225,32 @@ function exportCSV(data, filename) {
   showToast(`📥 Exported ${filename}`, 'success');
 }
 
-// ─── PROFILE MODAL ───────────────────────────────────────────────────────────
+// Profile modal
 function openProfileModal() {
+  const user = (typeof API !== 'undefined' && API.getUser) ? API.getUser() : null;
+  const name = (user && user.name) || 'Bagale Dada';
+  const email = (user && user.email) || 'admin@flds.demo';
+  const role = (user && user.role) || 'admin';
+  const initials = name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'BD';
+  const roleLabel = role === 'admin' ? 'System Administrator' : role === 'responder' ? 'Responder' : 'User';
+
   showModal({
-    title: '👤 NDRRMA Admin',
+    title: `👤 ${name}`,
     size: 'sm',
     body: `
       <div style="text-align:center;margin-bottom:20px;">
-        <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin:0 auto 12px;">ND</div>
-        <div style="font-size:16px;font-weight:700;">NDRRMA Admin</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">National Disaster Risk Reduction & Management Authority</div>
+        <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin:0 auto 12px;">${initials}</div>
+        <div style="font-size:16px;font-weight:700;">${name}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${email}</div>
       </div>
       <div style="display:grid;gap:8px;">
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
           <span style="font-size:12px;color:var(--text-muted);">Role</span>
-          <span style="font-size:12px;font-weight:600;">System Administrator</span>
+          <span style="font-size:12px;font-weight:600;">${roleLabel}</span>
+        </div>
+        <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
+          <span style="font-size:12px;color:var(--text-muted);">Email</span>
+          <span style="font-size:12px;font-weight:600;">${email}</span>
         </div>
         <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;">
           <span style="font-size:12px;color:var(--text-muted);">Access Level</span>
@@ -239,7 +266,82 @@ function openProfileModal() {
   });
 }
 
-// ─── INJECT ANIMATION STYLES ─────────────────────────────────────────────────
+// Alert-location picker modal — change the district/province this account is
+// scoped to. Persists to the profile via PUT /auth/profile.
+function showLocationModal() {
+  if (typeof NEPAL_PROVINCES === 'undefined') {
+    showToast('Location data not loaded — open the dashboard first', 'warning');
+    return;
+  }
+  const user = (typeof API.getUser === 'function') ? API.getUser() : null;
+  const curProvince = ((user && user.province) || '').trim();
+  const curDistrict = ((user && user.district) || '').trim();
+
+  const provinceOptions = ['<option value="">🇳🇵 All Nepal</option>']
+    .concat(NEPAL_PROVINCES.map(p =>
+      `<option value="${p.name}" ${p.name === curProvince ? 'selected' : ''}>${p.icon} ${p.name}</option>`
+    )).join('');
+
+  const districtOptions = ['<option value="">All districts</option>']
+    .concat(Object.entries(NEPAL_DISTRICT_PROVINCE)
+      .filter(([, prov]) => !curProvince || prov === curProvince)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([d]) => `<option value="${d}" ${d === curDistrict ? 'selected' : ''}>${d}</option>`)
+    ).join('');
+
+  showModal({
+    title: '📍 Change Alert Location',
+    size: 'sm',
+    body: `
+      <p style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:14px;">
+        Alerts on the dashboard, the alerts page and your notifications are scoped to this location.
+        Pick a province for province-wide alerts, or a district for its alerts only.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Province</label>
+          <select class="filter-select" style="width:100%;padding:10px;" id="loc-province">${provinceOptions}</select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">District</label>
+          <select class="filter-select" style="width:100%;padding:10px;" id="loc-district">${districtOptions}</select>
+        </div>
+      </div>
+    `,
+    actions: [
+      { id: 'cancel', label: 'Cancel', style: 'secondary' },
+      {
+        id: 'save', label: '💾 Save Location', style: 'primary', closeOnClick: false,
+        onClick: async () => {
+          const province = document.getElementById('loc-province').value;
+          const district = document.getElementById('loc-district').value;
+          try {
+            const res = await API.auth.updateProfile({ province, district });
+            if (res.data && res.data.user) API.setSession(API.getToken(), res.data.user);
+            if (typeof window.setScopeOverride === 'function') window.setScopeOverride(false);
+            closeModal();
+            showToast(
+              district ? `📍 Alerts scoped to ${province} · ${district}`
+                : province ? `📍 Alerts scoped to ${province} Province`
+                  : '🇳🇵 Alerts now show all of Nepal',
+              'success'
+            );
+            setTimeout(() => window.location.reload(), 600);
+          } catch (err) {
+            showToast(`Could not save location: ${(err.data && err.data.message) || err.message}`, 'error');
+          }
+        }
+      }
+    ]
+  });
+
+  // Province → district cascade inside the modal
+  const provSel = document.getElementById('loc-province');
+  const distSel = document.getElementById('loc-district');
+  provSel.addEventListener('change', () => populateDistrictSelect(distSel, provSel.value));
+}
+
+// Animation styles
 const interactionStyles = document.createElement('style');
 interactionStyles.textContent = `
   @keyframes slideInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
@@ -249,8 +351,26 @@ interactionStyles.textContent = `
 `;
 document.head.appendChild(interactionStyles);
 
-// ─── GLOBAL HEADER WIRING (runs on every page) ────────────────────────────────
+// Global header wiring
 document.addEventListener('DOMContentLoaded', () => {
+  // Show the logged-in user's name in the sidebar footer
+  const user = (typeof API !== 'undefined' && API.getUser) ? API.getUser() : null;
+  document.querySelectorAll('.sidebar-footer .nav-item').forEach(el => {
+    const name = (user && user.name) || el.textContent.trim();
+    el.textContent = '';
+    const icon = document.createElement('span');
+    icon.className = 'nav-icon';
+    icon.textContent = '👤';
+    el.appendChild(icon);
+    el.appendChild(document.createTextNode(name));
+  });
+  // Avatar initials
+  document.querySelectorAll('.avatar').forEach(a => {
+    if (user && user.name) {
+      a.textContent = user.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+  });
+
   // Notification bell
   document.querySelectorAll('.header-btn').forEach(btn => {
     if (btn.textContent.includes('🔔')) btn.addEventListener('click', openNotificationPanel);

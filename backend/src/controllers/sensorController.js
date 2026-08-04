@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const SensorData = require('../models/SensorData');
 const predictionService = require('../services/predictionService');
+const liveBus = require('../services/liveEventBus');
 const logger = require('../utils/logger');
 
 exports.ingestSensorData = async (req, res) => {
@@ -24,7 +25,7 @@ exports.ingestSensorData = async (req, res) => {
 
     logger.info(`Sensor data ingested: ${sensorId} (${disasterType})`);
 
-    // Auto-trigger prediction from sensor data
+    // Auto-trigger a prediction from the sensor reading
     const { prediction, mlResult } = await predictionService.predict(
       disasterType,
       readings,
@@ -35,6 +36,15 @@ exports.ingestSensorData = async (req, res) => {
     sensorData.predictionTriggered = true;
     sensorData.predictionId = prediction._id;
     await sensorData.save();
+
+    liveBus.emit('sensor:ingest', {
+      sensorId,
+      sensorType,
+      disasterType,
+      location,
+      readings,
+      processedAt: sensorData.processedAt,
+    });
 
     res.status(201).json({
       success: true,
@@ -63,9 +73,12 @@ exports.getSensorData = async (req, res) => {
     if (sensorId) query.sensorId = sensorId;
     if (disasterType) query.disasterType = disasterType;
 
+    const parsedLimit = parseInt(limit, 10);
+    const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 500) : 50;
+
     const data = await SensorData.find(query)
       .sort({ createdAt: -1 })
-      .limit(parseInt(limit))
+      .limit(safeLimit)
       .populate('predictionId', 'riskLevel probability alertTriggered');
 
     res.json({ success: true, count: data.length, data: { sensorReadings: data } });

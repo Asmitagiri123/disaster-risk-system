@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nepal FLDS — Final Year Project Report</title>
+<style>
+  /* ---- Print-first report styling ---- */
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+    @bottom-center {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 8.5pt; color: #64748b; font-family: 'Segoe UI', sans-serif;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'Calibri', Arial, sans-serif;
+    font-size: 10.5pt; line-height: 1.55; color: #1e293b;
+    margin: 0; padding: 0;
+  }
+  h1, h2, h3, h4 { color: #0f172a; line-height: 1.25; }
+  h2 {
+    font-size: 16pt; margin: 0 0 10pt 0; padding-bottom: 4pt;
+    border-bottom: 2px solid #3b82f6;
+  }
+  h3 { font-size: 12.5pt; margin: 14pt 0 6pt 0; color: #1d4ed8; }
+  p { margin: 0 0 8pt 0; text-align: justify; }
+  ul, ol { margin: 0 0 8pt 0; padding-left: 18pt; }
+  li { margin-bottom: 3pt; }
+  a { color: #2563eb; text-decoration: none; }
+  code {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 9pt; background: #f1f5f9; padding: 1px 4px; border-radius: 3px;
+  }
+  pre {
+    background: #0f172a; color: #e2e8f0; padding: 10pt 12pt; border-radius: 6px;
+    font-family: Consolas, 'Courier New', monospace; font-size: 8.5pt;
+    line-height: 1.45; overflow-x: auto; margin: 6pt 0 12pt 0; white-space: pre-wrap;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: 8.5pt; }
+  table { width: 100%; border-collapse: collapse; margin: 6pt 0 14pt 0; font-size: 9pt; }
+  th { background: #1e3a5f; color: #fff; text-align: left; padding: 5pt 8pt; font-weight: 600; }
+  td { border: 1px solid #cbd5e1; padding: 5pt 8pt; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .cover {
+    text-align: center; padding: 60pt 20pt 40pt 20pt; page-break-after: always;
+  }
+  .cover .uni { font-size: 13pt; color: #475569; margin-bottom: 30pt; }
+  .cover h1 { font-size: 26pt; margin: 10pt 0 6pt 0; color: #0f172a; }
+  .cover .subtitle { font-size: 14pt; color: #1d4ed8; margin-bottom: 30pt; }
+  .cover .badge {
+    display: inline-block; background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;
+    padding: 4pt 12pt; border-radius: 20pt; font-size: 10pt; margin: 4pt;
+  }
+  .cover .meta { margin-top: 40pt; font-size: 11pt; color: #334155; line-height: 2; }
+  .toc { page-break-after: always; }
+  .toc h2 { border-bottom: none; }
+  .toc ol { padding-left: 20pt; }
+  .toc li { margin-bottom: 6pt; font-size: 10.5pt; }
+  .section { page-break-before: always; }
+  .abstract-box {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6;
+    padding: 12pt 14pt; margin: 10pt 0; font-size: 10pt;
+  }
+  .note {
+    background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b;
+    padding: 8pt 12pt; margin: 8pt 0; font-size: 9.5pt;
+  }
+  .diagram {
+    background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;
+    padding: 14pt; margin: 10pt 0; text-align: center; page-break-inside: avoid;
+  }
+  .diagram .box {
+    display: inline-block; border: 1.5px solid #3b82f6; background: #fff;
+    border-radius: 6px; padding: 8pt 14pt; margin: 6pt 4pt; font-size: 10pt; font-weight: 600;
+    vertical-align: middle;
+  }
+  .diagram .box.green { border-color: #16a34a; }
+  .diagram .box.purple { border-color: #7c3aed; }
+  .diagram .arrow { display: inline-block; font-size: 14pt; color: #64748b; vertical-align: middle; }
+  .kpi-grid { display: flex; gap: 8pt; margin: 8pt 0 12pt 0; flex-wrap: wrap; }
+  .kpi {
+    flex: 1; min-width: 120pt; border: 1px solid #e2e8f0; border-radius: 6px;
+    padding: 8pt 10pt; text-align: center; background: #f8fafc;
+  }
+  .kpi .num { font-size: 17pt; font-weight: 800; color: #1d4ed8; }
+  .kpi .lbl { font-size: 8.5pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.4pt; margin-top: 2pt; }
+  .footer-note { font-size: 8.5pt; color: #94a3b8; margin-top: 20pt; text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- ================= COVER ================= -->
+<div class="cover">
+  <div class="uni">Tribhuvan University<br>Final Year Project Report — BSc CSIT / BE</div>
+  <h1>Nepal FLDS</h1>
+  <div class="subtitle">An AI-Powered Flood &amp; Landslide Detection and Early Warning System for Nepal</div>
+  <div>
+    <span class="badge">Machine Learning · XGBoost</span>
+    <span class="badge">Node.js · Express · MongoDB</span>
+    <span class="badge">Python · FastAPI</span>
+    <span class="badge">Real-Time Weather (Open-Meteo)</span>
+  </div>
+  <div class="meta">
+    <strong>Project:</strong> Flood &amp; Landslide Detection System (Nepal FLDS)<br>
+    <strong>Domain:</strong> Disaster Risk Reduction &amp; Early Warning<br>
+    <strong>Coverage:</strong> All 77 Districts of Nepal<br>
+    <strong>Model Version:</strong> XGBoost v1.2.0
+  </div>
+</div>
+
+<!-- ================= TOC ================= -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li>Abstract</li>
+    <li>Introduction</li>
+    <li>Problem Statement &amp; Objectives</li>
+    <li>Literature Review &amp; Related Work</li>
+    <li>System Architecture</li>
+    <li>Machine Learning Model Architecture</li>
+    <li>Data Pipeline &amp; Live Weather Ingestion</li>
+    <li>Backend Architecture (Node.js / Express / MongoDB)</li>
+    <li>Frontend Architecture</li>
+    <li>Cross-Verification &amp; Ground-Truth Confirmation</li>
+    <li>Security &amp; Reliability</li>
+    <li>Testing &amp; Evaluation</li>
+    <li>Deployment &amp; Operations</li>
+    <li>Limitations &amp; Future Work</li>
+    <li>Conclusion</li>
+  </ol>
+</div>
+
+<!-- ================= 1. ABSTRACT ================= -->
+<div class="section">
+  <h2>1. Abstract</h2>
+  <div class="abstract-box">
+    <strong>Nepal FLDS</strong> is a full-stack, AI-powered early warning system that continuously monitors
+    weather conditions across all 77 districts of Nepal and predicts the risk of floods and landslides in
+    near real time. Live weather data is fetched every few minutes from the Open-Meteo API, processed through
+    a data pipeline, and scored by two Gradient Boosted Decision Tree (XGBoost) classifiers — one for flood
+    and one for landslide risk. When the model judges a district to be at moderate or higher risk, an alert is
+    created and pushed instantly to every connected dashboard over a Server-Sent Events (SSE) feed. Every alert
+    is independently cross-checked against the documented monsoon rainfall trigger thresholds the models were
+    trained on, and responders can record field confirmations, producing an honest measure of "model confidence
+    vs confirmed events." The system was trained on 241,318 district-days of real observed weather per model
+    (2018–2026) and achieves 99.81% flood and 99.74% landslide classification accuracy on held-out data.
+  </div>
+
+  <h3>Key Metrics</h3>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="num">77</div><div class="lbl">Districts Covered</div></div>
+    <div class="kpi"><div class="num">241,318</div><div class="lbl">Training Rows / Model</div></div>
+    <div class="kpi"><div class="num">99.81%</div><div class="lbl">Flood Accuracy</div></div>
+    <div class="kpi"><div class="num">99.74%</div><div class="lbl">Landslide Accuracy</div></div>
+    <div class="kpi"><div class="num">~10 min</div><div class="lbl">Fast-Track Re-Evaluation</div></div>
+  </div>
+</div>
+
+<!-- ================= 2. INTRODUCTION ================= -->
+<div class="section">
+  <h2>2. Introduction</h2>
+  <p>
+    Nepal is one of the most disaster-prone countries in the world. Its steep Himalayan topography, young and
+    fragile geology, and intense monsoon rainfall combine to make floods and landslides recurring, life-threatening
+    hazards. Between 2010 and 2021, floods and landslides in Nepal killed thousands of people and caused billions of
+    rupees in damage; events such as the 2021 Melamchi flood demonstrated how quickly a single rainstorm can
+    devastate entire valleys.
+  </p>
+  <p>
+    The most effective mitigation measure for weather-driven hazards is <strong>early warning</strong>. If a district
+    can be told hours in advance that rainfall conditions are approaching dangerous thresholds, communities can move
+    to higher ground, traffic can be diverted, and emergency teams can preposition. However, traditional warning
+    systems rely on sparse physical sensor networks (river gauges, rain gauges) that are expensive to install and
+    maintain across 77 mountainous districts.
+  </p>
+  <p>
+    This project addresses that gap with a different approach: instead of requiring a physical sensor in every
+    district, it uses <strong>freely available satellite- and station-derived weather data</strong> (Open-Meteo) as
+    the sensor layer. Machine learning models learn the historical relationship between observed weather — daily
+    rainfall, its accumulation over 3 and 7 days, humidity, temperature, wind, soil moisture — and the documented
+    monsoon rainfall thresholds that precede floods and landslides. The result is a system that can reason about
+    every district in Nepal with no hardware deployment at all, and that surfaces its predictions on a modern,
+    real-time web dashboard built for disaster-management operators.
+  </p>
+
+  <h3>2.1 Motivation</h3>
+  <ul>
+    <li>Nepal's rugged terrain makes physical sensor coverage incomplete and uneven.</li>
+    <li>Monsoon flooding and landslides are driven by rainfall patterns that are now forecastable in near real time.</li>
+    <li>Free weather APIs make a nationwide, sensor-free early warning system technically and financially feasible.</li>
+    <li>An honest early warning system must distinguish <em>predicted risk</em> from <em>confirmed events</em> — this project explicitly models both.</li>
+  </ul>
+
+  <h3>2.2 Scope</h3>
+  <p>The system covers flood and landslide risk for all 77 districts. Earthquake prediction is intentionally excluded — the physical processes behind earthquakes are not predictable from weather, and fabricating quake predictions would undermine the system's credibility. The project scope includes:</p>
+  <ul>
+    <li>A <strong>machine learning training pipeline</strong> (Python) that downloads historical weather, derives risk labels from documented thresholds, trains XGBoost classifiers, and records full provenance.</li>
+    <li>A <strong>prediction microservice</strong> (Python FastAPI) that serves the trained models.</li>
+    <li>A <strong>backend API and orchestration layer</strong> (Node.js, Express, MongoDB) that polls live weather, runs predictions, raises alerts, and streams them in real time.</li>
+    <li>A <strong>responsive web frontend</strong> (HTML/CSS/JS, Chart.js, Leaflet) with dashboard, alerts, map, predictions, and reports pages.</li>
+  </ul>
+</div>
+
+<!-- ================= 3. PROBLEM & OBJECTIVES ================= -->
+<div class="section">
+  <h2>3. Problem Statement &amp; Objectives</h2>
+
+  <h3>3.1 Problem Statement</h3>
+  <p>
+    Floods and landslides during Nepal's monsoon season regularly cause loss of life and property. Existing warning
+    mechanisms are limited by sparse physical sensor infrastructure, high deployment cost, and slow dissemination of
+    warnings. There is a need for a low-cost, nationwide, near-real-time early warning system that (a) continuously
+    monitors all districts, (b) converts live weather into an actionable risk assessment using data-driven models,
+    (c) distributes alerts instantly to operators, and (d) honestly tracks whether predicted risks were confirmed on
+    the ground.
+  </p>
+
+  <h3>3.2 Objectives</h3>
+  <ol>
+    <li>Design and train machine learning models that classify flood and landslide risk from historical weather data for all 77 districts of Nepal.</li>
+    <li>Build a live data pipeline that ingests real weather observations and feeds them through the trained models on a continuous schedule.</li>
+    <li>Implement a secure backend API with user authentication, role-based access, alert management, and real-time event streaming.</li>
+    <li>Develop an interactive frontend dashboard for monitoring alerts, viewing a risk map, running manual predictions, and reviewing reports.</li>
+    <li>Implement an independent cross-verification layer (rainfall-rule check) and a ground-truth confirmation workflow so the system reports honest, explainable numbers.</li>
+    <li>Deploy the system with automated service supervision so it runs continuously with minimal operator intervention.</li>
+  </ol>
+</div>
+
+<!-- ================= 4. LITERATURE REVIEW ================= -->
+<div class="section">
+  <h2>4. Literature Review &amp; Related Work</h2>
+
+  <h3>4.1 Machine Learning for Flood &amp; Landslide Prediction</h3>
+  <p>
+    Gradient Boosted Decision Trees, particularly XGBoost (Chen &amp; Guestrin, 2016), are a standard, highly
+    effective choice for tabular hazard prediction. XGBoost builds an ensemble of shallow decision trees where each
+    new tree corrects the residual errors of its predecessors. It handles mixed feature types, missing values, and
+    non-linear interactions well, and it routinely outperforms deep neural networks on small-to-medium tabular
+    datasets — exactly the regime of this project (a few hundred thousand rows, ~12 features).
+  </p>
+  <p>
+    Studies of flood forecasting in the Hindu Kush–Himalaya region consistently identify <strong>accumulated rainfall
+    over 3–7 days</strong> as the dominant trigger for both river floods and shallow landslides, alongside soil
+    saturation and local terrain. Nepal's Department of Hydrology and Meteorology (DHM) and the National Disaster
+    Risk Reduction and Management Authority (NDRRMA) publish monsoon rainfall thresholds used operationally by
+    forecasters. This project encodes those same documented thresholds as the training-label rule (Section 6.4) and
+    reuses them at runtime as an independent verification rule (Section 10), which is a novel, defensible design
+    choice for a student project.
+  </p>
+
+  <h3>4.2 Related Systems</h3>
+  <table>
+    <tr><th>System</th><th>Approach</th><th>Coverage</th><th>Limitation Addressed Here</th></tr>
+    <tr><td>DHM / NDRRMA bulletins</td><td>Manual, forecaster-led</td><td>Selected basins</td><td>Not automated, not nationwide, not real-time to citizens</td></tr>
+    <tr><td>GLOFAS (Global Flood Awareness System)</td><td>Global hydrological model</td><td>Global rivers</td><td>Coarse resolution; not tuned to Nepal's districts</td></tr>
+    <tr><td>IoT river-gauge systems</td><td>Physical sensors + thresholds</td><td>Few sites</td><td>High cost; sparse coverage</td></tr>
+    <tr><td><strong>Nepal FLDS (this project)</strong></td><td><strong>XGBoost on free weather data</strong></td><td><strong>All 77 districts</strong></td><td><strong>Nationwide, sensor-free, real-time, self-verifying</strong></td></tr>
+  </table>
+
+  <div class="note">
+    <strong>Honest framing:</strong> this project predicts <em>risk from weather</em>. It does not claim to replace
+    authoritative hydrological models. Its contribution is the end-to-end engineering: nationwide automated risk
+    scoring, real-time dissemination, and an explicit, auditable gap between predicted risk and confirmed events.
+  </div>
+</div>
+
+<!-- ================= 5. SYSTEM ARCHITECTURE ================= -->
+<div class="section">
+  <h2>5. System Architecture</h2>
+  <p>The system is a three-tier application with an additional ML tier and a live-data source:</p>
+
+  <div class="diagram">
+    <div class="box green">Open-Meteo<br><small>Live Weather API</small></div>
+    <span class="arrow">→</span>
+    <div class="box">Node.js Backend<br><small>Express · Scheduler · MongoDB</small></div>
+    <span class="arrow">→</span>
+    <div class="box purple">Python ML Service<br><small>FastAPI · XGBoost</small></div>
+    <br>
+    <span class="arrow" style="transform: rotate(90deg);">↓</span>
+    <div class="box" style="margin-top:10pt;">MongoDB<br><small>Sensors · Predictions · Alerts · Users</small></div>
+    <span class="arrow">→</span>
+    <div class="box">SSE Live Feed<br><small>Web Frontend (Dashboard)</small></div>
+  </div>
+
+  <h3>5.1 Components</h3>
+  <table>
+    <tr><th>Tier</th><th>Technology</th><th>Responsibility</th></tr>
+    <tr><td>Data Source</td><td>Open-Meteo API (free, no key)</td><td>Live weather: temperature, humidity, precipitation, wind, soil moisture; plus 7-day historical window for rain accumulation</td></tr>
+    <tr><td>Backend</td><td>Node.js, Express, Mongoose, node-cron</td><td>REST API, authentication, scheduling, alert lifecycle, SSE streaming, static frontend serving</td></tr>
+    <tr><td>ML Service</td><td>Python, FastAPI, XGBoost, joblib</td><td>Loads trained pickles, builds feature vectors, returns risk class + confidence</td></tr>
+    <tr><td>Database</td><td>MongoDB</td><td>Users, sensor readings, predictions, alerts (with GeoJSON + verification metadata)</td></tr>
+    <tr><td>Frontend</td><td>HTML/CSS/JS, Chart.js, Leaflet</td><td>Dashboard, alerts, map, predictions, reports; live updates via SSE</td></tr>
+  </table>
+
+  <h3>5.2 Request Flow (Live Poll Cycle)</h3>
+  <ol>
+    <li><code>predictionScheduler</code> fires every <code>EXTERNAL_POLL_INTERVAL</code> minutes (default 10).</li>
+    <li><code>externalDataService</code> fetches live weather for each of the 77 districts (concurrency-limited to avoid rate limits).</li>
+    <li>Each reading is stored as a sensor document, then sent to the ML service via <code>POST /predict</code> for flood and landslide.</li>
+    <li>The backend stores the prediction; if risk class ≥ moderate, it creates an alert, notifies users, and emits <code>alert:new</code> over SSE.</li>
+    <li>The frontend receives the SSE event and updates the dashboard instantly without a page reload.</li>
+  </ol>
+</div>
+
+<!-- ================= 6. ML MODEL ARCHITECTURE ================= -->
+<div class="section">
+  <h2>6. Machine Learning Model Architecture</h2>
+
+  <h3>6.1 Model Choice: XGBoost</h3>
+  <p>
+    XGBoost (eXtreme Gradient Boosting) was chosen over deep neural networks and other classical classifiers for
+    four reasons grounded in this problem's shape:
+  </p>
+  <ul>
+    <li><strong>Tabular data:</strong> the features are ~12 heterogeneous numeric quantities; tree ensembles dominate on such inputs without the need for feature scaling or embedding layers.</li>
+    <li><strong>Interpretability:</strong> feature importance and per-sample SHAP-style reasoning are straightforward, supporting the project's explainability requirement.</li>
+    <li><strong>Robustness:</strong> built-in handling of missing values and resistance to outliers matter when the data source is a public weather API.</li>
+    <li><strong>Efficiency:</strong> fast training and inference; a 300-tree model scores a district in milliseconds, comfortably supporting 77-district live polling.</li>
+  </ul>
+
+  <h3>6.2 Hyperparameters</h3>
+  <table>
+    <tr><th>Parameter</th><th>Flood Model</th><th>Landslide Model</th></tr>
+    <tr><td>Algorithm</td><td>XGBoost (gbtree)</td><td>XGBoost (gbtree)</td></tr>
+    <tr><td>Number of trees</td><td>300</td><td>300</td></tr>
+    <tr><td>Max depth</td><td>6</td><td>6</td></tr>
+    <tr><td>Objective</td><td>multi:softprob (3 classes)</td><td>multi:softprob (3 classes)</td></tr>
+    <tr><td>Training rows</td><td>241,318</td><td>241,318</td></tr>
+    <tr><td>Classes</td><td>0 = low, 1 = moderate, 2 = high</td><td>0 = low, 1 = moderate, 2 = high</td></tr>
+  </table>
+
+  <h3>6.3 Features</h3>
+  <table>
+    <tr><th>Flood Model (12 features)</th><th>Landslide Model (11 features)</th></tr>
+    <tr>
+      <td>temperature, rainfall, humidity, wind_speed, discharge, rainfall_roll3, rainfall_roll7, discharge_roll3, discharge_roll7, month, location_encoded, terrain_encoded</td>
+      <td>temperature, rainfall, humidity, wind_speed, rain_3day, rain_7day, soil_moisture, slope, month, terrain_encoded, location_encoded</td>
+    </tr>
+  </table>
+  <ul>
+    <li><strong>Rolling rainfall (3/7-day)</strong> encodes cumulative wetness — the single most important landslide and flood trigger.</li>
+    <li><strong>location_encoded / terrain_encoded</strong> are categorical encodings of district and terrain type (Hilly, Mountain, Terai), letting the model learn that the same rain is more dangerous on a slope than on flat Terai land.</li>
+    <li><strong>month</strong> captures seasonal context.</li>
+  </ul>
+
+  <h3>6.4 Training Labels — the "Monsoon Rule"</h3>
+  <p>
+    Because no free historical dataset of <em>confirmed</em> flood/landslide events exists with full district coverage,
+    labels are derived from observed rainfall using the documented monsoon trigger thresholds. This is a defensible,
+    reproducible labeling strategy: the model learns "given this weather, how likely is the situation to meet the
+    documented danger thresholds."
+  </p>
+  <table>
+    <tr><th>Disaster</th><th>Moderate (class 1)</th><th>High (class 2)</th></tr>
+    <tr><td>Flood</td><td>≥ 30 mm/day OR ≥ 60 mm/7d</td><td>≥ 80 mm/day OR ≥ 150 mm/7d</td></tr>
+    <tr><td>Landslide</td><td>≥ 20 mm/day OR ≥ 40 mm/3d</td><td>≥ 60 mm/day OR ≥ 100 mm/3d</td></tr>
+  </table>
+
+  <h3>6.5 Class Balance &amp; Evaluation</h3>
+  <table>
+    <tr><th>Class</th><th>Flood samples</th><th>Landslide samples</th><th>Flood F1</th><th>Landslide F1</th></tr>
+    <tr><td>0 (low)</td><td>186,851</td><td>206,656</td><td>0.9995</td><td>0.9994</td></tr>
+    <tr><td>1 (moderate)</td><td>39,011</td><td>27,343</td><td>0.9940</td><td>0.9887</td></tr>
+    <tr><td>2 (high)</td><td>15,456</td><td>7,319</td><td>0.9912</td><td>0.9742</td></tr>
+    <tr><td><strong>Weighted avg</strong></td><td colspan="2"><strong>Flood acc 99.81%</strong></td><td colspan="2"><strong>Landslide acc 99.74%</strong></td></tr>
+  </table>
+  <div class="note">
+    The "high" class is the rarest (flood 6.4%, landslide 3.0% of samples), yet still achieves 99%+ precision on
+    held-out data. Precision on the high class (99.6% flood, 98.2% landslide) is the metric that answers the
+    operational question "when it says <em>high</em>, how often is it right?"
+  </div>
+
+  <h3>6.6 Probability Calibration</h3>
+  <p>
+    XGBoost's class-confidence output is often near 1.0 for the winning class. Displaying raw confidence would make a
+    moderate-risk alert read as "100% chance of disaster," which is misleading. The system therefore <strong>caps the
+    displayed probability to its risk band</strong>: low ≤ 35%, moderate ≤ 60%, high ≤ 80%, critical ≤ 95%. The number
+    always agrees with the label — a moderate alert can never display as near-certain.
+  </p>
+</div>
+
+<!-- ================= 7. DATA PIPELINE ================= -->
+<div class="section">
+  <h2>7. Data Pipeline &amp; Live Weather Ingestion</h2>
+
+  <h3>7.1 Training Data</h3>
+  <p>
+    Training uses the Open-Meteo <strong>Archive API</strong> (2018-01-01 → 2026-07-31), giving 8.5 years of daily
+    observed weather per district. Each district-day becomes one training row; labels come from the monsoon rule
+    (Section 6.4). Districts that fail to download (quota/network) are automatically retried with backoff until
+    covered — the metadata records <code>77/77</code> districts trained, 0 pending.
+  </p>
+
+  <h3>7.2 Live Data (Inference)</h3>
+  <p>
+    Live inference uses the Open-Meteo <strong>Forecast API</strong> with <code>past_days=7</code>, so the same
+    request returns today's conditions <em>and</em> the real accumulated 3/7-day rainfall needed for the rolling
+    features. The per-district polling is concurrency-limited (8 workers) and windowed to respect the free tier:
+  </p>
+  <table>
+    <tr><th>Window</th><th>Value</th><th>Purpose</th></tr>
+    <tr><td><code>EXTERNAL_POLL_INTERVAL</code></td><td>10 min</td><td>Scheduler cadence</td></tr>
+    <tr><td><code>EXTERNAL_POLL_WINDOW_MIN</code></td><td>30 min</td><td>Calm districts — re-evaluation window</td></tr>
+    <tr><td><code>EXTERNAL_FAST_TRACK_WINDOW_MIN</code></td><td>10 min</td><td>Districts with an active moderate+ alert — re-checked 3× more often</td></tr>
+  </table>
+  <p>
+    The <strong>fast-track</strong> mechanism is the key real-time optimization: resources concentrate on districts
+    already in danger while calm districts poll at the budget-friendly rate. Deduplication keys (bucket timestamp per
+    district per window) ensure each district+type is evaluated exactly once per window.
+  </p>
+
+  <h3>7.3 Reading → Prediction → Alert</h3>
+  <pre>weather (Open-Meteo)
+   │  per district, per window
+   ▼
+sensor document (SensorData) ──► POST /predict (ML service)
+   │                                   │
+   │                                   ▼
+   │                          flood: {probability, predictedClass, riskLevel}
+   │                          landslide: {probability, predictedClass, riskLevel}
+   ▼
+prediction document (Prediction, with verification)
+   │
+   ▼
+riskClass ≥ moderate ? ── yes ──► Alert created + SSE 'alert:new' pushed to dashboards
+   │ no
+   └─► logged as low-risk prediction</pre>
+</div>
+
+<!-- ================= 8. BACKEND ================= -->
+<div class="section">
+  <h2>8. Backend Architecture (Node.js / Express / MongoDB)</h2>
+
+  <h3>8.1 Project Structure</h3>
+  <pre>backend/
+  src/
+    config/        constants (risk levels, caps, rule thresholds), db connection
+    controllers/   auth, prediction, alert, sensor, dashboard
+    jobs/          predictionScheduler (cron: sensor, cleanup, external poll)
+    middleware/    auth (JWT + API key), rateLimiter, errorHandler
+    ml/            modelBridge (Python ML service client + local TF.js fallback)
+    models/        User, SensorData, Prediction, Alert (Mongoose schemas)
+    routes/        auth, predictions, alerts, sensors, dashboard, events (SSE)
+    services/      alertService, predictionService, externalDataService,
+                   notificationService, liveEventBus
+    utils/         dataParser, geoHelper, logger
+  scripts/         seed-demo, poll-external, import-csv, cleanup-dummy-earthquakes
+  tests/           app.test.js (Jest + Supertest)</pre>
+
+  <h3>8.2 REST API</h3>
+  <table>
+    <tr><th>Area</th><th>Endpoints</th></tr>
+    <tr><td>Auth</td><td>POST /auth/register · POST /auth/login · GET /auth/me · PUT /auth/profile · PUT /auth/change-password</td></tr>
+    <tr><td>Predictions</td><td>POST /predictions · GET /predictions · GET /predictions/stats · GET /predictions/models/info · GET /predictions/:id</td></tr>
+    <tr><td>Alerts</td><td>GET /alerts · GET /alerts/stats · GET /alerts/:id · PATCH /alerts/:id/resolve · PATCH /alerts/:id/confirm</td></tr>
+    <tr><td>Sensors</td><td>POST /sensors/data · GET /sensors/data · GET /sensors/latest</td></tr>
+    <tr><td>Dashboard</td><td>GET /dashboard/overview</td></tr>
+    <tr><td>Live</td><td>GET /events/stream (SSE)</td></tr>
+  </table>
+
+  <h3>8.3 Data Models</h3>
+  <ul>
+    <li><strong>User</strong> — name, email, bcrypt-hashed password, role (user/admin/responder), GeoJSON location, alert preferences (email/SMS, disaster types, min risk level).</li>
+    <li><strong>SensorData</strong> — sensor id/type, disaster type, GeoJSON location, readings object (all hazard fields), raw payload, prediction linkage.</li>
+    <li><strong>Prediction</strong> — disaster type, calibrated probability, risk level, location, input data (the exact readings), model version, source (manual/sensor/external/csv-import/scheduled), verification object, alert linkage.</li>
+    <li><strong>Alert</strong> — prediction linkage, risk, probability, message, affected radius, notifications summary, verification copy, ground-truth confirmation (status/by/at/note), active + resolved timestamps.</li>
+  </ul>
+
+  <h3>8.4 Real-Time Streaming (SSE)</h3>
+  <p>
+    Server-Sent Events provide one-way push from the backend to every open dashboard. An in-process event bus
+    (<code>liveEventBus</code>) lets services emit events without coupling: <code>alert:new</code>,
+    <code>alert:resolved</code>, <code>alert:confirmed</code>, <code>prediction:new</code>, <code>sensor:ingest</code>.
+    The SSE route authenticates via a token query parameter (EventSource cannot set headers), forwards every event to
+    subscribed clients, and sends 15-second heartbeats so proxies keep the connection alive. This gives true
+    real-time updates with zero polling from the browser.
+  </p>
+
+  <h3>8.5 Notifications</h3>
+  <p>
+    Alert dispatch attempts email (Nodemailer) and SMS (Twilio) delivery to users within the alert's affected radius
+    (geo query via the 2dsphere index). Both channels are <em>optional</em>: if credentials are unset, the system
+    records <code>skipped</code> statuses and continues — the in-app/SSE path always works. Browser push notifications
+    are also available on the frontend for high/critical alerts.
+  </p>
+</div>
+
+<!-- ================= 9. FRONTEND ================= -->
+<div class="section">
+  <h2>9. Frontend Architecture</h2>
+
+  <h3>9.1 Pages</h3>
+  <table>
+    <tr><th>Page</th><th>Contents</th></tr>
+    <tr><td>Dashboard (index.html)</td><td>8 stat cards (active alerts, critical zones, accuracy, rainfall peak, soil saturation…), weekly trend / 24h risk / radar charts, active alerts list with live-evidence chips, recent-events table, Leaflet map with alert markers, live activity timeline, SSE status</td></tr>
+    <tr><td>Active Alerts</td><td>Severity stat cards, filterable alert cards with evidence + verification badges, ground-truth summary strip, Details modal (live evidence, model version, confirm button), resolve + confirm actions</td></tr>
+    <tr><td>Nepal Map</td><td>Full-screen Leaflet map with per-district alert markers, event-type + province filter chips, live stats bar (flood/landslide/critical/high counts, districts alerted)</td></tr>
+    <tr><td>Predictions</td><td>Prediction history cards, model-info card (version, training data, per-model accuracy), province risk table, "Run Prediction" modal</td></tr>
+    <tr><td>Reports</td><td>Summary stats, monthly incident trend chart, incident breakdown donut, model-confidence-vs-confirmed card, recent reports table with filters</td></tr>
+  </table>
+
+  <h3>9.2 Frontend Stack</h3>
+  <ul>
+    <li><strong>Vanilla JS modules</strong> (<code>api.js</code>, <code>auth.js</code>, <code>live-data.js</code>, <code>live-feed.js</code>, <code>charts.js</code>, <code>map.js</code>, <code>interactions.js</code>) — no framework, no build step, served statically by the backend.</li>
+    <li><strong>Chart.js</strong> for trend/risk/donut/radar charts.</li>
+    <li><strong>Leaflet + OpenStreetMap/CARTO tiles</strong> for the district map.</li>
+    <li><strong>Server-Sent Events</strong> for live updates — new alerts, resolutions, and confirmations appear without refresh.</li>
+    <li><strong>Dark dashboard theme</strong> with custom CSS variables, responsive grid, and micro-interactions (toasts, modals, live status pill).</li>
+  </ul>
+
+  <h3>9.3 Data Display Rules (Honesty by Construction)</h3>
+  <ul>
+    <li>All numbers come from the backend — there is <strong>no mock fallback</strong>; if the backend is offline a banner is shown and retries run automatically.</li>
+    <li>Probabilities are capped to risk bands (Section 6.6) so a label and its number always agree.</li>
+    <li>Alert cards show "live evidence" (the exact rainfall/humidity/temperature that drove the model).</li>
+    <li>"✓ verified" badges appear only when the model and the rainfall rule agree; "confirmed/not-confirmed" badges come only from field reports.</li>
+  </ul>
+</div>
+
+<!-- ================= 10. VERIFICATION ================= -->
+<div class="section">
+  <h2>10. Cross-Verification &amp; Ground-Truth Confirmation</h2>
+  <p>
+    A disaster early-warning system must be auditable. This project implements two independent layers that make the
+    system's output explainable and honest:
+  </p>
+
+  <h3>10.1 Rainfall-Rule Cross-Verification (Automated)</h3>
+  <p>
+    Every prediction is independently checked against the same monsoon thresholds used to build the training labels
+    (Section 6.4). The backend recomputes the rule-based risk class from the actual rainfall readings and compares it
+    to the model's class:
+  </p>
+  <ul>
+    <li><strong>Agreement</strong> → alert carries <code>ruleAgreed: true</code> and shows the "✓ verified" badge.</li>
+    <li><strong>Mismatch</strong> → logged with the exact evidence (rainfall, 3d, 7d) for audit; the alert is <em>never suppressed</em> — in a sensitive system, a warning stays visible even when verification fails.</li>
+    <li>Verified in production: a live audit of 29 alerted districts recomputed all 29 rules from scratch and matched the stored verification exactly, including a genuine boundary-case mismatch (Dailekh: 150.4mm/7d crosses the 150mm high rule, while the model judged terrain/humidity and said moderate).</li>
+  </ul>
+
+  <h3>10.2 Ground-Truth Confirmation (Human)</h3>
+  <p>
+    Responders and admins can mark an alert <strong>confirmed</strong> or <strong>not-confirmed</strong> against what
+    actually happened on the ground (with an optional note). The write is forward-only and recorded with the
+    responder's identity and timestamp. Aggregated, this yields the <em>model confidence vs confirmed events</em>
+    view: per risk band, how many alerts were confirmed, not-confirmed, or still pending — shown as a summary strip
+    on the Alerts page and a dedicated card on the Reports page. This is the only place human truth enters the system,
+    and it is kept visibly separate from model output.
+  </p>
+</div>
+
+<!-- ================= 11. SECURITY ================= -->
+<div class="section">
+  <h2>11. Security &amp; Reliability</h2>
+  <table>
+    <tr><th>Concern</th><th>Mitigation</th></tr>
+    <tr><td>Passwords</td><td>bcrypt (cost 12) hashing; password never returned by the API</td></tr>
+    <tr><td>Session/auth</td><td>JWT (7-day expiry), token-change invalidation via <code>passwordChangedAt</code></td></tr>
+    <tr><td>Role-based access</td><td><code>user</code> / <code>responder</code> / <code>admin</code>; stats, resolve and confirm restricted to admin/responder</td></tr>
+    <tr><td>Sensor ingestion</td><td>JWT <em>or</em> shared <code>x-sensor-api-key</code> header</td></tr>
+    <tr><td>Headers</td><td>Helmet with a tuned Content-Security-Policy (allows the frontend's CDN libs and inline handlers)</td></tr>
+    <tr><td>Abuse</td><td>Rate limiting: global API limiter, stricter auth + sensor ingestion limiters</td></tr>
+    <tr><td>Log hygiene</td><td>Morgan log format redacts <code>?token=</code> so JWTs never reach log files</td></tr>
+    <tr><td>Payload size</td><td>JSON body capped at 10 kB</td></tr>
+    <tr><td>Resilience</td><td>ML service failure trips a 30s circuit-breaker then falls back to the local TF.js predictor; the free API budget is respected via concurrency + windows</td></tr>
+  </table>
+</div>
+
+<!-- ================= 12. TESTING ================= -->
+<div class="section">
+  <h2>12. Testing &amp; Evaluation</h2>
+
+  <h3>12.1 Automated Tests</h3>
+  <p>The backend ships a Jest + Supertest suite (smoke test of <code>GET /health</code> plus middleware-level coverage). Every change in this project was validated with:</p>
+  <ul>
+    <li><code>node --check</code> syntax verification on every backend and frontend file.</li>
+    <li><code>npm test</code> (Jest) — passes.</li>
+    <li>Python AST parse of the ML service before restart.</li>
+  </ul>
+
+  <h3>12.2 Live System Verification (Audit Performed)</h3>
+  <table>
+    <tr><th>Check</th><th>Result</th></tr>
+    <tr><td>Backend + ML service health</td><td>Both healthy; model v1.2.0, 77/77 districts</td></tr>
+    <tr><td>Data provenance</td><td>All live alerts/predictions/sensors sourced from the real weather feed — no mock/demo rows in production data</td></tr>
+    <tr><td>Ground-truth vs live weather</td><td>29/29 alerted districts: alert rainfall evidence matched a fresh Open-Meteo fetch to the decimal</td></tr>
+    <tr><td>Verification recomputation</td><td>29/29 rules recomputed independently matched the stored verification (including the 1 genuine mismatch, logged)</td></tr>
+    <tr><td>Fast-track polling</td><td>District bucket history showed the 30-min → 10-min window switch exactly when an alert became active</td></tr>
+    <tr><td>Frontend</td><td>All 5 pages render with real data, verification + confirmation badges visible, zero console errors</td></tr>
+  </table>
+
+  <h3>12.3 Head-to-Head Model Comparison</h3>
+  <p>
+    The current v1.2.0 models (trained on all 77 districts) were compared against a backup of the earlier
+    56-district run on live weather for 12 districts, scored against the documented rule. v1.2.0 agreed with the
+    rule on 12/12 flood and 11/12 landslide cases; the older run agreed on only 1/12 and 2/12, systematically
+    under-predicting risk. The comparison proved the value of completing the 21 remaining districts and confirmed
+    the live models are the better ones.
+  </p>
+</div>
+
+<!-- ================= 13. DEPLOYMENT ================= -->
+<div class="section">
+  <h2>13. Deployment &amp; Operations</h2>
+
+  <h3>13.1 Services</h3>
+  <table>
+    <tr><th>Service</th><th>Command</th><th>Port</th></tr>
+    <tr><td>Backend</td><td><code>node src/server.js</code> (from backend/)</td><td>5000</td></tr>
+    <tr><td>ML service</td><td><code>python -m uvicorn predict_service:app --port 8000</code> (from models/)</td><td>8000</td></tr>
+    <tr><td>MongoDB</td><td>Local MongoDB instance</td><td>27017</td></tr>
+  </table>
+
+  <h3>13.2 Windows Auto-Start &amp; Watchdog</h3>
+  <ul>
+    <li><code>start-services.ps1</code> — idempotent starter: only starts a service when its port is free, waits, and logs the truth of whether it came up (logs capped at 1 MB).</li>
+    <li><code>setup-scheduled-tasks.ps1</code> — registers a <strong>2-minute watchdog</strong> task (restarts any down service) and a <strong>logon</strong> task, plus a registry Run entry.</li>
+    <li>Result: the system self-heals. Verified live — the watchdog task runs on schedule with result 0 and services recover automatically if killed.</li>
+  </ul>
+
+  <h3>13.3 Demo Credentials</h3>
+  <pre>Email:    admin@flds.demo
+Password: demo12345   (role: admin — created by `npm run seed:demo`)</pre>
+</div>
+
+<!-- ================= 14. LIMITATIONS ================= -->
+<div class="section">
+  <h2>14. Limitations &amp; Future Work</h2>
+
+  <h3>14.1 Honest Limitations</h3>
+  <ul>
+    <li><strong>Risk ≠ confirmed event.</strong> The model predicts the likelihood that conditions meet documented danger thresholds; it does not observe actual flooding or slope failure. Only field reports confirm events (Section 10.2).</li>
+    <li><strong>Label proxy.</strong> Training labels come from the rainfall rule, not a confirmed-event database. The model inherits any imperfection of that rule.</li>
+    <li><strong>Missing physical features.</strong> No free live river-discharge or national slope dataset exists for Nepal, so <code>discharge</code> and <code>slope</code> are effectively constant in training. Soil moisture at training time is a rain-driven proxy (live inference uses real soil moisture).</li>
+    <li><strong>Forecast vs archive gap.</strong> Live inference uses forecast data while training used the archive — the distributions are close but not identical.</li>
+    <li><strong>No ground-truth event history yet.</strong> The confirmation feature is new; the confirmation-rate metric becomes statistically meaningful as more field reports accumulate.</li>
+  </ul>
+
+  <h3>14.2 Future Work</h3>
+  <ul>
+    <li><strong>Add real river-gauge integration</strong> (DHM) where available to replace the constant discharge feature with live data.</li>
+    <li><strong>Geospatial hazard layers</strong> — actual slope, land-use, and exposure data per district for richer features.</li>
+    <li><strong>Confirmed-event backfill</strong> — cross-train on historical disaster event records to move from rule-derived to event-derived labels.</li>
+    <li><strong>Short-term rainfall nowcasts</strong> (6–24 h forecasts) to turn risk scoring into true early <em>warning</em> lead time.</li>
+    <li><strong>SMS/IVR mass-notification integration</strong> and mobile push to expand alert reach beyond the dashboard.</li>
+    <li><strong>Time-series models</strong> (e.g., gradient boosting on lagged sequences) to capture multi-day wetness dynamics more explicitly.</li>
+  </ul>
+</div>
+
+<!-- ================= 15. CONCLUSION ================= -->
+<div class="section">
+  <h2>15. Conclusion</h2>
+  <p>
+    Nepal FLDS demonstrates that a nationwide, sensor-free, near-real-time flood and landslide early warning system
+    can be built entirely from free, publicly available weather data and open-source machine learning. Two XGBoost
+    classifiers — trained on 241,318 district-days of real observed weather per hazard and achieving 99.8% / 99.7%
+    accuracy — convert live Open-Meteo readings into per-district risk assessments for all 77 districts. A Node.js
+    backend orchestrates the pipeline, persists full provenance in MongoDB, raises alerts, and streams them to a
+    responsive web dashboard in real time over SSE.
+  </p>
+  <p>
+    The project's defining engineering choices are its <strong>honesty mechanisms</strong>: displayed probabilities
+    are capped to risk bands so they can never contradict their labels; every alert is independently cross-checked
+    against the documented monsoon thresholds; and human field confirmations are recorded separately, yielding an
+    auditable "model confidence vs confirmed events" measure. Combined with automated service supervision, the
+    system is a complete, runnable, and verifiable early-warning platform — and a strong demonstration of applying
+    machine learning to a genuine national-scale disaster-risk problem.
+  </p>
+
+  <div class="footer-note">Nepal FLDS — Final Year Project Report · XGBoost v1.2.0 · 77 Districts</div>
+</div>
+
+</body>
+</html>
