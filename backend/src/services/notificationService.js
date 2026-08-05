@@ -83,7 +83,8 @@ class NotificationService {
       critical: '#dc3545',
     };
     const color = riskColors[alert.riskLevel] || '#dc3545';
-    const probability = Math.round(alert.probability * 100);
+    const probability = alert.probability != null ? Math.round(alert.probability * 100) : 'N/A';
+    const message = alert.message || 'A potential disaster risk has been detected in your area. Please stay alert and follow safety instructions.';
 
     return `
     <!DOCTYPE html>
@@ -112,10 +113,6 @@ class NotificationService {
           <tr>
             <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6;">Location</td>
             <td style="padding:10px;border:1px solid #dee2e6;">${[alert.location?.municipality, alert.location?.city, alert.location?.country].filter(Boolean).join(', ') || 'N/A'}</td>
-          </tr>
-          <tr style="background:#e9ecef;">
-            <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6;">Affected Radius</td>
-            <td style="padding:10px;border:1px solid #dee2e6;">${alert.affectedRadius} km</td>
           </tr>
           <tr>
             <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6;">Alert Time</td>
@@ -175,7 +172,7 @@ class NotificationService {
   _getSafetyTips(disasterType) {
     const tips = {
       earthquake: [
-        'Drop, Cover, and Hold On — get under a sturdy table',
+        'Drop, Cover, and Hold On — get under a study table',
         'Stay away from windows and exterior walls',
         'Move to an open area away from buildings after shaking stops',
         'Do not use elevators',
