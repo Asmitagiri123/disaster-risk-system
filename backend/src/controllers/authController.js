@@ -6,6 +6,7 @@ const logger = require('../utils/logger');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { users: inMemoryUsers, addUser, findUserByEmail, findUserById, updateUser } = require('../utils/inMemoryStore');
+const notificationService = require('../services/notificationService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const sendTokenResponsePlain = (userPlain, statusCode, res) => {
