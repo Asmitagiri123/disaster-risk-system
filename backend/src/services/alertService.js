@@ -2,11 +2,9 @@ const nodemailer = require('nodemailer');
 const Alert = require('../models/Alert');
 const User = require('../models/User');
 const notificationService = require('./notificationService');
-const { getUsersInRadius } = require('../utils/geoHelper');
+const { getUsersInRadius } = require('../utils/geoHelper'); // Keep this, it's used
 const { normalizeDistrict, provinceOfDistrict } = require('../utils/nepalRegions');
-const { calibrateProbability } = require('../config/constants');
-const liveBus = require('./liveEventBus');
-const logger = require('../utils/logger');
+const { calibrateProbability } = require('../config/constants'); // Keep this, it's used
 
 // Message text; probability is capped to its risk band before formatting.
 function buildAlertMessage(disasterType, riskLevel, probability, location) {
@@ -153,6 +151,18 @@ class AlertService {
       .populate('predictionId', 'inputData modelVersion predictedBy verification');
     if (limit) q = q.limit(limit);
     return q;
+  }
+
+  async getAlertStats() {
+    const [total, active, byType] = await Promise.all([
+      Alert.countDocuments(),
+      Alert.countDocuments({ isActive: true }),
+      Alert.aggregate([
+        { $group: { _id: '$disasterType', count: { $sum: 1 }, totalNotified: { $sum: '$totalNotified' } } },
+      ]),
+    ]);
+
+    return { total, active, byType };
   }
 
   async resolveAlert(alertId) {

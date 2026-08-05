@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const logger = require('../utils/logger');
+const { findUserById } = require('../utils/inMemoryStore');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 
 const getTokenFromHeader = (req) => {
   if (req.headers.authorization?.startsWith('Bearer ')) {
@@ -17,8 +21,14 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    let user = null;
+    if (mongoose.connection.readyState === 1) {
+      user = await User.findById(decoded.id);
+    } else {
+      user = findUserById(decoded.id) || null;
+    }
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Token invalid — user not found.' });
@@ -28,11 +38,11 @@ exports.protect = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Account is deactivated.' });
     }
 
-    if (user.changedPasswordAfter(decoded.iat)) {
+    if (user.changedPasswordAfter && user.changedPasswordAfter(decoded.iat)) {
       return res.status(401).json({ success: false, message: 'Password was changed. Please log in again.' });
     }
 
-    req.user = user;
+    req.user = { ...user, id: user._id || user.id };
     next();
   } catch (err) {
     logger.warn(`Auth failed: ${err.message}`);

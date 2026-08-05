@@ -5,7 +5,7 @@
   let source = null;
   let reconnectTimer = null;
 
-  const RISK_LEVELS = { critical: 'critical', high: 'high', moderate: 'medium', low: 'low' };
+  const RISK_LEVELS = { high: 'high', moderate: 'medium', low: 'low' };
   const TYPE_ICONS = { flood: '🌊', landslide: '⛰️', earthquake: '🏚️' };
 
   // Connection management
@@ -123,7 +123,7 @@
     const prob = window.displayProbability ? window.displayProbability(a.probability, a.riskLevel) : Math.round((a.probability || 0) * 100);
     const sev = a.riskLevel || 'high';
 
-    playAlertSound(sev);
+    if (sev === 'high') playAlertSound(sev);
     showToast(`🚨 NEW ${type.toUpperCase()} ALERT — ${loc} (${prob}%)`, sev === 'critical' || sev === 'high' ? 'warning' : 'info', 8000);
     if (sev === 'critical' || sev === 'high') browserNotify(sev, type, loc, prob, a.message);
 
@@ -158,7 +158,7 @@
     const timeline = document.getElementById('timeline');      if (timeline) {
       const item = document.createElement('div');
       item.className = `timeline-item ${sev === 'critical' || sev === 'high' ? 'critical' : 'warning'} fade-in`;
-      item.innerHTML = `
+      item.innerHTML = /*html*/`
         <div class="timeline-time">just now</div>
         <div class="timeline-title">🚨 ${TYPE_ICONS[type] || '⚠️'} ${type} alert raised — ${loc}</div>
         <div class="timeline-desc">${sev} risk ${type} — ${prob}% model probability</div>`;
@@ -216,7 +216,7 @@
       const timeline = document.getElementById('timeline');
       if (timeline) {
         const item = document.createElement('div');
-        item.className = 'timeline-item resolved fade-in';
+        item.className = 'timeline-item resolved fade-in'; //
         item.innerHTML = `
           <div class="timeline-time">just now</div>
           <div class="timeline-title">✅ ${disasterType} alert resolved — ${location}</div>
@@ -309,8 +309,7 @@
         osc.start(t);
         osc.stop(t + dur + 0.05);
       };
-      if (severity === 'critical') { beep(880, 0, 0.4); beep(1100, 0.35, 0.4); }
-      else if (severity === 'high') { beep(660, 0, 0.35); beep(660, 0.3, 0.35); }
+      if (severity === 'high') { beep(880, 0, 0.15); beep(880, 0.2, 0.25); }
       else { beep(440, 0, 0.3); }
     } catch (err) {
       // Audio not available — visual alerts still work

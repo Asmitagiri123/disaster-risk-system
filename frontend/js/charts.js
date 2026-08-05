@@ -140,7 +140,7 @@ function initRiskTrendChart(canvasId) {
 
   const riskBadge = document.getElementById('risk-level-badge');
   if (riskBadge) {
-    const lvl = current >= 85 ? 'critical' : current >= 70 ? 'high' : current >= 40 ? 'medium' : 'low';
+    const lvl = current >= 75 ? 'high' : current >= 40 ? 'medium' : 'low';
     riskBadge.textContent = lvl.toUpperCase();
     riskBadge.className = `badge badge-${lvl}`;
   }

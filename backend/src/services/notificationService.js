@@ -136,6 +136,34 @@ class NotificationService {
     </html>`;
   }
 
+  buildWelcomeEmail(user) {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;">
+      <div style="background:#4CAF50;color:white;padding:20px;border-radius:8px 8px 0 0;text-align:center;">
+        <h1 style="margin:0;font-size:24px;">Welcome to NepAlert!</h1>
+      </div>
+      <div style="background:#f8f9fa;padding:20px;border:1px solid #dee2e6;">
+        <p style="font-size:16px;color:#555;">Dear ${user.name || 'User'},</p>
+        <p style="font-size:16px;color:#555;">Thank you for registering with NepAlert, your Flood & Landslide Detection System.</p>
+        <p style="font-size:16px;color:#555;">You can now log in to your dashboard to monitor real-time alerts, predictions, and sensor data.</p>
+        <p style="font-size:16px;color:#555;">Your account details:</p>
+        <ul style="font-size:16px;color:#555;">
+          <li><strong>Email:</strong> ${user.email}</li>
+          <li><strong>Role:</strong> ${user.role}</li>
+        </ul>
+        <p style="font-size:16px;color:#555;">We are committed to providing you with timely and accurate disaster information to help keep you safe.</p>
+        <p style="font-size:16px;color:#555;">Best regards,</p>
+        <p style="font-size:16px;color:#555;">The NepAlert Team</p>
+      </div>
+      <div style="background:#6c757d;color:white;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;">
+        Disaster Prediction & Early Warning System — Stay Safe
+      </div>
+    </body>
+    </html>`;
+  }
+
   buildAlertSMS(alert) {
     const probability = Math.round(alert.probability * 100);
     const locationText = [alert.location?.municipality, alert.location?.city]

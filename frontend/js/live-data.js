@@ -74,7 +74,7 @@ function timeAgo(iso) {
 
 // Cap the displayed probability to its risk band (mirrors the backend), so a
 // moderate alert never reads as "100%". Accepts both API and display severity.
-const RISK_PROBABILITY_CAPS = { critical: 0.95, high: 0.80, moderate: 0.60, medium: 0.60, low: 0.35 };
+const RISK_PROBABILITY_CAPS = { high: 0.95, moderate: 0.70, medium: 0.70, low: 0.40 };
 function displayProbability(prob, riskLevel) {
   const raw = Number(prob);
   if (!Number.isFinite(raw) || raw <= 0) return 0;

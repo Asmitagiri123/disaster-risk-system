@@ -101,8 +101,8 @@ const POLL_WINDOW_MIN = parseInt(process.env.EXTERNAL_POLL_WINDOW_MIN, 10) || 30
 
 // Districts with an active moderate+ alert are re-checked more often, so
 // dangerous conditions get near-real-time attention within the free budget.
-const FAST_TRACK_WINDOW_MIN = parseInt(process.env.EXTERNAL_FAST_TRACK_WINDOW_MIN, 10) || 10;
-const FAST_TRACK_RISKS = ['moderate', 'high', 'critical'];
+const FAST_TRACK_WINDOW_MIN = parseInt(process.env.EXTERNAL_FAST_TRACK_WINDOW_MIN, 10) || 15;
+const FAST_TRACK_RISKS = ['moderate', 'high'];
 
 // Run async fn over items with a bounded worker pool
 async function mapWithConcurrency(items, concurrency, fn) {

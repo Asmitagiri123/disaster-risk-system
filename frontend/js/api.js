@@ -1,11 +1,13 @@
 // api.js — Backend integration layer
-// Base URL matches backend server.js default port
 const API_BASE = 'http://localhost:5000/api/v1';
 
 // ─── TOKEN HELPERS ────────────────────────────────────────────────────────────
 const Auth = {
   getToken: () => localStorage.getItem('flds_token'),
-  getUser:  () => JSON.parse(localStorage.getItem('flds_user') || 'null'),
+  getUser: () => {
+    try { return JSON.parse(localStorage.getItem('flds_user') || 'null'); }
+    catch { return null; }
+  },
   save: (token, user) => {
     localStorage.setItem('flds_token', token);
     localStorage.setItem('flds_user', JSON.stringify(user));
@@ -17,10 +19,15 @@ const Auth = {
   isLoggedIn: () => !!localStorage.getItem('flds_token'),
 };
 
+function getLoginPath() {
+  return window.location.pathname.includes('/pages/') ? '../login.html' : 'login.html';
+}
+
 // ─── FETCH WRAPPER ────────────────────────────────────────────────────────────
 async function apiFetch(path, options = {}) {
   const token = Auth.getToken();
-  const res = await fetch(`${API_BASE}${path}`, {
+  const url = `${API_BASE}${path}`;
+  const res = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -29,17 +36,26 @@ async function apiFetch(path, options = {}) {
     },
   });
 
+  const text = await res.text();
+  let payload = null;
+  try {
+    payload = text ? JSON.parse(text) : null;
+  } catch {
+    // If JSON parsing fails, or text is empty, provide a more specific message
+    payload = { message: text || `Server responded with status ${res.status} but no valid JSON.`, success: false };
+  }
+
   if (res.status === 401) {
     Auth.clear();
     window.location.href = getLoginPath();
     return null;
   }
 
-  return res.json();
-}
+  if (!res.ok) {
+    throw payload || { success: false, message: 'Request failed' };
+  }
 
-function getLoginPath() {
-  return window.location.pathname.includes('/pages/') ? '../login.html' : 'login.html';
+  return payload || { success: true };
 }
 
 // ─── AUTH GUARD ───────────────────────────────────────────────────────────────
@@ -47,6 +63,20 @@ function requireAuth() {
   if (!Auth.isLoggedIn()) {
     window.location.href = getLoginPath();
   }
+}
+
+async function refreshSessionUser() {
+  if (!Auth.isLoggedIn()) return null;
+  try {
+    const res = await apiGetMe();
+    if (res?.success && res.data?.user) {
+      Auth.save(Auth.getToken(), res.data.user);
+      return res.data.user;
+    }
+  } catch (err) {
+    console.warn('Unable to refresh session user', err);
+  }
+  return null;
 }
 
 // ─── AUTH API ─────────────────────────────────────────────────────────────────
@@ -66,6 +96,20 @@ async function apiRegister(name, email, password) {
 
 async function apiGetMe() {
   return apiFetch('/auth/me');
+}
+
+async function apiUpdateProfile(updates) {
+  return apiFetch('/auth/profile', {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+}
+
+async function apiChangePassword(currentPassword, newPassword) {
+  return apiFetch('/auth/change-password', {
+    method: 'PUT',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
 }
 
 // ─── DATA API ─────────────────────────────────────────────────────────────────
@@ -94,3 +138,55 @@ async function apiGetSensors() {
 async function apiResolveAlert(id) {
   return apiFetch(`/alerts/${id}/resolve`, { method: 'PATCH' });
 }
+
+async function apiGetDashboardOverview() {
+  return apiFetch('/dashboard/overview');
+}
+
+window.API = {
+  BASE_URL: API_BASE,
+  auth: {
+    login: apiLogin,
+    register: apiRegister,
+    me: apiGetMe,
+    updateProfile: apiUpdateProfile,
+    changePassword: apiChangePassword,
+  },
+  alerts: {
+    list: apiGetAlerts,
+    stats: apiGetAlertStats,
+    resolve: apiResolveAlert,
+  },
+  predictions: {
+    list: apiGetPredictions,
+    stats: apiGetPredictionStats,
+    modelInfo: async () => apiFetch('/predictions/models/info'),
+  },
+  sensors: {
+    latest: apiGetSensors,
+  },
+  dashboard: {
+    overview: apiGetDashboardOverview,
+  },
+  getToken: Auth.getToken,
+  getUser: Auth.getUser,
+  setSession: Auth.save,
+  clearSession: Auth.clear,
+  isLoggedIn: Auth.isLoggedIn,
+};
+window.Auth = Auth;
+window.requireAuth = requireAuth;
+window.refreshSessionUser = refreshSessionUser;
+window.apiFetch = apiFetch;
+window.apiLogin = apiLogin;
+window.apiRegister = apiRegister;
+window.apiGetMe = apiGetMe;
+window.apiUpdateProfile = apiUpdateProfile;
+window.apiChangePassword = apiChangePassword;
+window.apiGetAlerts = apiGetAlerts;
+window.apiGetAlertStats = apiGetAlertStats;
+window.apiGetPredictions = apiGetPredictions;
+window.apiGetPredictionStats = apiGetPredictionStats;
+window.apiGetSensors = apiGetSensors;
+window.apiResolveAlert = apiResolveAlert;
+window.apiGetDashboardOverview = apiGetDashboardOverview;
