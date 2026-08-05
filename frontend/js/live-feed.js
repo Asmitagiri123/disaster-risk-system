@@ -102,7 +102,6 @@
       const n = new Notification(`🚨 ${sev.toUpperCase()} ${type.toUpperCase()} RISK — ${loc}`, {
         body: `${prob}% probability. ${(message || 'Take immediate precautions.').slice(0, 120)}`,
         tag: `flds-${type}-${loc}`,
-        requireInteraction: sev === 'critical',
         renotify: true,
       });
       n.onclick = () => { window.focus(); n.close(); };
@@ -124,8 +123,8 @@
     const sev = a.riskLevel || 'high';
 
     if (sev === 'high') playAlertSound(sev);
-    showToast(`🚨 NEW ${type.toUpperCase()} ALERT — ${loc} (${prob}%)`, sev === 'critical' || sev === 'high' ? 'warning' : 'info', 8000);
-    if (sev === 'critical' || sev === 'high') browserNotify(sev, type, loc, prob, a.message);
+    showToast(`🚨 NEW ${type.toUpperCase()} ALERT — ${loc} (${prob}%)`, sev === 'high' ? 'warning' : 'info', 8000);
+    if (sev === 'high') browserNotify(sev, type, loc, prob, a.message);
 
     // Notify other pages (e.g. alerts page prepends a card) via DOM event
     document.dispatchEvent(new CustomEvent('flds:alert:new', { detail: { alert: normalized } }));
@@ -157,7 +156,7 @@
     // 3. Prepend to the timeline (live activity feed)
     const timeline = document.getElementById('timeline');      if (timeline) {
       const item = document.createElement('div');
-      item.className = `timeline-item ${sev === 'critical' || sev === 'high' ? 'critical' : 'warning'} fade-in`;
+      item.className = `timeline-item ${sev === 'high' ? 'warning' : 'warning'} fade-in`;
       item.innerHTML = /*html*/`
         <div class="timeline-time">just now</div>
         <div class="timeline-title">🚨 ${TYPE_ICONS[type] || '⚠️'} ${type} alert raised — ${loc}</div>
@@ -170,7 +169,7 @@
         time: 'just now',
         title: `🚨 ${type} alert raised — ${loc}`,
         desc: `${sev} risk ${type} — ${prob}% model probability`,
-        type: sev === 'critical' || sev === 'high' ? 'critical' : 'warning',
+        type: sev === 'high' ? 'warning' : 'warning',
       });
       window.LIVE.timeline = window.LIVE.timeline.slice(0, 8);
     }

@@ -6,6 +6,7 @@ const logger = require('../utils/logger');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { users: inMemoryUsers, addUser, findUserByEmail, findUserById, updateUser } = require('../utils/inMemoryStore');
+const notificationService = require('../services/notificationService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const sendTokenResponsePlain = (userPlain, statusCode, res) => {
@@ -64,7 +65,7 @@ exports.register = async (req, res) => {
   }
 
   try {
-    const { name, email, password, phone, location } = req.body;
+    const { name, email, password, phone, location, role } = req.body;
 
     // If MongoDB not connected, use in-memory store
     if (mongoose.connection.readyState !== 1) {
@@ -82,6 +83,9 @@ exports.register = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Email already registered' });
     }
 
+    const validRoles = ['user', 'admin', 'responder'];
+    const userRole = validRoles.includes(role) ? role : 'user';
+
     // Alert location: canonical district + province from the login page picker.
     const choice = parseLocationChoice(req.body);
     const userData = {
@@ -89,6 +93,7 @@ exports.register = async (req, res) => {
       email,
       password,
       phone,
+      role: userRole,
       ...choice,
       location,
     });

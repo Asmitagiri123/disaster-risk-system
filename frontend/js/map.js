@@ -3,7 +3,6 @@
 let mapInstance = null;
 
 const MARKER_COLORS = {
-  critical: '#ef4444',
   high:     '#f97316',
   medium:   '#eab308',
   low:      '#22c55e'
@@ -65,13 +64,6 @@ function addMarker({ coords, type, severity, label, province, evidence }) {
           box-shadow:0 0 12px rgba(${hexToRgb(color)},0.5);
           animation:pulse-marker 2s infinite;
         ">${icon}</div>
-        ${severity === 'critical' ? `<div style="
-          position:absolute;
-          width:48px;height:48px;
-          border:1px solid rgba(${hexToRgb(color)},0.3);
-          border-radius:50%;
-          animation:pulse-ring 2s infinite;
-        "></div>` : ''}
       </div>`,
     iconSize: [48, 48],
     iconAnchor: [24, 24],
@@ -105,7 +97,6 @@ function hexToRgb(hex) {
 const mapStyles = document.createElement('style');
 mapStyles.textContent = `
   @keyframes pulse-marker { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-  @keyframes pulse-ring { 0%{transform:scale(0.8);opacity:1} 100%{transform:scale(1.6);opacity:0} }
   .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:transparent!important;box-shadow:none!important;border:none!important;}
   .leaflet-popup-content{margin:0!important;}
 `;

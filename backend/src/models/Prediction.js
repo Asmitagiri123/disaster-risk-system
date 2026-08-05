@@ -16,7 +16,7 @@ const predictionSchema = new mongoose.Schema(
     riskLevel: {
       type: String,
       required: true,
-      enum: ['low', 'moderate', 'high', 'critical'],
+      enum: ['low', 'moderate', 'high'],
     },
     location: {
       type: {

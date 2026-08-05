@@ -13,7 +13,7 @@
 
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">🏔️</div>
+      <div class="logo-icon">🔔</div>
       <div>
         <div class="logo-text">NepAlert</div>
         <div class="logo-sub">Flood & Landslide System</div>
@@ -27,18 +27,7 @@
       <div class="nav-section-label">Analysis</div>
       <a href="predictions.html" class="nav-item active"><span class="nav-icon">🔮</span> Predictions</a>
       <a href="reports.html" class="nav-item"><span class="nav-icon">📋</span> Reports</a>
-      <div class="nav-section-label">System</div>
-      <a href="#" class="nav-item"><span class="nav-icon">📡</span> Sensors</a>
-      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
     </nav>
-    <div class="sidebar-footer">
-      <div class="nav-item" style="cursor:pointer;" onclick="openProfileModal()">
-        <span class="nav-icon">👤</span> <span id="sidebar-username">Loading…</span>
-      </div>
-      <div class="nav-item" onclick="handleLogout()" style="cursor:pointer;color:var(--accent-red);margin-top:4px;">
-        <span class="nav-icon">🚪</span> Logout
-      </div>
-    </div>
   </aside>
 
   <div class="main-content">
@@ -168,8 +157,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="../js/api.js"></script>
 <script>requireAuth();</script>
-<script src="../js/mock-data.js"></script>
-<script src="../js/charts.js"></script>
+<script src="../js/live-data.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
 let predictionData = [];
@@ -320,12 +308,9 @@ async function loadPredictionPageData() {
   }
 }
 
-const _u2 = Auth.getUser();
-const _unEl2 = document.getElementById('sidebar-username');
-if (_unEl2 && _u2) _unEl2.textContent = _u2.name || _u2.email || 'NepAlert';
-
 initPredictionAccuracyChart('accuracyChart');
 loadPredictionPageData();
+setInterval(loadPredictionPageData, 30000);
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {

@@ -162,7 +162,6 @@
   border: 2px solid var(--bg-card);
 }
 
-.timeline-item.critical::before { background: var(--accent-red); }
 .timeline-item.warning::before { background: var(--accent-orange); }
 .timeline-item.resolved::before { background: var(--accent-green); }
 

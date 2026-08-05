@@ -36,7 +36,7 @@
 
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">🏔️</div>
+      <div class="logo-icon">🔔</div>
       <div>
         <div class="logo-text">NepAlert</div>
         <div class="logo-sub">Flood & Landslide System</div>
@@ -50,18 +50,7 @@
       <div class="nav-section-label">Analysis</div>
       <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
       <a href="reports.html" class="nav-item"><span class="nav-icon">📋</span> Reports</a>
-      <div class="nav-section-label">System</div>
-      <a href="#" class="nav-item"><span class="nav-icon">📡</span> Sensors</a>
-      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
     </nav>
-    <div class="sidebar-footer">
-      <div class="nav-item" style="cursor:pointer;" onclick="openProfileModal()">
-        <span class="nav-icon">👤</span> <span id="sidebar-username">Loading…</span>
-      </div>
-      <div class="nav-item" onclick="handleLogout()" style="cursor:pointer;color:var(--accent-red);margin-top:4px;">
-        <span class="nav-icon">🚪</span> Logout
-      </div>
-    </div>
   </aside>
 
   <div class="main-content">
@@ -84,31 +73,25 @@
       <div class="map-stats-bar fade-in">
         <div class="map-stat">
           <span>🌊</span>
-          <span class="map-stat-val" style="color:var(--accent-blue);">5</span>
+          <span class="map-stat-val" style="color:var(--accent-blue);" id="map-flood-count">0</span>
           <span style="color:var(--text-muted);">Flood Events</span>
         </div>
         <div style="width:1px;height:20px;background:var(--border);"></div>
         <div class="map-stat">
           <span>⛰️</span>
-          <span class="map-stat-val" style="color:var(--accent-purple);">4</span>
+          <span class="map-stat-val" style="color:var(--accent-purple);" id="map-landslide-count">0</span>
           <span style="color:var(--text-muted);">Landslide Events</span>
         </div>
         <div style="width:1px;height:20px;background:var(--border);"></div>
         <div class="map-stat">
-          <span>🔴</span>
-          <span class="map-stat-val" style="color:var(--accent-red);">2</span>
-          <span style="color:var(--text-muted);">Critical</span>
-        </div>
-        <div style="width:1px;height:20px;background:var(--border);"></div>
-        <div class="map-stat">
           <span>🟠</span>
-          <span class="map-stat-val" style="color:var(--accent-orange);">3</span>
+          <span class="map-stat-val" style="color:var(--accent-orange);" id="map-high-count">0</span>
           <span style="color:var(--text-muted);">High</span>
         </div>
         <div style="width:1px;height:20px;background:var(--border);"></div>
         <div class="map-stat">
           <span>👥</span>
-          <span class="map-stat-val">~258K</span>
+          <span class="map-stat-val" id="map-people-risk">0</span>
           <span style="color:var(--text-muted);">People at Risk</span>
         </div>
         <div style="margin-left:auto;font-size:11px;color:var(--text-muted);">
@@ -120,7 +103,6 @@
         <button class="map-filter-btn active">🌐 All Events</button>
         <button class="map-filter-btn">🌊 Flood Only</button>
         <button class="map-filter-btn">⛰️ Landslide Only</button>
-        <button class="map-filter-btn">🔴 Critical</button>
         <button class="map-filter-btn">🟠 High</button>
         <button class="map-filter-btn">🟡 Medium & Low</button>
       </div>
@@ -132,7 +114,6 @@
           <div class="legend-item"><span style="font-size:14px;">🌊</span> Flood</div>
           <div class="legend-item"><span style="font-size:14px;">⛰️</span> Landslide</div>
           <div style="margin-top:8px;" class="legend-title">Severity</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444;"></div> Critical</div>
           <div class="legend-item"><div class="legend-dot" style="background:#f97316;"></div> High</div>
           <div class="legend-item"><div class="legend-dot" style="background:#eab308;"></div> Medium</div>
           <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div> Low</div>
@@ -146,43 +127,53 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="../js/api.js"></script>
 <script>requireAuth();</script>
-<script src="../js/mock-data.js"></script>
+<script src="../js/live-data.js"></script>
 <script src="../js/map.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
   document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
-  const _u3 = Auth.getUser();
-  const _unEl3 = document.getElementById('sidebar-username');
-  if (_unEl3 && _u3) _unEl3.textContent = _u3.name || _u3.email || 'NepAlert';
   initMap('full-map');
+
+  let currentFilter = 'all';
+
+  function getFilteredMarkers() {
+    const markers = typeof DATA !== 'undefined' ? DATA.mapMarkers : [];
+    if (currentFilter === 'flood') return markers.filter(m => m.type === 'flood');
+    if (currentFilter === 'landslide') return markers.filter(m => m.type === 'landslide');
+    if (currentFilter === 'high') return markers.filter(m => m.severity === 'high');
+    if (currentFilter === 'medium-low') return markers.filter(m => m.severity === 'moderate' || m.severity === 'medium' || m.severity === 'low');
+    return markers;
+  }
+
+  function renderMapMarkers() {
+    mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
+    const markers = getFilteredMarkers();
+    markers.forEach(m => {
+      if (m.coords && m.coords[0] && m.coords[1]) {
+        addMarker(m);
+      }
+    });
+    showToast(`Showing ${markers.length} event(s)`, 'info', 1500);
+  }
 
   function applyMapFilter(btn) {
     document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const label = btn.textContent.trim();
 
-    // Remove all existing markers
-    mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
+    if (label.includes('Flood Only'))      currentFilter = 'flood';
+    else if (label.includes('Landslide'))  currentFilter = 'landslide';
+    else if (label.includes('High'))       currentFilter = 'high';
+    else if (label.includes('Medium'))     currentFilter = 'medium-low';
+    else                                   currentFilter = 'all';
 
-    let filtered = DATA.mapMarkers || [];
-    if (label.includes('Flood Only'))      filtered = (DATA.mapMarkers || []).filter(m => m.type === 'flood');
-    else if (label.includes('Landslide'))  filtered = (DATA.mapMarkers || []).filter(m => m.type === 'landslide');
-    else if (label.includes('Critical'))   filtered = (DATA.mapMarkers || []).filter(m => m.severity === 'critical');
-    else if (label.includes('High'))       filtered = (DATA.mapMarkers || []).filter(m => m.severity === 'high');
-    else if (label.includes('Medium'))     filtered = (DATA.mapMarkers || []).filter(m => m.severity === 'medium' || m.severity === 'low');
-
-    filtered.forEach(m => addMarker(m));
-    showToast(`Showing ${filtered.length} event(s) — ${label}`, 'info', 2000);
+    renderMapMarkers();
   }
 
   document.querySelectorAll('.map-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => applyMapFilter(btn));
   });
 
-  // Marker click → show detail panel
-  // (handled inside addMarker popup — already wired)
-
-  // Stats bar items clickable
   document.querySelectorAll('.map-stat').forEach(stat => {
     stat.style.cursor = 'pointer';
     stat.addEventListener('click', () => {
@@ -193,12 +184,35 @@
       } else if (text.includes('Landslide')) {
         const lsBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Landslide'));
         if (lsBtn) applyMapFilter(lsBtn);
-      } else if (text.includes('Critical')) {
-        const critBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Critical'));
-        if (critBtn) applyMapFilter(critBtn);
+      } else if (text.includes('High')) {
+        const highBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('High'));
+        if (highBtn) applyMapFilter(highBtn);
       }
     });
   });
+
+  async function refreshMapData() {
+    try {
+      await loadDashboardData();
+      const alerts = typeof DATA !== 'undefined' ? DATA.alerts : [];
+      const markers = typeof DATA !== 'undefined' ? DATA.mapMarkers : [];
+      const floodCount = alerts.filter(a => a.disasterType === 'flood').length;
+      const landslideCount = alerts.filter(a => a.disasterType === 'landslide').length;
+      const highCount = alerts.filter(a => a.riskLevel === 'high').length;
+      document.getElementById('map-flood-count').textContent = floodCount;
+      document.getElementById('map-landslide-count').textContent = landslideCount;
+      document.getElementById('map-high-count').textContent = highCount;
+      document.getElementById('map-people-risk').textContent = alerts.reduce((sum, a) => sum + (a._raw?.affectedRadius || 0), 0).toLocaleString();
+      document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
+
+      renderMapMarkers();
+    } catch (err) {
+      console.error('Map data load failed:', err);
+    }
+  }
+
+  refreshMapData();
+  setInterval(refreshMapData, 15000);
 </script>
 </body>
 </html>

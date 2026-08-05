@@ -6,10 +6,10 @@ const logger = require('../utils/logger');
 exports.getDashboardOverview = async (req, res) => {
   try {
     const since24h = new Date(Date.now() - 24 * 3600000);
-    const [alertCount, activeAlertCount, criticalCount, resolved24h, predictionCount, recentPredictions, recentSensors] = await Promise.all([
+    const [alertCount, activeAlertCount, highCount, resolved24h, predictionCount, recentPredictions, recentSensors] = await Promise.all([
       Alert.countDocuments(),
       Alert.countDocuments({ isActive: true }),
-      Alert.countDocuments({ isActive: true, riskLevel: { $in: ['high', 'critical'] } }),
+      Alert.countDocuments({ isActive: true, riskLevel: { $in: ['high'] } }),
       Alert.countDocuments({ isActive: false, resolvedAt: { $gte: since24h } }),
       Prediction.countDocuments(),
       // 50 recent predictions ≈ the last ~8h of weather-driven risk trend
@@ -23,7 +23,7 @@ exports.getDashboardOverview = async (req, res) => {
         summary: {
           alerts: alertCount,
           activeAlerts: activeAlertCount,
-          criticalZones: criticalCount,
+          highZones: highCount,
           resolved24h,
           predictions: predictionCount,
         },

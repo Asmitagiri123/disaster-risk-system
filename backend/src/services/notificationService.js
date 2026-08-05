@@ -80,7 +80,6 @@ class NotificationService {
       low: '#28a745',
       moderate: '#ffc107',
       high: '#fd7e14',
-      critical: '#dc3545',
     };
     const color = riskColors[alert.riskLevel] || '#dc3545';
     const probability = alert.probability != null ? Math.round(alert.probability * 100) : 'N/A';
