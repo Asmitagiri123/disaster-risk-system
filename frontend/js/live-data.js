@@ -79,15 +79,15 @@ function mapAlert(a) {
   return {
     _id: a._id,
     id: a._id,
-    type: a.disasterType === 'flood' ? 'Flood' : a.disasterType === 'landslide' ? 'Landslide' : a.disasterType,
-    severity: a.riskLevel || 'low',
+    type: (a.disasterType === 'flood' || a.disasterType === 'Flood') ? 'Flood' : (a.disasterType === 'landslide' || a.disasterType === 'Landslide') ? 'Landslide' : a.disasterType,
+    severity: (a.riskLevel || 'low').toLowerCase(),
     location: a.location?.address || a.location?.city || 'Nepal',
     magnitude: a.probability ? `${Math.round(a.probability * 100)}%` : '—',
     time: timeAgo(a.createdAt),
     coords,
     isActive: a.isActive,
     message: a.message || '',
-    disasterType: a.disasterType,
+    disasterType: (a.disasterType || 'flood').toLowerCase(),
     createdAt: a.createdAt,
   };
 }
@@ -139,9 +139,9 @@ function mapMarker(a) {
   if (!coords) return null;
   return {
     coords,
-    type: a.disasterType || 'flood',
-    severity: a.riskLevel || 'low',
-    label: `${a.disasterType === 'flood' ? 'Flood' : 'Landslide'} — ${a.location?.address || a.location?.city || 'Nepal'}`,
+    type: (a.disasterType || 'flood').toLowerCase(),
+    severity: (a.riskLevel || 'low').toLowerCase(),
+    label: `${(a.disasterType === 'flood' || a.disasterType === 'Flood') ? 'Flood' : 'Landslide'} — ${a.location?.address || a.location?.city || 'Nepal'}`,
   };
 }
 
@@ -158,6 +158,18 @@ function displayProbability(prob, riskLevel) {
 
 function capitalize(str) {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+}
+
+// Shared helper: keep sidebar + header badge counts in sync across all pages
+function syncBadgeCounts(count) {
+  document.querySelectorAll('.notif-badge').forEach(b => {
+    if (count > 0) { b.textContent = count; b.style.display = ''; }
+    else { b.style.display = 'none'; b.textContent = ''; }
+  });
+  document.querySelectorAll('.nav-badge').forEach(b => {
+    b.textContent = count;
+    if (count > 0) b.style.display = ''; else b.style.display = 'none';
+  });
 }
 
 function escapeHtml(str) {
@@ -440,8 +452,7 @@ async function loadLiveAlerts() {
     label: escapeHtml(`${a.type} — ${a.location}${a.province ? ` · ${a.province}` : ''} (${a.magnitude})`),
   }));
   // Keep header + sidebar badges in sync with the count
-  document.querySelectorAll('.notif-badge').forEach(b => { b.textContent = items.length; b.style.display = items.length ? '' : 'none'; });
-  document.querySelectorAll('.nav-badge').forEach(b => { b.textContent = items.length; });
+  syncBadgeCounts(items.length);
 
   // Reflect the scope on this page (banner + header chip)
   LIVE.scope = effectiveScope();
@@ -663,8 +674,9 @@ async function resolveLiveAlert(id) {
 // Legacy loadDashboardData used by index.html and other pages.
 // Populates both DATA (=LIVE) and LIVE so every page shape works.
 async function loadDashboardData() {
+  const scope = scopeParams();
   const [alertsRes, predictionsRes, sensorsRes, statsRes] = await Promise.allSettled([
-    apiGetAlerts({ limit: 50 }),
+    apiGetAlerts({ limit: 50 }, scope),
     apiGetPredictions({ limit: 10 }),
     apiGetSensors(),
     apiGetAlertStats(),
@@ -675,17 +687,17 @@ async function loadDashboardData() {
     DATA.alerts     = raw.map(mapAlert);
     DATA.mapMarkers = raw.map(mapMarker).filter(Boolean);
     DATA.stats.activeAlerts  = raw.filter(a => a.isActive).length;
-    DATA.stats.highRiskZones = raw.filter(a => a.riskLevel === 'high').length;
+    DATA.stats.highRiskZones = raw.filter(a => (a.riskLevel || '').toLowerCase() === 'high').length;
 
     DATA.timeline = raw.slice(0, 6).map(a => ({
       time:  new Date(a.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-      title: `${a.disasterType === 'flood' ? 'Flood' : 'Landslide'} — ${a.location?.address || a.location?.city || 'Nepal'}`,
-      desc:  a.message || `${a.riskLevel} risk level detected.`,
-      type:  (a.riskLevel === 'high') ? 'warning' : a.isActive ? 'warning' : 'resolved',
+      title: `${(a.disasterType || '').toLowerCase() === 'flood' ? 'Flood' : 'Landslide'} — ${a.location?.address || a.location?.city || 'Nepal'}`,
+      desc:  a.message || `${(a.riskLevel || 'low')} risk level detected.`,
+      type:  (a.riskLevel || '').toLowerCase() === 'high' ? 'warning' : a.isActive ? 'warning' : 'resolved',
     }));
 
-    const floodCount = raw.filter(a => a.disasterType === 'flood').length;
-    const landCount  = raw.filter(a => a.disasterType === 'landslide').length;
+    const floodCount = raw.filter(a => (a.disasterType || '').toLowerCase() === 'flood').length;
+    const landCount  = raw.filter(a => (a.disasterType || '').toLowerCase() === 'landslide').length;
     const total = floodCount + landCount || 1;
     DATA.disasterTypes = [
       { label: 'Flood',     value: Math.round(floodCount / total * 100), color: '#3b82f6' },
@@ -710,6 +722,10 @@ async function loadDashboardData() {
     const s = statsRes.value.data;
     DATA.stats.resolved24h = s?.resolved24h || 0;
   }
+
+  // Keep sidebar + header badge counts in sync across all pages
+  const activeCount = DATA.stats.activeAlerts || DATA.alerts.filter(a => a.isActive).length;
+  syncBadgeCounts(activeCount);
 }
 
 function startLivePoll(onUpdate) {
@@ -723,6 +739,8 @@ function startLivePoll(onUpdate) {
       DATA.stats.activeAlerts = newCount;
       DATA.alerts     = raw.map(mapAlert);
       DATA.mapMarkers = raw.map(mapMarker).filter(Boolean);
+      // Keep badges in sync during polling
+      syncBadgeCounts(newCount);
       if (onUpdate) onUpdate(delta);
     } catch { /* silent */ }
   }, 15000);
@@ -749,3 +767,4 @@ window.mapPrediction = mapPrediction;
 window.mapSensor = mapSensor;
 window.mapMarker = mapMarker;
 window.timeAgo = timeAgo;
+window.syncBadgeCounts = syncBadgeCounts;

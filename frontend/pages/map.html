@@ -36,7 +36,7 @@
 
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">🏔️</div>
+      <div class="logo-icon">🔔</div>
       <div>
         <div class="logo-text">NepAlert</div>
         <div class="logo-sub">Flood & Landslide System</div>
@@ -134,48 +134,46 @@
   document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
   initMap('full-map');
 
+  let currentFilter = 'all';
+
+  function getFilteredMarkers() {
+    const markers = typeof DATA !== 'undefined' ? DATA.mapMarkers : [];
+    if (currentFilter === 'flood') return markers.filter(m => m.type === 'flood');
+    if (currentFilter === 'landslide') return markers.filter(m => m.type === 'landslide');
+    if (currentFilter === 'high') return markers.filter(m => m.severity === 'high');
+    if (currentFilter === 'medium-low') return markers.filter(m => m.severity === 'moderate' || m.severity === 'medium' || m.severity === 'low');
+    return markers;
+  }
+
+  function renderMapMarkers() {
+    mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
+    const markers = getFilteredMarkers();
+    markers.forEach(m => {
+      if (m.coords && m.coords[0] && m.coords[1]) {
+        addMarker(m);
+      }
+    });
+    showToast(`Showing ${markers.length} event(s)`, 'info', 1500);
+  }
+
   function applyMapFilter(btn) {
     document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const label = btn.textContent.trim();
 
-    const alerts = typeof DATA !== 'undefined' ? DATA.alerts : [];
-    if (!alerts.length) {
-      showToast('Loading map data...', 'info', 2000);
-      return;
-    }
+    if (label.includes('Flood Only'))      currentFilter = 'flood';
+    else if (label.includes('Landslide'))  currentFilter = 'landslide';
+    else if (label.includes('High'))       currentFilter = 'high';
+    else if (label.includes('Medium'))     currentFilter = 'medium-low';
+    else                                   currentFilter = 'all';
 
-    let filtered = alerts;
-    if (label.includes('Flood Only'))      filtered = alerts.filter(a => a.disasterType === 'flood');
-    else if (label.includes('Landslide'))  filtered = alerts.filter(a => a.disasterType === 'landslide');
-    else if (label.includes('High'))       filtered = alerts.filter(a => a.riskLevel === 'high');
-    else if (label.includes('Medium'))     filtered = alerts.filter(a => a.riskLevel === 'medium' || a.riskLevel === 'low');
-
-    mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
-    filtered.forEach(a => {
-      const coords = a.location?.coordinates ? [a.location.coordinates[1], a.location.coordinates[0]] : null;
-      if (coords && coords[0] && coords[1]) {
-        addMarker({
-          coords,
-          type: a.disasterType || 'flood',
-          severity: a.riskLevel || 'low',
-          label: `${a.disasterType === 'flood' ? 'Flood' : 'Landslide'} — ${a.location?.address || a.location?.city || 'Nepal'}`,
-          province: a.location?.address || a.location?.city || 'Nepal',
-          evidence: a.predictionId?.inputData ? Object.entries(a.predictionId.inputData).filter(([,v]) => v !== undefined && v !== null).slice(0, 3).map(([k,v]) => `${k}: ${v}`).join(', ') : '',
-        });
-      }
-    });
-    showToast(`Showing ${filtered.length} event(s) — ${label}`, 'info', 2000);
+    renderMapMarkers();
   }
 
   document.querySelectorAll('.map-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => applyMapFilter(btn));
   });
 
-  // Marker click → show detail panel
-  // (handled inside addMarker popup — already wired)
-
-  // Stats bar items clickable
   document.querySelectorAll('.map-stat').forEach(stat => {
     stat.style.cursor = 'pointer';
     stat.addEventListener('click', () => {
@@ -205,13 +203,9 @@
       document.getElementById('map-landslide-count').textContent = landslideCount;
       document.getElementById('map-high-count').textContent = highCount;
       document.getElementById('map-people-risk').textContent = alerts.reduce((sum, a) => sum + (a._raw?.affectedRadius || 0), 0).toLocaleString();
+      document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
 
-      mapInstance.eachLayer(layer => { if (layer instanceof L.Marker) mapInstance.removeLayer(layer); });
-      markers.forEach(m => {
-        if (m.coords && m.coords[0] && m.coords[1]) {
-          addMarker(m);
-        }
-      });
+      renderMapMarkers();
     } catch (err) {
       console.error('Map data load failed:', err);
     }

@@ -57,6 +57,18 @@
           <label>Password</label>
           <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password" />
         </div>
+        <div class="form-group">
+          <label>Province</label>
+          <select id="province" style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:inherit;font-size:14px;padding:10px 12px;outline:none;box-sizing:border-box;">
+            <option value="">Select province</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>District</label>
+          <select id="district" disabled style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:inherit;font-size:14px;padding:10px 12px;outline:none;box-sizing:border-box;">
+            <option value="">Select district</option>
+          </select>
+        </div>
         <button type="submit" class="btn-login" id="login-btn">Sign In</button>
         <div class="error-msg" id="error-msg"></div>
       </form>
@@ -66,6 +78,7 @@
   </div>
 
   <script src="js/api.js"></script>
+  <script src="js/nepal-districts.js"></script>
   <script>
     const form = document.getElementById('login-form');
 
@@ -95,6 +108,26 @@
 
     let isRegister = false;
 
+    const provinceSel = document.getElementById('province');
+    const districtSel = document.getElementById('district');
+
+    if (provinceSel && window.NEPAL_PROVINCES) {
+      window.NEPAL_PROVINCES.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        provinceSel.appendChild(opt);
+      });
+
+      provinceSel.addEventListener('change', () => {
+        const prov = provinceSel.value;
+        districtSel.innerHTML = '<option value="">Select district</option>';
+        if (!prov) { districtSel.disabled = true; return; }
+        districtSel.disabled = false;
+        if (window.populateDistrictSelect) window.populateDistrictSelect(districtSel, prov);
+      });
+    }
+
     document.getElementById('toggle-auth').addEventListener('click', (ev) => {
       ev.preventDefault();
       isRegister = !isRegister;
@@ -109,6 +142,8 @@
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const name = document.getElementById('name')?.value?.trim();
+      const district = districtSel?.value || '';
+      const province = provinceSel?.value || '';
 
       submitBtn.disabled = true;
       submitBtn.textContent = isRegister ? 'Registering…' : 'Signing in…';
@@ -122,19 +157,18 @@
           if (password.length < 8) {
             throw new Error('Password must be at least 8 characters');
           }
-          const res = await apiRegister(name, email, password);
+          const res = await apiRegister(name, email, password, undefined, undefined, { district, province });
           if (res?.success) {
             Auth.save(res.token, res.data.user);
             window.location.href = 'index.html';
             return;
           } else if (res?.errors && res.errors.length) {
-            // express-validator returns an array of errors
             throw new Error(res.errors[0].msg || res.errors[0].message || 'Registration failed');
           } else {
             throw new Error(res?.message || 'Registration failed');
           }
         } else {
-          const res = await apiLogin(email, password);
+          const res = await apiLogin(email, password, { district, province });
           if (res?.success) {
             Auth.save(res.token, res.data.user);
             window.location.href = 'index.html';

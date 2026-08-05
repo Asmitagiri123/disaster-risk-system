@@ -13,7 +13,7 @@
 
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">🏔️</div>
+      <div class="logo-icon">🔔</div>
       <div>
         <div class="logo-text">NepAlert</div>
         <div class="logo-sub">Flood & Landslide System</div>
@@ -27,18 +27,7 @@
       <div class="nav-section-label">Analysis</div>
       <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
       <a href="reports.html" class="nav-item active"><span class="nav-icon">📋</span> Reports</a>
-      <div class="nav-section-label">System</div>
-      <a href="#" class="nav-item"><span class="nav-icon">📡</span> Sensors</a>
-      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
     </nav>
-    <div class="sidebar-footer">
-      <div class="nav-item" style="cursor:pointer;" onclick="openProfileModal()">
-        <span class="nav-icon">👤</span> <span id="sidebar-username">Loading…</span>
-      </div>
-      <div class="nav-item" onclick="handleLogout()" style="cursor:pointer;color:var(--accent-red);margin-top:4px;">
-        <span class="nav-icon">🚪</span> Logout
-      </div>
-    </div>
   </aside>
 
   <div class="main-content">
@@ -314,10 +303,6 @@ function renderDonutChart() {
   `).join('');
 }
 
-const _u4 = Auth.getUser();
-const _unEl4 = document.getElementById('sidebar-username');
-if (_unEl4 && _u4) _unEl4.textContent = _u4.name || _u4.email || 'NepAlert';
-
 renderReportsTable('All');
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -416,6 +401,7 @@ document.getElementById('generate-report-btn')?.addEventListener('click', () => 
 });
 
 loadReportPageData();
+setInterval(loadReportPageData, 30000);
 </script>
 </body>
 </html>

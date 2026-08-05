@@ -13,7 +13,7 @@
 
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">🏔️</div>
+      <div class="logo-icon">🔔</div>
       <div>
         <div class="logo-text">NepAlert</div>
         <div class="logo-sub">Flood & Landslide System</div>
@@ -104,6 +104,11 @@ let severitySelect;
 let typeSelect;
 
 function normalizeSeverity(riskLevel) {
+  if (typeof riskLevel === 'number') {
+    if (riskLevel >= 0.7) return 'high';
+    if (riskLevel >= 0.4) return 'medium';
+    return 'low';
+  }
   const level = (riskLevel || '').toLowerCase();
   if (level === 'high') return 'high';
   if (level === 'moderate' || level === 'medium') return 'medium';
@@ -147,7 +152,7 @@ function renderAlertCards(data) {
   }
 
   container.innerHTML = data.map((a, i) => `
-    <div class="card fade-in" style="border-left:3px solid ${statusColors[a.severity] || statusColors.low};">
+    <div class="card fade-in" style="border-left:3px solid ${statusColors[a.severity] || statusColors.low};cursor:pointer;" onclick="openDetailsModal(${i})">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="font-size:28px;">${a.icon}</div>
@@ -254,6 +259,7 @@ if (severitySelect) severitySelect.addEventListener('change', applyFilters);
 if (typeSelect) typeSelect.addEventListener('change', applyFilters);
 
 loadAlertsFromBackend();
+setInterval(loadAlertsFromBackend, 15000);
 
 function openDetailsModal(i) {
   const a = filteredAlerts[i];

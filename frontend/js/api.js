@@ -80,17 +80,19 @@ async function refreshSessionUser() {
 }
 
 // ─── AUTH API ─────────────────────────────────────────────────────────────────
-async function apiLogin(email, password) {
+async function apiLogin(email, password, options = {}) {
+  const body = { email, password, ...options };
   return apiFetch('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(body),
   });
 }
 
-async function apiRegister(name, email, password) {
+async function apiRegister(name, email, password, phone, location, options = {}) {
+  const body = { name, email, password, phone, location, ...options };
   return apiFetch('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -113,9 +115,10 @@ async function apiChangePassword(currentPassword, newPassword) {
 }
 
 // ─── DATA API ─────────────────────────────────────────────────────────────────
-async function apiGetAlerts(filters = {}) {
+async function apiGetAlerts(filters = {}, extraQuery = '') {
   const params = new URLSearchParams(filters).toString();
-  return apiFetch(`/alerts${params ? '?' + params : ''}`);
+  const qs = params ? (extraQuery ? '?' + params + '&' + extraQuery : '?' + params) : (extraQuery ? '?' + extraQuery : '');
+  return apiFetch(`/alerts${qs}`);
 }
 
 async function apiGetAlertStats() {

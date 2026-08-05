@@ -65,12 +65,15 @@ exports.register = async (req, res) => {
   }
 
   try {
-    const { name, email, password, phone, location } = req.body;
+    const { name, email, password, phone, location, role } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ success: false, message: 'Email already registered' });
     }
+
+    const validRoles = ['user', 'admin', 'responder'];
+    const userRole = validRoles.includes(role) ? role : 'user';
 
     // Alert location: canonical district + province from the login page picker.
     const choice = parseLocationChoice(req.body);
@@ -79,6 +82,7 @@ exports.register = async (req, res) => {
       email,
       password,
       phone,
+      role: userRole,
       ...choice,
       location,
     });
