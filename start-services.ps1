@@ -68,17 +68,17 @@ function Start-IfDown {
 }
 
 # --- Backend: node src/server.js (cwd = backend/) ---
-$node = (Get-Command node -ErrorAction SilentlyContinue).Source
-if (-not $node) { $node = 'C:\Program Files\nodejs\node.exe' }
-Start-IfDown -Name 'backend' -Port 5000 -FilePath $node `
-  -ArgumentList @('src/server.js') `
-  -WorkingDirectory (Join-Path $Root 'backend') -WaitSeconds 15
+$node = (Get-Command node -ErrorAction SilentlyContinue).Source | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+if (-not $node) {
+  Write-Log 'Could not find node.exe - Backend service not started'
+} else {
+  Start-IfDown -Name 'backend' -Port 5000 -FilePath $node `
+    -ArgumentList @('src/server.js') `
+    -WorkingDirectory (Join-Path $Root 'backend') -WaitSeconds 15
+}
 
 # --- ML service: python -m uvicorn predict_service:app (cwd = models/) ---
-$pythonCandidates = @(
-  'C:\Users\Sujan Bhandari\AppData\Local\Programs\Python\Python313\python.exe',
-  (Get-Command python -ErrorAction SilentlyContinue).Source
-) | Where-Object { $_ -and (Test-Path $_) }
+$pythonCandidates = @((Get-Command python -ErrorAction SilentlyContinue).Source) | Where-Object { $_ -and (Test-Path $_) }
 $python = $pythonCandidates | Select-Object -First 1
 if (-not $python) {
   Write-Log 'Could not find python.exe - ML service not started'
