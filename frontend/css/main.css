@@ -576,3 +576,34 @@ ul { list-style: none; }
   transition: opacity var(--transition);
 }
 .tooltip:hover::after { opacity: 1; }
+
+/* --- Login Page --- */
+.login-page-body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--bg-primary); }
+.login-wrap { width:100%; max-width:400px; padding:20px; }
+.login-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:var(--radius); padding:36px 32px; box-shadow:var(--shadow-lg); }
+.login-logo { text-align:center; margin-bottom:28px; }
+.login-logo .logo-icon { font-size:40px; margin-bottom:8px; }
+.login-logo .logo-icon-box { display:inline-flex; align-items:center; justify-content:center; width:64px; height:64px; background:var(--accent-blue); border-radius:14px; margin-bottom:12px; }
+.login-logo .logo-icon-box svg { width:34px; height:34px; fill:#fff; }
+.login-logo h1 { font-size:22px; font-weight:800; margin:0 0 4px; }
+.login-logo p { font-size:12px; color:var(--text-muted); margin:0; }
+.form-group { margin-bottom:16px; }
+.form-group label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.form-input, .form-select {
+  width:100%; background:var(--bg-secondary); border:1px solid var(--border);
+  border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit;
+  font-size:14px; padding:10px 12px; outline:none; box-sizing:border-box;
+  transition:border-color 0.2s;
+}
+.form-input:focus, .form-select:focus { border-color:var(--accent-blue); }
+.btn-login {
+  width:100%; padding:12px; font-size:14px; font-weight:700;
+  background:var(--accent-blue); color:#fff; border:none;
+  border-radius:var(--radius-sm); cursor:pointer; margin-top:8px;
+  transition:opacity 0.2s;
+}
+.btn-login:hover { opacity:0.9; }
+.btn-login:disabled { opacity:0.5; cursor:not-allowed; }
+.error-msg { color:var(--accent-red); font-size:12px; margin-top:12px; text-align:center; min-height:18px; }
+.login-footer { text-align:center; margin-top:20px; font-size:11px; color:var(--text-muted); }
+.auth-toggle-wrap { text-align:center; margin-top:12px; }
