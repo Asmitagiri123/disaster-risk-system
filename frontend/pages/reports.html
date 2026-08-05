@@ -50,16 +50,7 @@
       <div class="page-header fade-in">
         <div>
           <div class="page-header-title">Incident Reports — Recent Activity</div>
-          <div class="page-header-sub">Latest backend incident data and downloadable reports for Nepal</div>
-        </div>
-        <div class="header-actions">
-          <select class="filter-select" id="report-period-select">
-            <option>Last 30 Days</option>
-            <option>Last 7 Days</option>
-            <option>Monsoon Season</option>
-            <option>This Year</option>
-          </select>
-          <button class="btn btn-primary" id="generate-report-btn">📥 Generate Report</button>
+          <div class="page-header-sub">Latest backend incident data for Nepal</div>
         </div>
       </div>
 
@@ -267,7 +258,6 @@ async function loadReportPageData() {
     reportRows = createReportRows();
     updateReportStats(reportRows);
     renderReportsTable(currentReportFilter);
-    buildMonthChart(document.getElementById('report-period-select')?.value || 'Monsoon Season');
     renderDonutChart();
   } catch (err) {
     console.error('Failed to load reports from backend', err);
@@ -309,94 +299,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderReportsTable(btn.textContent.trim());
-  });
-});
-
-let monthChart = null;
-function buildMonthChart(period) {
-  if (monthChart) monthChart.destroy();
-  const ctx = document.getElementById('monthlyChart');
-  if (!ctx) return;
-
-  const alerts = (DATA.alerts || []).filter(a => a.createdAt);
-  const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const floodData = monthLabels.map(() => 0);
-  const landslideData = monthLabels.map(() => 0);
-
-  alerts.forEach(alert => {
-    const createdAt = new Date(alert.createdAt);
-    if (Number.isNaN(createdAt.getTime())) return;
-    const monthIndex = createdAt.getMonth();
-    if (alert.disasterType === 'flood') floodData[monthIndex] += 1;
-    else if (alert.disasterType === 'landslide') landslideData[monthIndex] += 1;
-  });
-
-  monthChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: monthLabels,
-      datasets: [
-        { label: 'Flood', data: floodData, backgroundColor: 'rgba(59,130,246,0.7)', borderRadius: 4, borderSkipped: false },
-        { label: 'Landslide', data: landslideData, backgroundColor: 'rgba(139,92,246,0.7)', borderRadius: 4, borderSkipped: false }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10 } },
-        tooltip: { backgroundColor: '#1a2235', borderColor: '#2d3748', borderWidth: 1, titleColor: '#f1f5f9', bodyColor: '#94a3b8', padding: 10, cornerRadius: 8 }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 11 } }, border: { color: '#1e293b' }, stacked: true },
-        y: { grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 11 } }, border: { color: '#1e293b' }, stacked: true }
-      }
-    }
-  });
-}
-
-document.getElementById('report-period-select')?.addEventListener('change', function() {
-  buildMonthChart(this.value);
-  showToast(`Chart updated: ${this.value}`, 'info', 2000);
-});
-
-document.getElementById('generate-report-btn')?.addEventListener('click', () => {
-  const period = document.getElementById('report-period-select')?.value || 'Last 30 Days';
-  showModal({
-    title: '📥 Generate Report',
-    size: 'sm',
-    body: `
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Report Type</label>
-        <select class="filter-select" style="width:100%;padding:10px;" id="gen-type">
-          <option>Flood Incident Report</option>
-          <option>Landslide Incident Report</option>
-          <option>Combined Summary</option>
-          <option>Province-Level Analysis</option>
-        </select>
-      </div>
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Format</label>
-        <select class="filter-select" style="width:100%;padding:10px;" id="gen-fmt">
-          <option>CSV</option>
-          <option>TXT</option>
-        </select>
-      </div>
-      <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text-muted);">
-        Period: <strong style="color:var(--text-primary);">${period}</strong>
-      </div>`,
-    actions: [
-      { id: 'cancel', label: 'Cancel', style: 'secondary' },
-      { id: 'generate', label: '⚙️ Generate', style: 'primary', onClick: () => {
-        const type = document.getElementById('gen-type')?.value || 'Report';
-        const fmt = document.getElementById('gen-fmt')?.value || 'CSV';
-        const rows = (DATA.alerts || []).map(a => `${a.disasterType || 'alert'},${a.location?.address || a.location?.city || 'Nepal'},${a.riskLevel || 'low'}`).join('\n');
-        const fileName = `${type.toLowerCase().replace(/\s+/g, '-')}.${fmt.toLowerCase()}`;
-        const content = fmt === 'CSV' ? `type,location,risk\n${rows}` : `Report Type: ${type}\nPeriod: ${period}\nGenerated: ${new Date().toISOString()}\n\n${rows}`;
-        downloadTextFile(fileName, content, fmt === 'CSV' ? 'text/csv;charset=utf-8' : 'text/plain;charset=utf-8');
-        showToast(`✅ Report downloaded: ${fileName}`, 'success', 4000);
-      }}
-    ]
   });
 });
 

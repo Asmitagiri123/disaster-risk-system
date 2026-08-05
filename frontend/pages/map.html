@@ -21,14 +21,6 @@
     }
     .map-filter-btn.active, .map-filter-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--border-light); }
     .map-filter-btn.active { border-color: var(--accent-blue); color: var(--accent-blue); }
-    .map-stats-bar {
-      display: flex; gap: 16px; align-items: center;
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 10px 16px;
-      margin-bottom: 12px; flex-wrap: wrap;
-    }
-    .map-stat { display: flex; align-items: center; gap: 6px; font-size: 12px; }
-    .map-stat-val { font-weight: 700; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -70,35 +62,6 @@
 
     <main class="page-content">
 
-      <div class="map-stats-bar fade-in">
-        <div class="map-stat">
-          <span>🌊</span>
-          <span class="map-stat-val" style="color:var(--accent-blue);" id="map-flood-count">0</span>
-          <span style="color:var(--text-muted);">Flood Events</span>
-        </div>
-        <div style="width:1px;height:20px;background:var(--border);"></div>
-        <div class="map-stat">
-          <span>⛰️</span>
-          <span class="map-stat-val" style="color:var(--accent-purple);" id="map-landslide-count">0</span>
-          <span style="color:var(--text-muted);">Landslide Events</span>
-        </div>
-        <div style="width:1px;height:20px;background:var(--border);"></div>
-        <div class="map-stat">
-          <span>🟠</span>
-          <span class="map-stat-val" style="color:var(--accent-orange);" id="map-high-count">0</span>
-          <span style="color:var(--text-muted);">High</span>
-        </div>
-        <div style="width:1px;height:20px;background:var(--border);"></div>
-        <div class="map-stat">
-          <span>👥</span>
-          <span class="map-stat-val" id="map-people-risk">0</span>
-          <span style="color:var(--text-muted);">People at Risk</span>
-        </div>
-        <div style="margin-left:auto;font-size:11px;color:var(--text-muted);">
-          Updated: <span style="color:var(--text-secondary);" id="map-time">—</span>
-        </div>
-      </div>
-
       <div class="map-controls fade-in fade-in-delay-1">
         <button class="map-filter-btn active">🌐 All Events</button>
         <button class="map-filter-btn">🌊 Flood Only</button>
@@ -131,7 +94,6 @@
 <script src="../js/map.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
-  document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
   initMap('full-map');
 
   let currentFilter = 'all';
@@ -174,37 +136,9 @@
     btn.addEventListener('click', () => applyMapFilter(btn));
   });
 
-  document.querySelectorAll('.map-stat').forEach(stat => {
-    stat.style.cursor = 'pointer';
-    stat.addEventListener('click', () => {
-      const text = stat.textContent.trim();
-      if (text.includes('Flood')) {
-        const floodBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Flood Only'));
-        if (floodBtn) applyMapFilter(floodBtn);
-      } else if (text.includes('Landslide')) {
-        const lsBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('Landslide'));
-        if (lsBtn) applyMapFilter(lsBtn);
-      } else if (text.includes('High')) {
-        const highBtn = [...document.querySelectorAll('.map-filter-btn')].find(b => b.textContent.includes('High'));
-        if (highBtn) applyMapFilter(highBtn);
-      }
-    });
-  });
-
   async function refreshMapData() {
     try {
       await loadDashboardData();
-      const alerts = typeof DATA !== 'undefined' ? DATA.alerts : [];
-      const markers = typeof DATA !== 'undefined' ? DATA.mapMarkers : [];
-      const floodCount = alerts.filter(a => a.disasterType === 'flood').length;
-      const landslideCount = alerts.filter(a => a.disasterType === 'landslide').length;
-      const highCount = alerts.filter(a => a.riskLevel === 'high').length;
-      document.getElementById('map-flood-count').textContent = floodCount;
-      document.getElementById('map-landslide-count').textContent = landslideCount;
-      document.getElementById('map-high-count').textContent = highCount;
-      document.getElementById('map-people-risk').textContent = alerts.reduce((sum, a) => sum + (a._raw?.affectedRadius || 0), 0).toLocaleString();
-      document.getElementById('map-time').textContent = new Date().toLocaleTimeString();
-
       renderMapMarkers();
     } catch (err) {
       console.error('Map data load failed:', err);

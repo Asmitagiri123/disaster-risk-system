@@ -134,10 +134,6 @@ async function apiGetPredictionStats() {
   return apiFetch('/predictions/stats');
 }
 
-async function apiGetSensors() {
-  return apiFetch('/sensors/latest');
-}
-
 async function apiResolveAlert(id) {
   return apiFetch(`/alerts/${id}/resolve`, { method: 'PATCH' });
 }
@@ -165,9 +161,6 @@ window.API = {
     stats: apiGetPredictionStats,
     modelInfo: async () => apiFetch('/predictions/models/info'),
   },
-  sensors: {
-    latest: apiGetSensors,
-  },
   dashboard: {
     overview: apiGetDashboardOverview,
   },
@@ -190,6 +183,5 @@ window.apiGetAlerts = apiGetAlerts;
 window.apiGetAlertStats = apiGetAlertStats;
 window.apiGetPredictions = apiGetPredictions;
 window.apiGetPredictionStats = apiGetPredictionStats;
-window.apiGetSensors = apiGetSensors;
 window.apiResolveAlert = apiResolveAlert;
 window.apiGetDashboardOverview = apiGetDashboardOverview;

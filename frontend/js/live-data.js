@@ -5,12 +5,9 @@ const LIVE = {
   stats:        { activeAlerts: 0, highRiskZones: 0, monitored: 77, accuracy: '—', responseTime: '—', resolved24h: 0 },
   alerts:       [],
   predictions:  [],
-  sensors:      [],
   timeline:     [],
   disasterTypes:[],
-  weeklyTrend:  [],
   riskTrend:    null,
-  sensorRadar:  null,
   mapMarkers:   [],
 };
 
@@ -59,9 +56,6 @@ const SEVERITY_DISPLAY = { high: 'high', moderate: 'medium', low: 'low' };
 const TYPE_DISPLAY = { flood: 'Flood', landslide: 'Landslide', earthquake: 'Earthquake' };
 const TYPE_ICON = { Flood: '🌊', Landslide: '⛰️', Earthquake: '🏚️' };
 const TYPE_COLOR = { Flood: '#3b82f6', Landslide: '#8b5cf6', Earthquake: '#f97316' };
-const SENSOR_ICONS = {
-  seismic: '📳', hydrological: '🌊', meteorological: '🌦️', geotechnical: '⛰️',
-};
 
 function timeAgo(iso) {
   if (!iso) return '—';
@@ -104,33 +98,6 @@ function mapPrediction(p) {
     trend: 'stable',
     color: isFlood ? '#3b82f6' : '#8b5cf6',
     createdAt: p.createdAt,
-  };
-}
-
-function mapSensor(s) {
-  const r = s.readings || {};
-  let val = '—', unit = '';
-  if (r.rainfall !== undefined)    { val = r.rainfall;    unit = ' mm'; }
-  else if (r.waterLevel !== undefined) { val = r.waterLevel; unit = ' m'; }
-  else if (r.soilMoisture !== undefined) { val = r.soilMoisture; unit = '%'; }
-  else if (r.riverFlow !== undefined)  { val = r.riverFlow;  unit = ' m³/s'; }
-  else if (r.humidity !== undefined)   { val = r.humidity;   unit = '%'; }
-  else if (r.temperature !== undefined){ val = r.temperature; unit = '°C'; }
-
-  const iconMap = {
-    hydrological: '🌊', meteorological: '🌧️',
-    geotechnical: '📐', seismic: '📡',
-  };
-  return {
-    id: s._id,
-    sensorId: s.sensorId,
-    name: s.sensorType || s.sensorId,
-    icon: iconMap[s.sensorType] || '📡',
-    value: `${val}${unit}`,
-    status: s.status || 'active',
-    disasterType: s.disasterType,
-    location: s.location?.address || '',
-    readings: r,
   };
 }
 
@@ -281,28 +248,43 @@ function buildRiskTrend(predictions) {
   return { labels, data };
 }
 
-// Sensor radar "vs threshold" — latest reading scaled against each metric's
-// alert threshold (so rainfall 150mm, humidity 95%, etc. all map to ~100%).
-const SENSOR_RADAR_META = {
-  rainfall: { label: 'Rainfall', threshold: 150 },
-  humidity: { label: 'Humidity', threshold: 95 },
-  temperature: { label: 'Temp', threshold: 35 },
-  riverFlow: { label: 'River Flow', threshold: 1500 },
-  windSpeed: { label: 'Wind', threshold: 60 },
-  soilMoisture: { label: 'Soil Moisture', threshold: 60 },
-};
+// Dashboard chart aggregations, computed from backend data.
 
-function buildSensorRadar(latest) {
-  const readings = (latest && latest.readings) || {};
+// Alerts raised vs resolved per day, last 7 days.
+function buildWeeklyTrend(activeAlerts, resolvedAlerts) {
+  const days = [];
   const labels = [];
-  const values = [];
-  Object.entries(SENSOR_RADAR_META).forEach(([key, meta]) => {
-    const v = readings[key];
-    if (v === undefined || v === null) return;
-    labels.push(meta.label);
-    values.push(Math.min(100, Math.round((v / meta.threshold) * 100)));
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+    days.push({ y: d.getFullYear(), m: d.getMonth(), day: d.getDate() });
+  }
+  const bucketIndex = iso => {
+    const d = new Date(iso);
+    return days.findIndex(x => x.y === d.getFullYear() && x.m === d.getMonth() && x.day === d.getDate());
+  };
+  const raised = new Array(7).fill(0);
+  const resolved = new Array(7).fill(0);
+  activeAlerts.forEach(a => { const i = bucketIndex(a.createdAt); if (i >= 0) raised[i] += 1; });
+  resolvedAlerts.forEach(a => { const i = bucketIndex(a.resolvedAt || a.createdAt); if (i >= 0) resolved[i] += 1; });
+  return labels.map((day, i) => ({ day, alerts: raised[i], resolved: resolved[i] }));
+}
+
+// Hourly max probability over the last 24h, from saved predictions.
+function buildRiskTrend(predictions) {
+  const HOUR = 3600000;
+  const now = Date.now();
+  const data = new Array(24).fill(null);
+  predictions.forEach(p => {
+    const t = (p._raw && p._raw.createdAt) ? new Date(p._raw.createdAt).getTime() : now;
+    const hoursAgo = (now - t) / HOUR;
+    if (hoursAgo < 0 || hoursAgo > 24) return;
+    const idx = 23 - Math.floor(hoursAgo);
+    if (idx >= 0 && idx < 24) data[idx] = Math.max(data[idx] ?? 0, p.probability);
   });
-  return labels.length ? { labels, values } : null;
+  const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+  return { labels, data };
 }
 
 // Dashboard
@@ -346,27 +328,6 @@ async function loadLiveDashboard() {
     _raw: p,
   }));
 
-  const recentSensors = s.recentSensors || [];
-  LIVE.sensors = recentSensors.slice(0, 9).map(sd => {
-    const readings = sd.readings || {};
-    const firstKey = Object.keys(readings)[0];
-    return {
-      name: capitalize((sd.sensorType || firstKey || 'sensor').replace('_', ' ')),
-      icon: SENSOR_ICONS[sd.sensorType] || '📡',
-      value: firstKey ? `${readings[firstKey]}` : sd.sensorId,
-      status: 'active',
-    };
-  });
-  LIVE.sensorRadar = buildSensorRadar(recentSensors[0]);
-
-  // Sensor count from the backend (one weather feed per district)
-  try {
-    const latest = await API.sensors.latest();
-    LIVE.sensorsTotal = (latest.count) || LIVE.sensors.length;
-  } catch (err) {
-    LIVE.sensorsTotal = LIVE.sensors.length;
-  }
-
   const [activeRes, resolvedRes] = await Promise.allSettled([
     API.alerts.list('?active=true' + scopeParams()),
     // Recent resolved window only; the full set would be huge on each refresh.
@@ -380,13 +341,8 @@ async function loadLiveDashboard() {
     return typeof rain === 'number' ? Math.max(max, rain) : max;
   }, 0) || null;
 
-  // Avg soil moisture from the latest sensor readings
-  const soilVals = recentSensors.map(sd => sd.readings && sd.readings.soilMoisture).filter(v => Number.isFinite(v));
-  if (soilVals.length) {
-    LIVE.stats.soilSaturation = Math.round(soilVals.reduce((a, b) => a + b, 0) / soilVals.length);
-  }
-
   LIVE.weeklyTrend = buildWeeklyTrend(activeAlerts, resolvedAlerts);
+  LIVE.riskTrend = buildRiskTrend(LIVE.predictions);
   LIVE.riskTrend = buildRiskTrend(LIVE.predictions);
 
   // Live activity feed: raised + resolved events, newest first.
@@ -671,14 +627,13 @@ async function resolveLiveAlert(id) {
   LIVE.alerts = LIVE.alerts.filter(a => String(a._raw && a._raw._id) !== String(id));
 }
 
-// Populate alerts/predictions/sensors into the shared DATA object.
+// Populate alerts/predictions into the shared DATA object.
 // Used by every page — dashboard, alerts, map, predictions, reports.
 async function loadDashboardData() {
   const scope = scopeParams();
-  const [alertsRes, predictionsRes, sensorsRes, statsRes] = await Promise.allSettled([
+  const [alertsRes, predictionsRes, statsRes] = await Promise.allSettled([
     apiGetAlerts({ limit: 100 }, scope),
     apiGetPredictions({ limit: 20 }),
-    apiGetSensors(),
     apiGetAlertStats(),
   ]);
 
@@ -737,12 +692,6 @@ async function loadDashboardData() {
     console.error('[NepAlert] Predictions API failed:', predictionsRes.reason);
   }
 
-  if (sensorsRes.status === 'fulfilled' && sensorsRes.value?.success) {
-    DATA.sensors = (sensorsRes.value.data?.sensors || []).slice(0, 9).map(mapSensor);
-  } else if (sensorsRes.status === 'rejected') {
-    console.error('[NepAlert] Sensors API failed:', sensorsRes.reason);
-  }
-
   if (statsRes.status === 'fulfilled' && statsRes.value?.success) {
     const s = statsRes.value.data;
     DATA.stats.resolved24h = s?.resolved24h || 0;
@@ -789,7 +738,6 @@ window.alertVerification = alertVerification;
 window.EVIDENCE_SOURCE_LABEL = EVIDENCE_SOURCE_LABEL;
 window.mapAlert = mapAlert;
 window.mapPrediction = mapPrediction;
-window.mapSensor = mapSensor;
 window.mapMarker = mapMarker;
 window.timeAgo = timeAgo;
 window.syncBadgeCounts = syncBadgeCounts;

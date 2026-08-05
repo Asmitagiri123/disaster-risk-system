@@ -45,47 +45,6 @@ function showEmpty(canvasId, message = 'Waiting for live data…') {
   el.textContent = message;
 }
 
-function initWeeklyTrendChart(canvasId) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
-  const trend = (window.LIVE && LIVE.weeklyTrend) || [];
-  if (!trend.length) return showEmpty(canvasId, 'No alert history yet');
-
-  return createChart(canvasId, {
-    type: 'bar',
-    data: {
-      labels: trend.map(d => d.day),
-      datasets: [
-        {
-          label: 'Raised',
-          data: trend.map(d => d.alerts),
-          backgroundColor: 'rgba(239,68,68,0.7)',
-          borderRadius: 4,
-          borderSkipped: false,
-        },
-        {
-          label: 'Resolved',
-          data: trend.map(d => d.resolved),
-          backgroundColor: 'rgba(34,197,94,0.7)',
-          borderRadius: 4,
-          borderSkipped: false,
-        },
-      ],
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      scales: {
-        x: { grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 11 } }, border: { color: '#1e293b' } },
-        y: { grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 11 }, stepSize: 5 }, border: { color: '#1e293b' } },
-      },
-      plugins: {
-        ...CHART_DEFAULTS.plugins,
-        legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10, borderRadius: 3 } },
-      },
-    },
-  });
-}
-
 function initDisasterTypeChart(canvasId) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
@@ -167,58 +126,6 @@ function initRiskTrendChart(canvasId) {
       scales: {
         x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 10 }, maxTicksLimit: 8 }, border: { color: '#1e293b' } },
         y: { min: 0, max: 100, grid: { color: 'rgba(30,41,59,0.8)' }, ticks: { color: '#475569', font: { size: 10 }, callback: v => v + '%' }, border: { color: '#1e293b' } },
-      },
-    },
-  });
-}
-
-// Latest sensor readings scaled against their alert thresholds.
-function initSensorRadarChart(canvasId) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
-  const radar = (window.LIVE && LIVE.sensorRadar) || null;
-  if (!radar || !radar.labels.length) return showEmpty(canvasId, 'No sensor readings yet');
-
-  return createChart(canvasId, {
-    type: 'radar',
-    data: {
-      labels: radar.labels,
-      datasets: [
-        {
-          label: 'Current',
-          data: radar.values,
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59,130,246,0.15)',
-          borderWidth: 2,
-          pointBackgroundColor: '#3b82f6',
-          pointRadius: 3,
-        },
-        {
-          label: 'Alert Threshold',
-          data: radar.values.map(() => 80),
-          borderColor: 'rgba(239,68,68,0.5)',
-          backgroundColor: 'transparent',
-          borderWidth: 1,
-          borderDash: [4, 4],
-          pointRadius: 0,
-        },
-      ],
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      scales: {
-        r: {
-          min: 0,
-          max: 100,
-          grid: { color: 'rgba(30,41,59,0.8)' },
-          angleLines: { color: 'rgba(30,41,59,0.8)' },
-          ticks: { display: false },
-          pointLabels: { color: '#94a3b8', font: { size: 11 } },
-        },
-      },
-      plugins: {
-        ...CHART_DEFAULTS.plugins,
-        legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10, boxHeight: 10 } },
       },
     },
   });

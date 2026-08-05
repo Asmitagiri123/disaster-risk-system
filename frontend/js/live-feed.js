@@ -33,7 +33,6 @@
     source.addEventListener('alert:resolved', (e) => onAlertResolved(JSON.parse(e.data)));
     source.addEventListener('alert:confirmed', (e) => onAlertConfirmed(JSON.parse(e.data)));
     source.addEventListener('prediction:new', (e) => onPredictionNew(JSON.parse(e.data)));
-    source.addEventListener('sensor:ingest', (e) => onSensorIngest(JSON.parse(e.data)));
 
     source.onerror = () => {
       // EventSource auto-reconnects; just reflect status
@@ -281,12 +280,6 @@
         if (typeof renderPredictions === 'function') renderPredictions();
       }).catch(() => {});
     }
-  }
-
-  function onSensorIngest(data) {
-    const type = (data.disasterType || '').toLowerCase();
-    const loc = (data.location && (data.location.city || data.location.address)) || 'Nepal';
-    showToast(`📡 ${type} reading received from ${loc}`, 'info', 3500);
   }
 
   // Alert sound (Web Audio, no asset file)

@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Sidebar items with href="#" → open inline modals (Settings, Sensors)
+  // Sidebar items with href="#" → open inline modals (Settings)
   document.querySelectorAll('.sidebar .nav-item').forEach(item => {
     const href = item.getAttribute('href');
     if (href === '#') {
@@ -429,7 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ev.preventDefault();
         const txt = item.textContent.trim();
         if (txt.includes('Settings')) return openSettingsModal();
-        if (txt.includes('Sensors'))  return openSensorsModal();
         // fallback: show profile for anything else
         openProfileModal();
       });
@@ -442,12 +441,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!btn) return;
     const text = (btn.textContent || '').trim();
     if (text.includes('Generate Report') || text.includes('Generate')) {
-      // Try to trigger existing handler on page (some pages attach handlers inline); otherwise show modal
-      if (typeof window.buildMonthChart === 'function') {
-        // let page handle it (reports.html attaches its own listener). Do nothing.
-        return;
-      }
-      // fallback: show a simple generate modal
       showModal({
         title: '📥 Generate Report',
         size: 'sm',
@@ -458,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// --- Settings / Sensors modals ---
+// ─── SETTINGS MODAL ──────────────────────────────────────
 function openSettingsModal() {
   const user = getCurrentUser();
   showModal({
@@ -496,22 +489,5 @@ function openSettingsModal() {
       } },
       { id: 'close', label: 'Close', style: 'secondary' }
     ]
-  });
-}
-
-function openSensorsModal() {
-  showModal({
-    title: '📡 Sensors',
-    size: 'md',
-    body: `
-      <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
-        Manage sensor endpoints and health checks. Use the Sensors page for full controls.
-      </div>
-      <div style="margin-top:10px;display:grid;gap:8px;">
-        <button class="btn btn-secondary" onclick="showToast('Health check started','info')">Run Health Check</button>
-        <button class="btn btn-secondary" onclick="showToast('Added mock sensor','success')">Add Mock Sensor</button>
-      </div>
-    `,
-    actions: [ { id: 'close', label: 'Close', style: 'secondary' } ]
   });
 }

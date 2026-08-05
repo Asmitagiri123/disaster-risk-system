@@ -169,35 +169,6 @@
 .timeline-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
 .timeline-desc { font-size: 12px; color: var(--text-secondary); }
 
-/* Sensor grid */
-.sensor-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.sensor-item {
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  text-align: center;
-  transition: all var(--transition);
-}
-
-.sensor-item:hover { border-color: var(--border-light); background: var(--accent-blue-light); }
-.sensor-item.active { border-color: rgba(34,197,94,0.4); }
-.sensor-item.warning { border-color: rgba(234,179,8,0.4); }
-.sensor-item.offline { border-color: rgba(239,68,68,0.3); opacity: 0.6; }
-
-.sensor-icon { font-size: 20px; margin-bottom: 6px; }
-.sensor-value { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
-.sensor-name { font-size: 10px; color: var(--text-muted); }
-.sensor-status { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
-.sensor-status.online { color: var(--accent-green); }
-.sensor-status.warning { color: var(--accent-yellow); }
-.sensor-status.offline { color: var(--accent-red); }
-
 /* Chart bars (CSS-only) */
 .bar-chart {
   display: flex;

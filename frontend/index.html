@@ -118,19 +118,7 @@
       </div>
 
       <!-- Charts row -->
-      <div class="grid grid-3 fade-in fade-in-delay-4" style="margin-bottom:16px;">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">📈 Weekly Alert Trend</div>
-              <div class="card-subtitle">New vs resolved</div>
-            </div>
-          </div>
-          <div class="chart-container" style="height:160px;">
-            <canvas id="weeklyTrendChart"></canvas>
-          </div>
-        </div>
-
+      <div class="grid grid-2 fade-in fade-in-delay-4" style="margin-bottom:16px;">
         <div class="card">
           <div class="card-header">
             <div>
@@ -165,8 +153,8 @@
         </div>
       </div>
 
-      <!-- Predictions + Sensors + Timeline -->
-      <div class="grid grid-3 fade-in" style="margin-bottom:16px;">
+      <!-- Predictions + Timeline -->
+      <div class="grid grid-2 fade-in" style="margin-bottom:16px;">
         <div class="card">
           <div class="card-header">
             <div>
@@ -176,17 +164,6 @@
             <a href="pages/predictions.html" class="btn btn-secondary" style="font-size:12px;padding:6px 10px;">Details →</a>
           </div>
           <div class="scroll-list" id="predictions-list"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">📡 Sensor Network</div>
-              <div class="card-subtitle">Live readings</div>
-            </div>
-            <span class="badge badge-info">9 Active</span>
-          </div>
-          <div class="sensor-grid" id="sensor-grid"></div>
         </div>
 
         <div class="card">
@@ -202,48 +179,34 @@
         </div>
       </div>
 
-      <!-- Radar + Table -->
-      <div class="grid grid-1-2 fade-in">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">🕸️ Sensor Radar</div>
-              <div class="card-subtitle">vs alert thresholds</div>
-            </div>
+      <!-- Recent Events Table -->
+      <div class="card fade-in">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📋 Recent Events</div>
+            <div class="card-subtitle">Last 24 hours</div>
           </div>
-          <div class="chart-container" style="height:220px;">
-            <canvas id="sensorRadarChart"></canvas>
+          <div class="tabs" style="margin-bottom:0;width:auto;">
+            <button class="tab-btn active">All</button>
+            <button class="tab-btn">Flood</button>
+            <button class="tab-btn">Landslide</button>
           </div>
         </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">📋 Recent Events</div>
-              <div class="card-subtitle">Last 24 hours</div>
-            </div>
-            <div class="tabs" style="margin-bottom:0;width:auto;">
-              <button class="tab-btn active">All</button>
-              <button class="tab-btn">Flood</button>
-              <button class="tab-btn">Landslide</button>
-            </div>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Event</th>
-                  <th>Location</th>
-                  <th>Severity</th>
-                  <th>Time</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="recent-events-tbody">
-                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">Loading live events…</td></tr>
-              </tbody>
-            </table>
-          </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Location</th>
+                <th>Severity</th>
+                <th>Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-events-tbody">
+              <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">Loading live events…</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -285,19 +248,6 @@
       `).join('');
     }
 
-    const sensorGrid = document.getElementById('sensor-grid');
-    if (sensorGrid) {
-      const sensors = (data.sensors || []).slice(0, 9);
-      sensorGrid.innerHTML = sensors.map(s => `
-        <div class="sensor-item active">
-          <div class="sensor-icon">${s.icon || '📡'}</div>
-          <div class="sensor-value">${s.value || '—'}</div>
-          <div class="sensor-name">${s.name || s.sensorId}</div>
-          <div class="sensor-status online">Active</div>
-        </div>
-      `).join('');
-    }
-
     const timeline = document.getElementById('timeline');
     if (timeline) {
       const items = (data.timeline || []).slice(0, 8);
@@ -334,10 +284,8 @@
       }
     }
 
-    if (typeof initWeeklyTrendChart === 'function') initWeeklyTrendChart('weeklyTrendChart');
     if (typeof initDisasterTypeChart === 'function') initDisasterTypeChart('disasterTypeChart');
     if (typeof initRiskTrendChart === 'function') initRiskTrendChart('riskTrendChart');
-    if (typeof initSensorRadarChart === 'function') initSensorRadarChart('sensorRadarChart');
     if (typeof syncMapMarkers === 'function') syncMapMarkers();
   }
 

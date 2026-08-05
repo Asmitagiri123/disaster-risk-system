@@ -96,7 +96,7 @@ exports.register = async (req, res) => {
       role: userRole,
       ...choice,
       location,
-    });
+    };
     logger.info(`New user registered: ${email}`);
     sendTokenResponse(user, 201, res);
   } catch (err) {
