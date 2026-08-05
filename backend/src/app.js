@@ -7,12 +7,12 @@ const logger = require('./utils/logger');
 // Load env vars
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const authRoutes = require('./routes/authRoutes');
-const alertRoutes = require('./routes/alertRoutes');
-const predictionRoutes = require('./routes/predictionRoutes');
-const sensorRoutes = require('./routes/sensorRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const eventRoutes = require('./routes/eventRoutes');
+const authRoutes = require('./routes/auth.routes');
+const alertRoutes = require('./routes/alert.routes');
+const predictionRoutes = require('./routes/prediction.routes');
+const sensorRoutes = require('./routes/sensor.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+const eventRoutes = require('./routes/events.routes');
 
 const app = express();
 
