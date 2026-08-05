@@ -2,7 +2,6 @@ const RISK_LEVELS = {
   LOW: 'low',
   MODERATE: 'moderate',
   HIGH: 'high',
-  CRITICAL: 'critical',
 };
 
 const DISASTER_TYPES = {
@@ -18,8 +17,7 @@ const ALERT_STATUS = {
 };
 
 const getRiskLevel = (probability) => {
-  if (probability >= 0.85) return RISK_LEVELS.CRITICAL;
-  if (probability >= 0.65) return RISK_LEVELS.HIGH;
+  if (probability >= 0.70) return RISK_LEVELS.HIGH;
   if (probability >= 0.40) return RISK_LEVELS.MODERATE;
   return RISK_LEVELS.LOW;
 };
@@ -29,7 +27,6 @@ const RISK_PROBABILITY_CAPS = {
   [RISK_LEVELS.LOW]: 0.35,
   [RISK_LEVELS.MODERATE]: 0.60,
   [RISK_LEVELS.HIGH]: 0.80,
-  [RISK_LEVELS.CRITICAL]: 0.95,
 };
 
 // Cap raw confidence to its risk level's band. Non-numeric passes through.

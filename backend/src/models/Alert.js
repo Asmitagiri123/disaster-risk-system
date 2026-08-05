@@ -15,7 +15,7 @@ const alertSchema = new mongoose.Schema(
     riskLevel: {
       type: String,
       required: true,
-      enum: ['low', 'moderate', 'high', 'critical'],
+      enum: ['low', 'moderate', 'high'],
     },
     probability: {
       type: Number,

@@ -133,7 +133,7 @@ function getNotifications() {
     const id = `alert-${alert.id || index}`;
     const title = `${alert.type || (alert.disasterType === 'flood' ? 'Flood' : 'Landslide')} — ${alert.location || 'Nepal'}`;
     const desc = alert.message || `${alert.severity || 'medium'} risk alert from the live feed.`;
-    const type = (alert.severity === 'critical' || alert.severity === 'high') ? 'critical' : (alert.severity === 'medium') ? 'warning' : 'info';
+    const type = (alert.severity === 'high') ? 'high' : (alert.severity === 'medium') ? 'warning' : 'info';
     return {
       id,
       title,
@@ -149,7 +149,7 @@ function getNotifications() {
 }
 
 function renderNotifBody() {
-  const typeColors = { critical: 'var(--accent-red)', warning: 'var(--accent-orange)', info: 'var(--accent-blue)' };
+  const typeColors = { high: 'var(--accent-red)', warning: 'var(--accent-orange)', info: 'var(--accent-blue)' };
   const notifications = getNotifications();
 
   if (!notifications.length) {
@@ -313,6 +313,14 @@ function getCurrentUser() {
   return Auth.getUser() || {};
 }
 
+function isReadOnly() {
+  const user = getCurrentUser();
+  return user.role === 'user';
+}
+
+window.getCurrentUser = getCurrentUser;
+window.isReadOnly = isReadOnly;
+
 function updateUserDisplay() {
   const user = getCurrentUser();
   const name = user.name || user.email || 'NepAlert';
@@ -393,7 +401,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Broadcast button (any page)
   document.querySelectorAll('.btn-danger').forEach(btn => {
-    if (btn.textContent.includes('Broadcast')) btn.addEventListener('click', openBroadcastModal);
+    if (btn.textContent.includes('Broadcast')) {
+      btn.addEventListener('click', (e) => {
+        if (isReadOnly()) {
+          showToast('Read-only users cannot broadcast alerts', 'warning');
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        openBroadcastModal();
+      });
+    }
   });
 
   // Sidebar items with href="#" → open inline modals (Settings, Sensors)

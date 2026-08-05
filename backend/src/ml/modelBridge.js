@@ -90,7 +90,7 @@ class MLService {
 
     // Same rainfall-rule cross-check as the external path, for fallback runs.
     const rule = getRuleRiskClass(disasterType, inputData);
-    const modelClass = ({ low: 0, moderate: 1, high: 2, critical: 2 })[riskLevel];
+    const modelClass = ({ low: 0, moderate: 1, high: 2 })[riskLevel];
     const ruleAgreed = rule ? rule.riskClass === modelClass : null;
 
     return {

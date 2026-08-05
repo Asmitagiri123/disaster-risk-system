@@ -2,17 +2,19 @@
 // Pages call loadLive*() then re-render.
 
 const LIVE = {
-  stats: null,
-  alerts: [],
-  predictions: [],
-  sensors: [],
-  timeline: [],
-  disasterTypes: [],
-  weeklyTrend: [],
-  riskTrend: null,
-  sensorRadar: null,
-  mapMarkers: [],
+  stats:        { activeAlerts: 0, highRiskZones: 0, monitored: 77, accuracy: '—', responseTime: '—', resolved24h: 0 },
+  alerts:       [],
+  predictions:  [],
+  sensors:      [],
+  timeline:     [],
+  disasterTypes:[],
+  weeklyTrend:  [],
+  riskTrend:    null,
+  sensorRadar:  null,
+  mapMarkers:   [],
 };
+
+const DATA = LIVE;
 
 // ── Alert location scope ──
 // The logged-in user's district/province (from the profile) is the default
@@ -53,7 +55,7 @@ function setScopeOverride(off) {
   else sessionStorage.removeItem('flds_scope_off');
 }
 
-const SEVERITY_DISPLAY = { critical: 'critical', high: 'high', moderate: 'medium', low: 'low' };
+const SEVERITY_DISPLAY = { high: 'high', moderate: 'medium', low: 'low' };
 const TYPE_DISPLAY = { flood: 'Flood', landslide: 'Landslide', earthquake: 'Earthquake' };
 const TYPE_ICON = { Flood: '🌊', Landslide: '⛰️', Earthquake: '🏚️' };
 const TYPE_COLOR = { Flood: '#3b82f6', Landslide: '#8b5cf6', Earthquake: '#f97316' };
@@ -70,6 +72,77 @@ function timeAgo(iso) {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   return new Date(iso).toLocaleDateString();
+}
+
+function mapAlert(a) {
+  const coords = a.location?.coordinates ? [a.location.coordinates[1], a.location.coordinates[0]] : null;
+  return {
+    _id: a._id,
+    id: a._id,
+    type: a.disasterType === 'flood' ? 'Flood' : a.disasterType === 'landslide' ? 'Landslide' : a.disasterType,
+    severity: a.riskLevel || 'low',
+    location: a.location?.address || a.location?.city || 'Nepal',
+    magnitude: a.probability ? `${Math.round(a.probability * 100)}%` : '—',
+    time: timeAgo(a.createdAt),
+    coords,
+    isActive: a.isActive,
+    message: a.message || '',
+    disasterType: a.disasterType,
+    createdAt: a.createdAt,
+  };
+}
+
+function mapPrediction(p) {
+  const isFlood = p.disasterType === 'flood';
+  return {
+    id: p._id,
+    type: isFlood ? 'Flood' : 'Landslide',
+    icon: isFlood ? '🌊' : '⛰️',
+    location: p.location?.address || p.location?.city || 'Nepal',
+    probability: Math.round((p.probability || 0) * 100),
+    riskLevel: p.riskLevel || 'low',
+    trend: 'stable',
+    color: isFlood ? '#3b82f6' : '#8b5cf6',
+    createdAt: p.createdAt,
+  };
+}
+
+function mapSensor(s) {
+  const r = s.readings || {};
+  let val = '—', unit = '';
+  if (r.rainfall !== undefined)    { val = r.rainfall;    unit = ' mm'; }
+  else if (r.waterLevel !== undefined) { val = r.waterLevel; unit = ' m'; }
+  else if (r.soilMoisture !== undefined) { val = r.soilMoisture; unit = '%'; }
+  else if (r.riverFlow !== undefined)  { val = r.riverFlow;  unit = ' m³/s'; }
+  else if (r.humidity !== undefined)   { val = r.humidity;   unit = '%'; }
+  else if (r.temperature !== undefined){ val = r.temperature; unit = '°C'; }
+
+  const iconMap = {
+    hydrological: '🌊', meteorological: '🌧️',
+    geotechnical: '📐', seismic: '📡',
+  };
+  return {
+    id: s._id,
+    sensorId: s.sensorId,
+    name: s.sensorType || s.sensorId,
+    icon: iconMap[s.sensorType] || '📡',
+    value: `${val}${unit}`,
+    status: s.status || 'active',
+    disasterType: s.disasterType,
+    location: s.location?.address || '',
+    readings: r,
+  };
+}
+
+function mapMarker(a) {
+  const coords = a.location?.coordinates ? [a.location.coordinates[1], a.location.coordinates[0]] : null;
+  if (!coords) return null;
+  return {
+    coords,
+    type: a.disasterType || 'flood',
+    severity: a.riskLevel || 'low',
+    label: `${a.disasterType === 'flood' ? 'Flood' : 'Landslide'} — ${a.location?.address || a.location?.city || 'Nepal'}`,
+  };
 }
 
 // Cap the displayed probability to its risk band (mirrors the backend), so a
@@ -228,7 +301,7 @@ async function loadLiveDashboard() {
 
   LIVE.stats = {
     activeAlerts: summary.activeAlerts ?? 0,
-    criticalZones: summary.criticalZones ?? 0, // server-side counts (no undercount)
+    highZones: summary.highZones ?? 0, // server-side counts (no undercount)
     monitored: 77,
     accuracy: null,
     responseTime: null,
@@ -310,7 +383,7 @@ async function loadLiveDashboard() {
     time: timeAgo(a.createdAt),
     title: `🚨 ${capitalize(a.disasterType)} alert raised — ${(a.location && a.location.city) || 'Nepal'}`,
     desc: `${a.riskLevel} risk ${a.disasterType} — ${displayProbability(a.probability, a.riskLevel)}% model probability`,
-    type: a.riskLevel === 'critical' || a.riskLevel === 'high' ? 'critical' : 'warning',
+    type: a.riskLevel === 'high' ? 'warning' : 'warning',
   }));
   const resolved = resolvedAlerts.slice(0, 5).map(a => ({
     at: new Date(a.resolvedAt || a.createdAt).getTime(),
@@ -567,7 +640,7 @@ async function loadLiveReports() {
     },
   ];
 
-  LIVE.reportTypeColors = { Flood: 'badge-info', Landslide: 'badge-medium', Earthquake: 'badge-critical', Summary: 'badge-high' };
+  LIVE.reportTypeColors = { Flood: 'badge-info', Landslide: 'badge-medium', Earthquake: 'badge-high', Summary: 'badge-high' };
 }
 
 // Ground-truth counts (single /alerts/stats call), shared by both pages.
@@ -587,7 +660,76 @@ async function resolveLiveAlert(id) {
   LIVE.alerts = LIVE.alerts.filter(a => String(a._raw && a._raw._id) !== String(id));
 }
 
+// Legacy loadDashboardData used by index.html and other pages.
+// Populates both DATA (=LIVE) and LIVE so every page shape works.
+async function loadDashboardData() {
+  const [alertsRes, predictionsRes, sensorsRes, statsRes] = await Promise.allSettled([
+    apiGetAlerts({ limit: 50 }),
+    apiGetPredictions({ limit: 10 }),
+    apiGetSensors(),
+    apiGetAlertStats(),
+  ]);
+
+  if (alertsRes.status === 'fulfilled' && alertsRes.value?.success) {
+    const raw = alertsRes.value.data.alerts || [];
+    DATA.alerts     = raw.map(mapAlert);
+    DATA.mapMarkers = raw.map(mapMarker).filter(Boolean);
+    DATA.stats.activeAlerts  = raw.filter(a => a.isActive).length;
+    DATA.stats.highRiskZones = raw.filter(a => a.riskLevel === 'high').length;
+
+    DATA.timeline = raw.slice(0, 6).map(a => ({
+      time:  new Date(a.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      title: `${a.disasterType === 'flood' ? 'Flood' : 'Landslide'} — ${a.location?.address || a.location?.city || 'Nepal'}`,
+      desc:  a.message || `${a.riskLevel} risk level detected.`,
+      type:  (a.riskLevel === 'high') ? 'warning' : a.isActive ? 'warning' : 'resolved',
+    }));
+
+    const floodCount = raw.filter(a => a.disasterType === 'flood').length;
+    const landCount  = raw.filter(a => a.disasterType === 'landslide').length;
+    const total = floodCount + landCount || 1;
+    DATA.disasterTypes = [
+      { label: 'Flood',     value: Math.round(floodCount / total * 100), color: '#3b82f6' },
+      { label: 'Landslide', value: Math.round(landCount  / total * 100), color: '#8b5cf6' },
+    ];
+  }
+
+  if (predictionsRes.status === 'fulfilled' && predictionsRes.value?.success) {
+    const raw = predictionsRes.value.data?.predictions || predictionsRes.value.data || [];
+    DATA.predictions = raw.map(mapPrediction);
+    if (DATA.predictions.length) {
+      const avg = DATA.predictions.reduce((s, p) => s + p.probability, 0) / DATA.predictions.length;
+      DATA.stats.accuracy = avg.toFixed(1);
+    }
+  }
+
+  if (sensorsRes.status === 'fulfilled' && sensorsRes.value?.success) {
+    DATA.sensors = (sensorsRes.value.data?.sensors || []).slice(0, 9).map(mapSensor);
+  }
+
+  if (statsRes.status === 'fulfilled' && statsRes.value?.success) {
+    const s = statsRes.value.data;
+    DATA.stats.resolved24h = s?.resolved24h || 0;
+  }
+}
+
+function startLivePoll(onUpdate) {
+  setInterval(async () => {
+    try {
+      const res = await apiGetAlerts({ limit: 50 });
+      if (!res?.success) return;
+      const raw = res.data.alerts || [];
+      const newCount = raw.filter(a => a.isActive).length;
+      const delta = newCount - DATA.stats.activeAlerts;
+      DATA.stats.activeAlerts = newCount;
+      DATA.alerts     = raw.map(mapAlert);
+      DATA.mapMarkers = raw.map(mapMarker).filter(Boolean);
+      if (onUpdate) onUpdate(delta);
+    } catch { /* silent */ }
+  }, 15000);
+}
+
 window.LIVE = LIVE;
+window.DATA = DATA;
 window.displayProbability = displayProbability;
 window.loadLiveDashboard = loadLiveDashboard;
 window.loadLiveAlerts = loadLiveAlerts;
@@ -595,8 +737,15 @@ window.loadLivePredictions = loadLivePredictions;
 window.loadLiveDisasterTypes = loadLiveDisasterTypes;
 window.loadLiveReports = loadLiveReports;
 window.loadLiveGroundTruth = loadLiveGroundTruth;
+window.loadDashboardData = loadDashboardData;
+window.startLivePoll = startLivePoll;
 window.resolveLiveAlert = resolveLiveAlert;
 window.buildAlertEvidence = buildAlertEvidence;
 window.evidenceChips = evidenceChips;
 window.alertVerification = alertVerification;
 window.EVIDENCE_SOURCE_LABEL = EVIDENCE_SOURCE_LABEL;
+window.mapAlert = mapAlert;
+window.mapPrediction = mapPrediction;
+window.mapSensor = mapSensor;
+window.mapMarker = mapMarker;
+window.timeAgo = timeAgo;

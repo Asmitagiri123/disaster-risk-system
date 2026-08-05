@@ -66,7 +66,7 @@ const userSchema = new mongoose.Schema(
       },
       minRiskLevel: {
         type: String,
-        enum: ['low', 'moderate', 'high', 'critical'],
+        enum: ['low', 'moderate', 'high'],
         default: 'high',
       },
     },

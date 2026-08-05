@@ -27,18 +27,7 @@
       <div class="nav-section-label">Analysis</div>
       <a href="predictions.html" class="nav-item"><span class="nav-icon">🔮</span> Predictions</a>
       <a href="reports.html" class="nav-item"><span class="nav-icon">📋</span> Reports</a>
-      <div class="nav-section-label">System</div>
-      <a href="#" class="nav-item"><span class="nav-icon">📡</span> Sensors</a>
-      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
     </nav>
-    <div class="sidebar-footer">
-      <div class="nav-item" style="cursor:pointer;" onclick="openProfileModal()">
-        <span class="nav-icon">👤</span> <span id="sidebar-username">Loading…</span>
-      </div>
-      <div class="nav-item" onclick="handleLogout()" style="cursor:pointer;color:var(--accent-red);margin-top:4px;">
-        <span class="nav-icon">🚪</span> Logout
-      </div>
-    </div>
   </aside>
 
   <div class="main-content">
@@ -63,20 +52,20 @@
           <div class="page-header-title">Alert Management</div>
           <div class="page-header-sub">Monitor, triage, and respond to active flood and landslide events across Nepal</div>
         </div>
-        <div class="header-actions">
-          <select class="filter-select">
-            <option>All Severities</option>
-            <option>High</option>
-            <option>Medium</option>
-            <option>Low</option>
-          </select>
-          <select class="filter-select">
-            <option>All Types</option>
-            <option>Flood</option>
-            <option>Landslide</option>
-          </select>
-          <button class="btn btn-danger">🚨 Broadcast All</button>
-        </div>
+      <div class="header-actions">
+        <select class="filter-select">
+          <option>All Severities</option>
+          <option>High</option>
+          <option>Medium</option>
+          <option>Low</option>
+        </select>
+        <select class="filter-select">
+          <option>All Types</option>
+          <option>Flood</option>
+          <option>Landslide</option>
+        </select>
+        <button class="btn btn-danger broadcast-btn">🚨 Broadcast All</button>
+      </div>
       </div>
 
       <div class="grid grid-3 fade-in fade-in-delay-1" style="margin-bottom:20px;">
@@ -105,10 +94,10 @@
 
 <script src="../js/api.js"></script>
 <script>requireAuth();</script>
-<script src="../js/mock-data.js"></script>
+<script src="../js/live-data.js"></script>
 <script src="../js/interactions.js"></script>
 <script>
-const statusColors = { high: '#f97316', medium: '#eab308', low: '#22c55e', critical: '#ef4444' };
+const statusColors = { high: '#f97316', medium: '#eab308', low: '#22c55e' };
 let alertList = [];
 let filteredAlerts = [];
 let severitySelect;
@@ -116,14 +105,14 @@ let typeSelect;
 
 function normalizeSeverity(riskLevel) {
   const level = (riskLevel || '').toLowerCase();
-  if (level === 'critical' || level === 'high') return 'critical';
+  if (level === 'high') return 'high';
   if (level === 'moderate' || level === 'medium') return 'medium';
   return 'low';
 }
 
 function getSeverityBucket(riskLevel) {
   const severity = normalizeSeverity(riskLevel);
-  return severity === 'critical' || severity === 'high' ? 'high' : severity === 'medium' ? 'medium' : 'low';
+  return severity === 'high' ? 'high' : severity === 'medium' ? 'medium' : 'low';
 }
 
 function mapAlertToCardModel(a) {
@@ -188,7 +177,7 @@ function renderAlertCards(data) {
         <div style="font-size:11px;color:var(--text-muted);">🕐 ${a.time}</div>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" data-idx="${i}" onclick="openDetailsModal(${i})">Details</button>
-          <button class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="openRespondModal(${i})">Respond</button>
+          <button class="btn btn-primary respond-btn" style="font-size:11px;padding:5px 10px;" onclick="openRespondModal(${i})">Respond</button>
         </div>
       </div>
     </div>
@@ -227,7 +216,7 @@ function applyFilters() {
   const type = typeSelect?.value || 'All Types';
   const filtered = alertList.filter(a => {
     const alignsWithSeverity = sev === 'All Severities' || (
-      (sev === 'High' && (a.severity === 'high' || a.severity === 'critical')) ||
+      (sev === 'High' && a.severity === 'high') ||
       (sev === 'Medium' && a.severity === 'medium') ||
       (sev === 'Low' && a.severity === 'low')
     );
@@ -258,11 +247,6 @@ async function loadAlertsFromBackend() {
     updateAlertBadge(0);
   }
 }
-
-// Populate sidebar username
-const _u = Auth.getUser();
-const _unEl = document.getElementById('sidebar-username');
-if (_unEl && _u) _unEl.textContent = _u.name || _u.email || 'NepAlert';
 
 severitySelect = document.querySelectorAll('.filter-select')[0];
 typeSelect = document.querySelectorAll('.filter-select')[1];
@@ -303,12 +287,16 @@ function openDetailsModal(i) {
       </div>`,
     actions: [
       { id: 'map', label: '🗺️ View on Map', style: 'secondary', onClick: () => window.location.href = 'map.html' },
-      { id: 'respond', label: '⚡ Respond', style: 'primary', onClick: () => openRespondModal(filteredAlerts.indexOf(a)) }
+      ...(typeof isReadOnly === 'function' && isReadOnly() ? [] : [{ id: 'respond', label: '⚡ Respond', style: 'primary', onClick: () => openRespondModal(filteredAlerts.indexOf(a)) }])
     ]
   });
 }
 
 function openRespondModal(i) {
+  if (typeof isReadOnly === 'function' && isReadOnly()) {
+    showToast('Read-only users cannot respond to alerts', 'warning');
+    return;
+  }
   const a = filteredAlerts[i];
   if (!a) return;
   showModal({
@@ -351,6 +339,10 @@ function openRespondModal(i) {
       }}
     ]
   });
+}
+
+if (typeof isReadOnly === 'function' && isReadOnly()) {
+  document.querySelectorAll('.broadcast-btn, .respond-btn').forEach(btn => btn.style.display = 'none');
 }
 </script>
 </body>

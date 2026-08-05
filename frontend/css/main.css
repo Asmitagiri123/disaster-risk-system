@@ -390,7 +390,6 @@ ul { list-style: none; }
   letter-spacing: 0.5px;
 }
 
-.badge-critical { background: rgba(239,68,68,0.2); color: var(--accent-red); border: 1px solid rgba(239,68,68,0.3); }
 .badge-high { background: rgba(249,115,22,0.2); color: var(--accent-orange); border: 1px solid rgba(249,115,22,0.3); }
 .badge-medium { background: rgba(234,179,8,0.2); color: var(--accent-yellow); border: 1px solid rgba(234,179,8,0.3); }
 .badge-low { background: rgba(34,197,94,0.2); color: var(--accent-green); border: 1px solid rgba(34,197,94,0.3); }
@@ -418,7 +417,6 @@ ul { list-style: none; }
   flex-shrink: 0;
 }
 
-.alert-dot.critical { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
 .alert-dot.high { background: var(--accent-orange); box-shadow: 0 0 8px var(--accent-orange); }
 .alert-dot.medium { background: var(--accent-yellow); }
 .alert-dot.low { background: var(--accent-green); }

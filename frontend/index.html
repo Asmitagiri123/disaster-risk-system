@@ -40,22 +40,7 @@
       <a href="pages/reports.html" class="nav-item">
         <span class="nav-icon">📋</span> Reports
       </a>
-      <div class="nav-section-label">System</div>
-      <a href="#" class="nav-item">
-        <span class="nav-icon">📡</span> Sensors
-      </a>
-      <a href="#" class="nav-item">
-        <span class="nav-icon">⚙️</span> Settings
-      </a>
     </nav>
-    <div class="sidebar-footer">
-      <div class="nav-item" id="sidebar-user" style="cursor:pointer;" onclick="openProfileModal()">
-        <span class="nav-icon">👤</span> <span id="sidebar-username">Loading…</span>
-      </div>
-      <div class="nav-item" onclick="handleLogout()" style="cursor:pointer;color:var(--accent-red);margin-top:4px;">
-        <span class="nav-icon">🚪</span> Logout
-      </div>
-    </div>
   </aside>
 
   <div class="main-content">
@@ -85,108 +70,38 @@
       <div class="page-header fade-in">
         <div>
           <div class="page-header-title">Nepal Flood & Landslide Overview</div>
-          <div class="page-header-sub">Real-time monitoring across all 77 districts — Monsoon 2024</div>
+          <div class="page-header-sub">Real-time monitoring across all 77 districts — Monsoon 2026</div>
         </div>
         <div class="header-actions">
           <button class="btn btn-secondary">📥 Export</button>
-          <button class="btn btn-danger">🚨 Broadcast Alert</button>
+          <button class="btn btn-danger broadcast-btn">🚨 Broadcast Alert</button>
         </div>
       </div>
 
-      <!-- Stat cards row 1 -->
-      <div class="grid grid-4 fade-in fade-in-delay-1" style="margin-bottom:16px;">
-        <div class="stat-card red">
-          <div class="stat-icon red">🚨</div>
-          <div class="stat-value" id="stat-alerts"></div>
-          <div class="stat-label">Active Alerts</div>
-          <div class="stat-change up">↑ 2 since yesterday</div>
-        </div>
-        <div class="stat-card orange">
-          <div class="stat-icon orange">⚠️</div>
-          <div class="stat-value" id="stat-critical">4</div>
-          <div class="stat-label">High Risk Zones</div>
-          <div class="stat-change up">↑ 1 new zone</div>
-        </div>
-        <div class="stat-card blue">
-          <div class="stat-icon blue">📡</div>
-          <div class="stat-value" id="stat-monitored">77</div>
-          <div class="stat-label">Districts Monitored</div>
-          <div class="stat-change neutral">→ All 77 districts</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-icon green">✅</div>
-          <div class="stat-value" id="stat-accuracy">91.8%</div>
-          <div class="stat-label">Prediction Accuracy</div>
-          <div class="stat-change down">↑ +0.6% this month</div>
-        </div>
-      </div>
-
-      <!-- Stat cards row 2 -->
-      <div class="grid grid-4 fade-in fade-in-delay-2" style="margin-bottom:20px;">
-        <div class="stat-card purple">
-          <div class="stat-icon purple">⚡</div>
-          <div class="stat-value" id="stat-response">3.6m</div>
-          <div class="stat-label">Avg Response Time</div>
-          <div class="stat-change down">↓ 0.6m faster</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-icon green">🔒</div>
-          <div class="stat-value" id="stat-resolved">5</div>
-          <div class="stat-label">Resolved (24h)</div>
-          <div class="stat-change down">↑ 1 more than avg</div>
-        </div>
-        <div class="stat-card blue">
-          <div class="stat-icon blue">🌊</div>
-          <div class="stat-value">187 mm</div>
-          <div class="stat-label">24h Rainfall (Peak)</div>
-          <div class="stat-change up">↑ Above normal</div>
-        </div>
-        <div class="stat-card yellow">
-          <div class="stat-icon yellow">🌱</div>
-          <div class="stat-value">94%</div>
-          <div class="stat-label">Avg Soil Saturation</div>
-          <div class="stat-change up">↑ Critical threshold</div>
-        </div>
-      </div>
-
-      <!-- Map + Alerts -->
-      <div class="grid grid-2-1 fade-in fade-in-delay-3" style="margin-bottom:16px;">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">🗺️ Nepal Live Event Map</div>
-              <div class="card-subtitle">Active floods and landslides across districts</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <select class="filter-select">
-                <option>All Events</option>
-                <option>Flood Only</option>
-                <option>Landslide Only</option>
-              </select>
-              <a href="pages/map.html" class="btn btn-secondary" style="font-size:12px;padding:6px 10px;">Full Map →</a>
-            </div>
+      <!-- Map -->
+      <div class="card fade-in fade-in-delay-3" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🗺️ Nepal Live Event Map</div>
+            <div class="card-subtitle">Active floods and landslides across districts</div>
           </div>
-          <div class="map-container">
-            <div id="leaflet-map"></div>
-            <div class="map-legend">
-              <div class="legend-title">Severity</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444;"></div> Critical</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#f97316;"></div> High</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#eab308;"></div> Medium</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div> Low</div>
-            </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="filter-select">
+              <option>All Events</option>
+              <option>Flood Only</option>
+              <option>Landslide Only</option>
+            </select>
+            <a href="pages/map.html" class="btn btn-secondary" style="font-size:12px;padding:6px 10px;">Full Map →</a>
           </div>
         </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">🚨 Active Alerts</div>
-              <div class="card-subtitle">Latest incidents</div>
-            </div>
-            <a href="pages/alerts.html" class="btn btn-secondary" style="font-size:12px;padding:6px 10px;">View All →</a>
+        <div class="map-container">
+          <div id="leaflet-map"></div>
+          <div class="map-legend">
+            <div class="legend-title">Severity</div>
+             <div class="legend-item"><div class="legend-dot" style="background:#f97316;"></div> High</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#eab308;"></div> Medium</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div> Low</div>
           </div>
-          <div class="scroll-list" id="alerts-list"></div>
         </div>
       </div>
 
@@ -314,20 +229,6 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>🌊 Flood Level 4</td>
-                  <td>Koshi River, Sunsari</td>
-                  <td><span class="badge badge-critical">Critical</span></td>
-                  <td>14:52</td>
-                  <td><span style="color:var(--accent-red);font-size:11px;font-weight:600;">● Active</span></td>
-                </tr>
-                <tr>
-                  <td>⛰️ Major Landslide</td>
-                  <td>Sindhupalchok</td>
-                  <td><span class="badge badge-critical">Critical</span></td>
-                  <td>14:30</td>
-                  <td><span style="color:var(--accent-red);font-size:11px;font-weight:600;">● Active</span></td>
-                </tr>
-                <tr>
                   <td>🌊 Flood Level 3</td>
                   <td>Rapti River, Dang</td>
                   <td><span class="badge badge-high">High</span></td>
@@ -376,11 +277,108 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="js/api.js"></script>
 <script>requireAuth();</script>
-<script src="js/mock-data.js"></script>
+<script src="js/live-data.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/map.js"></script>
 <script src="js/interactions.js"></script>
 <script src="js/app.js"></script>
+<script>
+  async function renderDashboard() {
+    await loadDashboardData();
+
+    const data = typeof DATA !== 'undefined' ? DATA : {};
+    const stats = data.stats || {};
+
+    const predictionsList = document.getElementById('predictions-list');
+    if (predictionsList) {
+      const preds = (data.predictions || []).slice(0, 6);
+      predictionsList.innerHTML = preds.map(p => `
+        <div class="prediction-card" style="cursor:pointer;" onclick="window.showPredictionDetail('${p.id || p._id}')">
+          <div class="prediction-icon" style="background:${p.color || '#3b82f6'}20;color:${p.color || '#3b82f6'};">${p.icon || '📊'}</div>
+          <div class="prediction-info">
+            <div class="prediction-name">${p.type} — ${p.location}</div>
+            <div class="prediction-location">${p.probability}% probability · ${p.riskLevel} risk</div>
+            <div class="prediction-prob">
+              <div class="prob-bar"><div class="prob-fill" style="width:${p.probability}%;background:${p.color || '#3b82f6'};"></div></div>
+              <div class="prob-value" style="color:${p.color || '#3b82f6'};">${p.probability}%</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    const sensorGrid = document.getElementById('sensor-grid');
+    if (sensorGrid) {
+      const sensors = (data.sensors || []).slice(0, 9);
+      sensorGrid.innerHTML = sensors.map(s => `
+        <div class="sensor-item active">
+          <div class="sensor-icon">${s.icon || '📡'}</div>
+          <div class="sensor-value">${s.value || '—'}</div>
+          <div class="sensor-name">${s.name || s.sensorId}</div>
+          <div class="sensor-status online">Active</div>
+        </div>
+      `).join('');
+    }
+
+    const timeline = document.getElementById('timeline');
+    if (timeline) {
+      const items = (data.timeline || []).slice(0, 8);
+      timeline.innerHTML = items.map(t => `
+        <div class="timeline-item ${t.type === 'resolved' ? 'resolved' : 'warning'} fade-in">
+          <div class="timeline-time">${t.time}</div>
+          <div class="timeline-title">${t.title}</div>
+          <div class="timeline-desc">${t.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    if (typeof initWeeklyTrendChart === 'function') initWeeklyTrendChart('weeklyTrendChart');
+    if (typeof initDisasterTypeChart === 'function') initDisasterTypeChart('disasterTypeChart');
+    if (typeof initRiskTrendChart === 'function') initRiskTrendChart('riskTrendChart');
+    if (typeof initSensorRadarChart === 'function') initSensorRadarChart('sensorRadarChart');
+    if (typeof syncMapMarkers === 'function') syncMapMarkers();
+  }
+
+  if (typeof initMap === 'function') initMap('leaflet-map');
+  renderDashboard();
+  setInterval(renderDashboard, 15000);
+
+  if (typeof isReadOnly === 'function' && isReadOnly()) {
+    document.querySelectorAll('.broadcast-btn').forEach(btn => btn.style.display = 'none');
+  }
+
+  function showPredictionDetail(predId) {
+    const preds = typeof DATA !== 'undefined' ? DATA.predictions : [];
+    const p = preds.find(x => String(x.id || x._id) === String(predId));
+    if (!p) return;
+    const statusColors = { high: '#f97316', medium: '#eab308', low: '#22c55e' };
+    showModal({
+      title: `${p.icon || '📊'} ${p.type} — ${p.location}`,
+      size: 'md',
+      body: `
+        <div style="margin-bottom:14px;">
+          <span class="badge badge-${p.riskLevel || 'medium'}">${p.riskLevel || 'medium'} risk</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${p.probability}% probability</span>
+        </div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;">Prediction generated for ${p.location}.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Disaster Type</div>
+            <div style="font-size:15px;font-weight:700;margin-top:4px;">${p.type}</div>
+          </div>
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 14px;">
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Probability</div>
+            <div style="font-size:15px;font-weight:700;margin-top:4px;color:${statusColors[p.riskLevel] || statusColors.low};">${p.probability}%</div>
+          </div>
+        </div>
+      `,
+      actions: [
+        { id: 'predictions', label: 'View All Predictions', style: 'secondary', onClick: () => window.location.href = 'pages/predictions.html' }
+      ]
+    });
+  }
+  window.showPredictionDetail = showPredictionDetail;
+</script>
 <style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>
 </body>
 </html>
