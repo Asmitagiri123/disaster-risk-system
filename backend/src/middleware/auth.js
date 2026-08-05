@@ -42,7 +42,10 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Password was changed. Please log in again.' });
     }
 
-    req.user = { ...user, id: user._id || user.id };
+    // Convert Mongoose document to plain object so role, district, etc. are
+    // directly accessible (spreading a Mongoose doc doesn't copy _doc fields).
+    const plain = typeof user.toObject === 'function' ? user.toObject() : { ...user };
+    req.user = { ...plain, id: user._id || user.id };
     next();
   } catch (err) {
     logger.warn(`Auth failed: ${err.message}`);

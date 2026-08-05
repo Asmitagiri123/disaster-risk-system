@@ -41,6 +41,15 @@
         <span class="nav-icon">📋</span> Reports
       </a>
     </nav>
+    <div class="sidebar-footer" id="sidebar-user-footer">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.08);">
+        <div class="avatar" style="width:32px;height:32px;font-size:12px;">ND</div>
+        <div style="flex:1;min-width:0;">
+          <div id="sidebar-username" style="font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">User</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.5);">View Profile</div>
+        </div>
+      </div>
+    </div>
   </aside>
 
   <div class="main-content">
@@ -61,6 +70,10 @@
           <span class="notif-badge" style="display:none;"></span>
         </button>
         <button class="header-btn tooltip" data-tip="Refresh Data">🔄</button>
+        <div class="header-user">
+          <button class="header-btn header-logout-btn tooltip" data-tip="Logout" aria-label="Logout">🚪</button>
+          <div class="avatar" id="header-avatar">ND</div>
+        </div>
       </div>
     </header>
 

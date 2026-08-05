@@ -671,38 +671,59 @@ async function resolveLiveAlert(id) {
   LIVE.alerts = LIVE.alerts.filter(a => String(a._raw && a._raw._id) !== String(id));
 }
 
-// Legacy loadDashboardData used by index.html and other pages.
-// Populates both DATA (=LIVE) and LIVE so every page shape works.
+// Populate alerts/predictions/sensors into the shared DATA object.
+// Used by every page — dashboard, alerts, map, predictions, reports.
 async function loadDashboardData() {
   const scope = scopeParams();
   const [alertsRes, predictionsRes, sensorsRes, statsRes] = await Promise.allSettled([
-    apiGetAlerts({ limit: 50 }, scope),
-    apiGetPredictions({ limit: 10 }),
+    apiGetAlerts({ limit: 100 }, scope),
+    apiGetPredictions({ limit: 20 }),
     apiGetSensors(),
     apiGetAlertStats(),
   ]);
 
+  // If the scoped call returned zero alerts but we have a scope active, try
+  // a nationwide fallback so the user always sees something.
+  let rawAlerts = [];
   if (alertsRes.status === 'fulfilled' && alertsRes.value?.success) {
-    const raw = alertsRes.value.data.alerts || [];
-    DATA.alerts     = raw.map(mapAlert);
-    DATA.mapMarkers = raw.map(mapMarker).filter(Boolean);
-    DATA.stats.activeAlerts  = raw.filter(a => a.isActive).length;
-    DATA.stats.highRiskZones = raw.filter(a => (a.riskLevel || '').toLowerCase() === 'high').length;
+    rawAlerts = alertsRes.value.data.alerts || [];
+  }
+  if (rawAlerts.length === 0 && scope) {
+    // Retry without scope to show all Nepal data
+    try {
+      const fallback = await apiGetAlerts({ limit: 100 });
+      if (fallback?.success) {
+        rawAlerts = fallback.data.alerts || [];
+        if (rawAlerts.length > 0 && typeof showToast === 'function') {
+          showToast('📍 No alerts in your area — showing all Nepal', 'info', 3000);
+        }
+      }
+    } catch (_) { /* use empty */ }
+  }
 
-    DATA.timeline = raw.slice(0, 6).map(a => ({
+  if (rawAlerts.length > 0) {
+    DATA.alerts     = rawAlerts.map(mapAlert);
+    DATA.mapMarkers = rawAlerts.map(mapMarker).filter(Boolean);
+    DATA.stats.activeAlerts  = rawAlerts.filter(a => a.isActive).length;
+    DATA.stats.highRiskZones = rawAlerts.filter(a => (a.riskLevel || '').toLowerCase() === 'high').length;
+
+    DATA.timeline = rawAlerts.slice(0, 6).map(a => ({
       time:  new Date(a.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
       title: `${(a.disasterType || '').toLowerCase() === 'flood' ? 'Flood' : 'Landslide'} — ${a.location?.address || a.location?.city || 'Nepal'}`,
       desc:  a.message || `${(a.riskLevel || 'low')} risk level detected.`,
       type:  (a.riskLevel || '').toLowerCase() === 'high' ? 'warning' : a.isActive ? 'warning' : 'resolved',
     }));
 
-    const floodCount = raw.filter(a => (a.disasterType || '').toLowerCase() === 'flood').length;
-    const landCount  = raw.filter(a => (a.disasterType || '').toLowerCase() === 'landslide').length;
+    const floodCount = rawAlerts.filter(a => (a.disasterType || '').toLowerCase() === 'flood').length;
+    const landCount  = rawAlerts.filter(a => (a.disasterType || '').toLowerCase() === 'landslide').length;
     const total = floodCount + landCount || 1;
     DATA.disasterTypes = [
       { label: 'Flood',     value: Math.round(floodCount / total * 100), color: '#3b82f6' },
       { label: 'Landslide', value: Math.round(landCount  / total * 100), color: '#8b5cf6' },
     ];
+  } else if (alertsRes.status === 'rejected') {
+    console.error('[NepAlert] Alerts API failed:', alertsRes.reason);
+    if (typeof showToast === 'function') showToast('⚠️ Could not reach backend — check if server is running', 'error', 5000);
   }
 
   if (predictionsRes.status === 'fulfilled' && predictionsRes.value?.success) {
@@ -712,10 +733,14 @@ async function loadDashboardData() {
       const avg = DATA.predictions.reduce((s, p) => s + p.probability, 0) / DATA.predictions.length;
       DATA.stats.accuracy = avg.toFixed(1);
     }
+  } else if (predictionsRes.status === 'rejected') {
+    console.error('[NepAlert] Predictions API failed:', predictionsRes.reason);
   }
 
   if (sensorsRes.status === 'fulfilled' && sensorsRes.value?.success) {
     DATA.sensors = (sensorsRes.value.data?.sensors || []).slice(0, 9).map(mapSensor);
+  } else if (sensorsRes.status === 'rejected') {
+    console.error('[NepAlert] Sensors API failed:', sensorsRes.reason);
   }
 
   if (statsRes.status === 'fulfilled' && statsRes.value?.success) {

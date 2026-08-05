@@ -309,6 +309,8 @@ function handleLogout() {
   }, 'Logout', 'danger');
 }
 
+window.handleLogout = handleLogout;
+
 function getCurrentUser() {
   return Auth.getUser() || {};
 }
@@ -398,6 +400,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Avatar → profile
   document.querySelectorAll('.avatar').forEach(a => a.addEventListener('click', openProfileModal));
+
+  // Header logout button
+  document.querySelectorAll('.header-logout-btn').forEach(btn => {
+    btn.addEventListener('click', handleLogout);
+  });
 
   // Broadcast button (any page)
   document.querySelectorAll('.btn-danger').forEach(btn => {
