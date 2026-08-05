@@ -1,8 +1,7 @@
 const dotenv = require('dotenv');
 dotenv.config({ path: require('path').resolve(__dirname, '../../.env') });
 const app = require('./app');
-const connectDB = require('./config/db');
-const mlService = require('./ml/modelBridge');
+const connectDB = require('./config/db'); // modelBridge is used by services, no need to call directly here
 const { startAllJobs } = require('./jobs/predictionScheduler');
 const logger = require('./utils/logger');
 
@@ -12,9 +11,6 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
-
-    // Load ML models
-    await mlService.loadModels();
 
     // Start scheduled jobs
     startAllJobs();
